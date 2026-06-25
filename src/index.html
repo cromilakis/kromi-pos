@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./vendor/react.production.min.js"></script>
+<script src="./vendor/react-dom.production.min.js"></script>
+<script src="./vendor/babel.min.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap');
+*{box-sizing:border-box;}
+body{margin:0;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:#cdd5e3;border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+input::placeholder{color:#9aa8bd;}
+@keyframes brotaPop{0%{transform:scale(1);}35%{transform:scale(1.3);}100%{transform:scale(1);}}
+@keyframes brotaRowIn{0%{background:#CFF1DD;}100%{background:transparent;}}
+@keyframes brotaShake{10%,90%{transform:translateX(-1px);}20%,80%{transform:translateX(2px);}30%,50%,70%{transform:translateX(-5px);}40%,60%{transform:translateX(5px);}}
+@keyframes brotaFadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.lkey{border:1px solid #E1E5EE;background:#fff;border-radius:13px;font-size:23px;font-weight:700;color:#0F2A1B;cursor:pointer;display:flex;align-items:center;justify-content:center;height:56px;font-family:inherit;transition:transform .07s,background .12s;}
+.lkey:active{transform:scale(.95);background:#F1F4F8;}
+#thermal-receipt{position:absolute;left:-9999px;top:0;}
+/* Configuración: degradar columnas en ventanas angostas */
+@media (max-width:1240px){ .cfg-preview{display:none !important;} }
+@media (max-width:1024px){ .cfg-subnav{width:208px !important;} }
+/* Inicio: apilar CTA + actividad en ventanas angostas */
+.inicio-bottom{display:flex;gap:18px;align-items:stretch;flex-wrap:wrap;}
+@media (max-width:1080px){ .inicio-cta{width:100% !important;} .inicio-activity{flex-basis:100% !important;} }
+@media print{
+  body{background:#fff !important;}
+  body *{visibility:hidden !important;}
+  #thermal-receipt, #thermal-receipt *{visibility:visible !important;}
+  #thermal-receipt{position:fixed !important;left:0 !important;top:0 !important;width:58mm !important;}
+  @page{size:58mm auto;margin:0;}
+}
+</style>
+</helmet>
+
+<template id="__bundler_thumbnail" data-bg-color="#0F2A1B">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#0F2A1B"/>
+    <rect x="430" y="250" width="340" height="340" rx="80" fill="url(#g)"/>
+    <g transform="translate(600 420) scale(11)" fill="none" stroke="#0F2A1B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M-5 8h10"/><path d="M-2 8c5.5-2.5.8-6.4 3-10"/>
+      <path d="M-2.5 -2.6c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/>
+      <path d="M2.1 -6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/>
+    </g>
+    <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22C463"/><stop offset="1" stop-color="#97F2CC"/></linearGradient></defs>
+  </svg>
+</template>
+<div style="min-height:100vh;width:100%;display:flex;align-items:center;justify-content:center;padding:30px;box-sizing:border-box;background:radial-gradient(120% 120% at 70% 10%,#CAD0D9 0%,#AEB7C5 55%,#959EAD 100%);font-family:'Satoshi',system-ui,sans-serif;">
+  <div style="width:1200px;height:760px;max-width:100%;max-height:100%;display:flex;flex-direction:column;background:#F6F7FB;color:#0F2A1B;overflow:hidden;border-radius:13px;box-shadow:0 50px 110px rgba(0,0,40,.45),0 0 0 1px rgba(0,0,40,.08);">
+
+  <!-- ================= TITLEBAR (ventana de escritorio) ================= -->
+  <div style="height:36px;flex:none;background:#ECEDF1;border-bottom:1px solid #DADCE3;display:flex;align-items:center;padding:0 14px;position:relative;z-index:20;">
+    <div style="display:flex;gap:8px;">
+      <span style="width:12px;height:12px;border-radius:50%;background:#FF5F57;"></span>
+      <span style="width:12px;height:12px;border-radius:50%;background:#FEBC2E;"></span>
+      <span style="width:12px;height:12px;border-radius:50%;background:#28C840;"></span>
+    </div>
+    <div style="position:absolute;left:0;right:0;text-align:center;font-size:12.5px;font-weight:700;color:#6B7280;pointer-events:none;">{{ windowTitle }}</div>
+  </div>
+
+  <!-- ================= LOGIN ================= -->
+  <sc-if value="{{ loggedOut }}" hint-placeholder-val="{{ true }}">
+  <div data-screen-label="Login" style="flex:1;display:flex;min-height:0;">
+    <div style="flex:1.05;position:relative;background-image:linear-gradient(155deg,rgba(8,40,26,.55) 0%,rgba(6,28,18,.30) 45%,rgba(4,20,12,.70) 100%),url('uploads/bg-login.png');background-size:cover;background-position:center;color:#fff;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:48px;">
+      <div style="display:flex;align-items:center;gap:12px;position:relative;">
+        <div style="width:44px;height:44px;border-radius:13px;background:linear-gradient(150deg,#22C463,#97F2CC);display:flex;align-items:center;justify-content:center;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F2A1B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:22px;">Brota <span style="font-weight:500;color:rgba(255,255,255,.7);">· Vivero</span></div>
+      </div>
+      <div style="position:relative;max-width:420px;">
+        <div style="font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#97F2CC;margin-bottom:14px;">Punto de venta</div>
+        <h1 style="font-size:40px;font-weight:900;line-height:1.1;letter-spacing:-.02em;margin:0 0 16px;">Haz crecer tu vivero, una venta a la vez.</h1>
+        <p style="font-size:16px;line-height:1.55;color:rgba(255,255,255,.78);margin:0;">Gestiona ventas, stock, clientes y caja desde un solo lugar. Inicia sesión para comenzar tu turno.</p>
+      </div>
+      <div style="position:relative;font-size:13px;color:rgba(255,255,255,.55);">© 2026 Brota · Vivero</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px;background:#fff;">
+      <div style="width:100%;max-width:372px;">
+        <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0 0 4px;letter-spacing:-.01em;">Iniciar sesión</h2>
+        <p style="font-size:14px;color:#7C95A8;margin:0 0 22px;">Ingrese su RUT para abrir la caja.</p>
+        <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:8px;">RUT del usuario</label>
+        <div style="{{ loginInputWrapStyle }}">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="{{ loginIconColor }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M5 17c.8-1.6 2.3-2.5 4-2.5s3.2.9 4 2.5M15 9h3M15 13h3"/></svg>
+          <span style="{{ loginRutTextStyle }}">{{ loginRutDisplay }}</span>
+        </div>
+        <sc-if value="{{ loginHasError }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:8px;color:#D02E2E;font-size:13px;font-weight:600;margin-top:11px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            {{ loginError }}
+          </div>
+        </sc-if>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px;">
+          <sc-for list="{{ loginKeys }}" as="k" hint-placeholder-count="12">
+            <button class="lkey" onClick="{{ k.onClick }}">{{ k.label }}</button>
+          </sc-for>
+        </div>
+        <button onClick="{{ doLogin }}" style="width:100%;height:52px;margin-top:16px;border:0;border-radius:13px;background:#1E9E54;color:#fff;font-weight:800;font-size:16px;font-family:inherit;cursor:pointer;box-shadow:0 8px 20px rgba(30,158,84,.28);">Ingresar</button>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:20px;padding:12px 14px;background:#F6F7FB;border:1px solid #ECEFF4;border-radius:12px;">
+          <span style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9aa8bd;flex:none;">Demo</span>
+          <div style="font-size:12.5px;color:#7C95A8;line-height:1.5;"><b style="color:#0F2A1B;">11.111.111-1</b> admin · <b style="color:#0F2A1B;">22.222.222-2</b> cajero</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= APP ================= -->
+  <sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;display:flex;min-height:0;">
+
+  <!-- ================= SIDEBAR ================= -->
+  <sc-if value="{{ showSidebar }}" hint-placeholder-val="{{ true }}">
+  <aside style="width:236px;flex:none;background:#fff;border-right:1px solid #E1E5EE;display:flex;flex-direction:column;padding:16px 14px;z-index:5;">
+    <div style="display:flex;align-items:center;gap:11px;padding:2px 8px 16px;">
+      <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(150deg,#22C463,#97F2CC);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(34,196,99,.28);flex:none;">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0F2A1B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>
+      </div>
+      <div style="line-height:1.1;min-width:0;"><div style="font-weight:900;font-size:16px;color:#0F2A1B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ brandName }}</div><div style="font-size:11px;color:#7C95A8;font-weight:500;">Punto de venta</div></div>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;gap:3px;">
+      <sc-for list="{{ navTabs }}" as="tab" hint-placeholder-count="4">
+        <button onClick="{{ tab.onClick }}" style="{{ tab.style }}">{{ tab.icon }}<span>{{ tab.label }}</span></button>
+      </sc-for>
+    </nav>
+
+    <sc-if value="{{ showAdminMenu }}" hint-placeholder-val="{{ false }}">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#94A3B5;padding:20px 12px 8px;">Administración</div>
+    <nav style="display:flex;flex-direction:column;gap:3px;">
+      <sc-for list="{{ adminMenuItems }}" as="m" hint-placeholder-count="5">
+        <button onClick="{{ m.onClick }}" style="{{ m.style }}">{{ m.icon }}<span>{{ m.label }}</span></button>
+      </sc-for>
+    </nav>
+    </sc-if>
+
+    <div style="flex:1;min-height:16px;"></div>
+
+    <div style="border-top:1px solid #F0F2F7;padding-top:12px;display:flex;align-items:center;gap:10px;">
+      <div style="width:38px;height:38px;border-radius:50%;background:#0F2A1B;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none;">{{ sessionInitials }}</div>
+      <div style="line-height:1.15;min-width:0;flex:1;"><div style="font-size:13px;font-weight:700;color:#0F2A1B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ sessionName }}</div><div style="font-size:11px;color:#7C95A8;">{{ sessionRoleLabel }}</div></div>
+      <button onClick="{{ logout }}" title="Cerrar sesión" style="width:34px;height:34px;border:1px solid #E1E5EE;background:#fff;border-radius:10px;color:#7C95A8;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
+    </div>
+  </aside>
+  </sc-if>
+
+  <!-- ================= CONTENT ================= -->
+  <div style="flex:1;min-height:0;position:relative;">
+
+    <!-- ---------- INICIO ---------- -->
+    <sc-if value="{{ isInicio }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Inicio" style="position:absolute;inset:0;overflow:auto;padding:30px 34px;">
+      <div style="max-width:1080px;margin:0 auto;">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:6px;">{{ todayStr }} · Sucursal Centro</div>
+            <h2 style="font-size:28px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">Tu turno de hoy</h2>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+          </div>
+        </div>
+
+        <!-- stat cards -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px;">
+          <div style="background:#0F2A1B;border-radius:18px;padding:20px 22px;color:#fff;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(34,196,99,.40),transparent 70%);"></div>
+            <div style="font-size:12.5px;color:#97F2CC;font-weight:700;margin-bottom:8px;position:relative;">Ventas del turno</div>
+            <div style="font-size:32px;font-weight:900;position:relative;letter-spacing:-.02em;">{{ myShiftCount }}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px;position:relative;">operaciones cobradas</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
+            <div style="font-size:12.5px;color:#7C95A8;font-weight:700;margin-bottom:8px;">Total vendido</div>
+            <div style="font-size:30px;font-weight:900;color:#0F2A1B;letter-spacing:-.02em;">{{ myShiftTotalStr }}</div>
+            <div style="font-size:12px;color:#9aa8bd;margin-top:3px;">IVA incluido</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
+            <div style="font-size:12.5px;color:#7C95A8;font-weight:700;margin-bottom:8px;">Tiempo en turno</div>
+            <div style="font-size:30px;font-weight:900;color:#0F2A1B;letter-spacing:-.02em;">{{ shiftDurationStr }}</div>
+            <div style="font-size:12px;color:#9aa8bd;margin-top:3px;">desde las {{ shiftOpenStr }}</div>
+          </div>
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
+            <div style="font-size:12.5px;color:#7C95A8;font-weight:700;margin-bottom:8px;">Ticket promedio</div>
+            <div style="font-size:30px;font-weight:900;color:#0F2A1B;letter-spacing:-.02em;">{{ myShiftAvgStr }}</div>
+            <div style="font-size:12px;color:#9aa8bd;margin-top:3px;">por venta</div>
+          </div>
+        </div>
+
+        <!-- recent activity -->
+        <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="font-weight:900;font-size:16px;color:#0F2A1B;">Actividad reciente</div>
+            <button onClick="{{ goHistorialFromInicio }}" style="{{ verHistorialStyle }}">{{ verHistorialLabel }}</button>
+          </div>
+          <sc-for list="{{ recentActivity }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid #F0F2F7;">
+                <span style="{{ r.dotStyle }}">{{ r.icon }}</span>
+                <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:14px;color:#0F2A1B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.summary }}</div><div style="font-size:12px;color:#9aa8bd;">{{ r.meta }}</div></div>
+                <span style="{{ r.methodStyle }}">{{ r.method }}</span>
+                <span style="font-weight:900;font-size:15px;color:#0F2A1B;white-space:nowrap;min-width:80px;text-align:right;">{{ r.amount }}</span>
+              </div>
+            </sc-for>
+          </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ---------- VENTA ---------- -->
+    <sc-if value="{{ isVenta }}" hint-placeholder-val="{{ true }}">
+    <div data-screen-label="Venta" style="position:absolute;inset:0;display:flex;flex-direction:column;">
+      <!-- immersive top strip -->
+      <div style="height:58px;flex:none;display:flex;align-items:center;gap:14px;padding:0 18px;background:#fff;border-bottom:1px solid #E1E5EE;">
+        <button onClick="{{ exitVenta }}" title="Volver al inicio" style="display:flex;align-items:center;gap:8px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:9px 14px;font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer;flex:none;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          Inicio
+        </button>
+        <div style="width:1px;height:26px;background:#E1E5EE;flex:none;"></div>
+        <div style="display:flex;align-items:center;gap:4px;background:#F0F2F7;border-radius:11px;padding:4px;flex:none;">
+          <button onClick="{{ setScanOff }}" style="{{ modeCatalogStyle }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            Catálogo
+          </button>
+          <button onClick="{{ setScanOn }}" style="{{ modeScanStyle }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14M7.5 5v14M12 5v14M16.5 5v14M21 5v14"/></svg>
+            Escáner
+          </button>
+        </div>
+        <div style="flex:1;"></div>
+        <div style="display:flex;align-items:center;gap:9px;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:11px;padding:7px 12px;flex:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01"/></svg>
+          <span style="font-size:12px;font-weight:700;color:#7C95A8;">Sucursal</span>
+          <select value="{{ branch }}" onChange="{{ setBranch }}" style="border:0;outline:none;background:transparent;font-family:inherit;font-size:13.5px;font-weight:700;color:#0F2A1B;cursor:pointer;">
+            <sc-for list="{{ branchOptions }}" as="b" hint-placeholder-count="4">
+              <option value="{{ b.value }}">{{ b.label }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;flex:none;">
+          <div style="width:34px;height:34px;border-radius:50%;background:#0F2A1B;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;">{{ sessionInitials }}</div>
+          <div style="line-height:1.1;"><div style="font-size:12.5px;font-weight:700;color:#0F2A1B;">{{ sessionName }}</div><div style="font-size:11px;color:#7C95A8;">{{ sessionRoleLabel }}</div></div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;min-height:0;">
+      <!-- catalog -->
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0;padding:18px 22px 0;">
+        <sc-if value="{{ catalogMode }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E1E5EE;border-radius:14px;padding:12px 16px;margin-bottom:14px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="Buscar planta, maceta, accesorio…" style="border:0;outline:none;background:transparent;flex:1;font-family:inherit;font-size:15px;color:#0F2A1B;" />
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:0;">
+            <sc-for list="{{ catChips }}" as="c" hint-placeholder-count="7">
+              <button onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:3px;background:#fff;border:1px solid #E1E5EE;border-radius:11px;padding:3px;flex:none;">
+            <button onClick="{{ setViewGrid }}" title="Vista cuadrícula" style="{{ viewGridStyle }}">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </button>
+            <button onClick="{{ setViewList }}" title="Vista lista" style="{{ viewListStyle }}">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style="flex:1;overflow:auto;padding-bottom:20px;">
+          <sc-for list="{{ catalogGroups }}" as="g" hint-placeholder-count="3">
+            <div style="margin-bottom:24px;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px;">
+                <span style="width:9px;height:9px;border-radius:50%;background:{{ g.dot }};"></span>
+                <span style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">{{ g.label }}</span>
+                <span style="background:#E7EFE8;color:#0F2A1B;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;">{{ g.countStr }}</span>
+              </div>
+              <sc-if value="{{ ventaIsGrid }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,196px);justify-content:start;gap:14px;align-content:start;">
+                <sc-for list="{{ g.items }}" as="p" hint-placeholder-count="6">
+                  <button onClick="{{ p.onAdd }}" style="{{ p.cardStyle }}" style-hover="transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,64,.13);border-color:#cdd9ee;" style-active="transform:translateY(-1px) scale(.99);">
+                    <div style="{{ p.tileStyle }}">{{ p.icon }}</div>
+                    <div style="width:100%;padding:9px 12px 10px;box-sizing:border-box;text-align:left;">
+                      <div style="font-weight:700;font-size:14px;color:#0F2A1B;line-height:1.2;margin-bottom:6px;">{{ p.name }}</div>
+                      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;">
+                        <span style="{{ p.availStyle }}">{{ p.availStr }}</span>
+                        <span style="font-weight:900;font-size:16px;color:#0F2A1B;white-space:nowrap;flex:none;">{{ p.priceStr }}</span>
+                      </div>
+                    </div>
+                  </button>
+                </sc-for>
+              </div>
+              </sc-if>
+              <sc-if value="{{ ventaIsList }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;background:#fff;border:1px solid #E1E5EE;border-radius:14px;overflow:hidden;">
+                <sc-for list="{{ g.items }}" as="p" hint-placeholder-count="6">
+                  <button onClick="{{ p.onAdd }}" style="{{ p.rowStyle }}">
+                    <span style="font-weight:700;font-size:14px;color:#0F2A1B;flex:1;text-align:left;min-width:0;">{{ p.name }}</span>
+                    <span style="{{ p.availStyle }}">{{ p.availStr }}</span>
+                    <span style="font-weight:900;font-size:15px;color:#0F2A1B;white-space:nowrap;min-width:84px;text-align:right;">{{ p.priceStr }}</span>
+                    <span style="{{ p.rowAddStyle }}">+</span>
+                  </button>
+                </sc-for>
+              </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+        <sc-if value="{{ scanMode }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;display:flex;flex-direction:column;min-height:0;padding-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:15px 18px;margin-bottom:12px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:#E6F7EE;display:flex;align-items:center;justify-content:center;flex:none;">
+              <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1E9E54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14M7.5 5v14M12 5v14M16.5 5v14M21 5v14"/></svg>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#0a6e36;margin-bottom:3px;">Lectura de código de barras</div>
+              <input ref="{{ scanRef }}" value="{{ scanInput }}" onInput="{{ onScanInput }}" onKeyDown="{{ onScanKey }}" placeholder="Escanee el producto o ingrese el código…" style="width:100%;border:0;outline:none;background:transparent;font-family:inherit;font-size:18px;font-weight:700;color:#0F2A1B;" />
+            </div>
+            <button onClick="{{ openScanPicker }}" style="border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 16px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;flex:none;">Simular lectura</button>
+          </div>
+          <div style="{{ scanMsgStyle }}">{{ scanMsgText }}</div>
+          <div style="flex:1;display:flex;flex-direction:column;min-height:0;background:#fff;border:1px solid #E1E5EE;border-radius:16px;overflow:hidden;margin-top:12px;">
+            <div style="display:grid;grid-template-columns:1fr 110px 104px 120px 34px;gap:10px;padding:13px 20px;border-bottom:1px solid #E1E5EE;font-size:11px;font-weight:700;color:#7C95A8;text-transform:uppercase;letter-spacing:.06em;">
+              <span>Producto</span><span style="text-align:right;">Precio</span><span style="text-align:center;">Cantidad</span><span style="text-align:right;">Sub total</span><span></span>
+            </div>
+            <div style="flex:1;overflow:auto;">
+              <sc-if value="{{ hasCart }}" hint-placeholder-val="{{ true }}">
+                <sc-for list="{{ cartItems }}" as="ci" hint-placeholder-count="4">
+                  <div style="{{ ci.scanRowStyle }}">
+                    <div style="display:flex;align-items:center;gap:13px;min-width:0;">
+                      <div style="{{ ci.tintStyle }}">{{ ci.icon }}</div>
+                      <div style="font-weight:700;font-size:16px;color:#0F2A1B;line-height:1.2;min-width:0;">{{ ci.name }}</div>
+                    </div>
+                    <span style="text-align:right;font-weight:700;font-size:14px;color:#7C95A8;">{{ ci.unitStr }}</span>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+                      <button onClick="{{ ci.onDec }}" style="width:24px;height:24px;border-radius:7px;border:1px solid #E1E5EE;background:#fff;color:#7C95A8;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">–</button>
+                      <span style="font-weight:700;font-size:14px;color:#0F2A1B;min-width:16px;text-align:center;">{{ ci.qty }}</span>
+                      <button onClick="{{ ci.onInc }}" style="width:24px;height:24px;border-radius:7px;border:0;background:#D3F4E0;color:#1E9E54;font-size:15px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">+</button>
+                    </div>
+                    <span style="text-align:right;font-weight:900;font-size:16px;color:#0F2A1B;">{{ ci.lineStr }}</span>
+                    <button onClick="{{ ci.onRemove }}" title="Quitar" style="border:0;background:transparent;color:#cdd5e3;font-size:16px;cursor:pointer;font-family:inherit;">✕</button>
+                  </div>
+                </sc-for>
+              </sc-if>
+              <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ false }}">
+                <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:50px 20px;color:#9aa8bd;">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#cdd5e3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;"><path d="M3 5v14M7.5 5v14M12 5v14M16.5 5v14M21 5v14"/></svg>
+                  <div style="font-weight:700;font-size:15px;color:#7C95A8;">Esperando el primer producto</div>
+                  <div style="font-size:13px;color:#9aa8bd;">Escanee un código o use “Simular lectura”.</div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;margin-top:14px;background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:15px 22px;">
+            <div><div style="font-size:12px;color:#7C95A8;font-weight:600;">Artículos</div><div style="font-weight:900;font-size:20px;color:#0F2A1B;">{{ scanItemsCount }}</div></div>
+            <div style="width:1px;height:34px;background:#E1E5EE;"></div>
+            <div><div style="font-size:12px;color:#7C95A8;font-weight:600;">Subtotal + IVA</div><div style="font-weight:700;font-size:14px;color:#7C95A8;">{{ netoStr }} + {{ ivaStr }}</div></div>
+            <div style="flex:1;"></div>
+            <div style="text-align:right;"><div style="font-size:12px;color:#0a6e36;font-weight:700;letter-spacing:.1em;text-transform:uppercase;">Total</div><div style="font-weight:900;font-size:30px;color:#0F2A1B;letter-spacing:-.02em;">{{ totalStr }}</div></div>
+            <button onClick="{{ openPay }}" style="{{ scanCobrarStyle }}">Cobrar</button>
+          </div>
+        </div>
+        </sc-if>
+        </div>
+      <!-- cart -->
+      <sc-if value="{{ catalogMode }}" hint-placeholder-val="{{ true }}">
+      <div style="width:320px;flex:none;background:#fff;border-left:1px solid #E1E5EE;display:flex;flex-direction:column;">
+        <div style="padding:16px 20px 12px;border-bottom:1px solid #E1E5EE;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-weight:900;font-size:18px;color:#0F2A1B;">Venta actual</div>
+            {{ itemCountBadge }}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:11px;padding:8px 12px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <select value="{{ selectedCustomerId }}" onChange="{{ onCustomer }}" style="border:0;outline:none;background:transparent;flex:1;font-family:inherit;font-size:14px;font-weight:600;color:#0F2A1B;cursor:pointer;">
+              <sc-for list="{{ customerOptions }}" as="o" hint-placeholder-count="4">
+                <option value="{{ o.value }}">{{ o.label }}</option>
+              </sc-for>
+            </select>
+          </div>
+        </div>
+        <div style="flex:1;overflow:auto;padding:6px 20px;">
+          <sc-if value="{{ hasCart }}" hint-placeholder-val="{{ true }}">
+            <sc-for list="{{ cartItems }}" as="ci" hint-placeholder-count="3">
+              <div style="{{ ci.rowStyle }}">
+                <div style="{{ ci.tintStyle }}">{{ ci.icon }}</div>
+                <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:14px;color:#0F2A1B;line-height:1.2;">{{ ci.name }}</div><div style="font-size:12px;color:#7C95A8;">{{ ci.perStr }}</div></div>
+                <div style="display:flex;align-items:center;gap:7px;">
+                  <button onClick="{{ ci.onDec }}" style="width:26px;height:26px;border-radius:8px;border:1px solid #E1E5EE;background:#fff;color:#7C95A8;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;">–</button>
+                  <span style="font-weight:700;font-size:14px;color:#0F2A1B;min-width:16px;text-align:center;">{{ ci.qty }}</span>
+                  <button onClick="{{ ci.onInc }}" style="width:26px;height:26px;border-radius:8px;border:0;background:#D3F4E0;color:#1E9E54;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;">+</button>
+                </div>
+              </div>
+            </sc-for>
+          </sc-if>
+          <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;color:#9aa8bd;">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cdd5e3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+              <div style="font-weight:700;font-size:15px;color:#7C95A8;">Carrito vacío</div>
+              <div style="font-size:13px;color:#9aa8bd;">Seleccione un producto para sumarlo a la venta.</div>
+            </div>
+          </sc-if>
+        </div>
+        <div style="padding:16px 20px;border-top:1px solid #E1E5EE;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:5px;"><span>Subtotal</span><span>{{ netoStr }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:10px;"><span>IVA 19%</span><span>{{ ivaStr }}</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;"><span style="font-weight:900;font-size:18px;color:#0F2A1B;">Total</span><span style="font-weight:900;font-size:28px;color:#0F2A1B;letter-spacing:-.02em;">{{ totalStr }}</span></div>
+          <div style="display:flex;gap:10px;">
+            <button onClick="{{ openPay }}" style="{{ cobrarStyle }}">Cobrar</button>
+            <button onClick="{{ clearCart }}" title="Vaciar carrito" style="width:54px;height:54px;border:1px solid #E1E5EE;background:#fff;border-radius:14px;color:#7C95A8;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+    </div>
+    </sc-if>
+
+    <!-- ---------- STOCK ---------- -->
+    <sc-if value="{{ isStock }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Stock" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">{{ stockEyebrow }}</div>
+          <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">{{ stockTitle }}</h2>
+        </div>
+        <sc-if value="{{ canManageStock }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ openAddProduct }}" style="display:flex;align-items:center;gap:8px;border:1px solid #A7E3C0;background:#E6F7EE;color:#0a6e36;border-radius:12px;padding:12px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Agregar producto
+        </button>
+        </sc-if>
+        <sc-if value="{{ stockReadOnly }}" hint-placeholder-val="{{ false }}">
+        <span style="display:flex;align-items:center;gap:8px;border:1px solid #E1E5EE;background:#fff;color:#7C95A8;border-radius:12px;padding:12px 18px;font-weight:700;font-size:13px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          Solo lectura
+        </span>
+        </sc-if>
+      </div>
+      <sc-for list="{{ stockGroups }}" as="g" hint-placeholder-count="3">
+        <div style="margin-bottom:26px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px;">
+            <span style="width:9px;height:9px;border-radius:50%;background:{{ g.dot }};"></span>
+            <span style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">{{ g.label }}</span>
+            <span style="background:#E7EFE8;color:#0F2A1B;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;">{{ g.countStr }}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">
+            <sc-for list="{{ g.items }}" as="r" hint-placeholder-count="4">
+              <div style="{{ r.cardStyle }}">
+                <div style="{{ r.thumbStyle }}">{{ r.icon }}</div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;padding:12px 14px;">
+                  <div style="font-weight:700;font-size:15px;color:#0F2A1B;line-height:1.2;">{{ r.name }}</div>
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:3px;">
+                    <span style="font-weight:700;font-size:13px;color:#7C95A8;">{{ r.priceStr }}</span>
+                    <span style="{{ r.stockCaptionStyle }}">{{ r.stockCaption }}</span>
+                  </div>
+                  <sc-if value="{{ r.canEdit }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:12px;">
+                    <div style="display:flex;align-items:center;gap:7px;">
+                      <button onClick="{{ r.onEdit }}" title="Editar producto" style="width:30px;height:30px;border:1px solid #E1E5EE;background:#fff;color:#7C95A8;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex:none;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                      </button>
+                      <button onClick="{{ r.onDelete }}" title="Eliminar producto" style="width:30px;height:30px;border:1px solid #F5C2C2;background:#fff;color:#D02E2E;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex:none;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:9px;">
+                      <button onClick="{{ r.onMinus }}" style="width:30px;height:30px;border-radius:9px;border:1px solid #E1E5EE;background:#fff;color:#7C95A8;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">–</button>
+                      <span style="{{ r.stockStyle }}">{{ r.stockStr }}</span>
+                      <button onClick="{{ r.onPlus }}" style="width:30px;height:30px;border-radius:9px;border:0;background:#D3F4E0;color:#1E9E54;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">+</button>
+                    </div>
+                  </div>
+                  </sc-if>
+                  <sc-if value="{{ r.readOnly }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:12px;">
+                    <span style="{{ r.stockCaptionStyle }}">{{ r.stockCaption }}</span>
+                    <span style="display:flex;align-items:baseline;gap:5px;"><span style="{{ r.stockStyle }}">{{ r.stockStr }}</span><span style="font-size:12px;color:#9aa8bd;font-weight:600;">u.</span></span>
+                  </div>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- ---------- CATEGORÍAS ---------- -->
+    <sc-if value="{{ isCategorias }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Categorías" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Mantención</div>
+          <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">Categorías</h2>
+        </div>
+        <button onClick="{{ openAddCategory }}" style="display:flex;align-items:center;gap:8px;border:1px solid #A7E3C0;background:#E6F7EE;color:#0a6e36;border-radius:12px;padding:12px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nueva categoría
+        </button>
+      </div>
+      <sc-if value="{{ catMsgHas }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:9px;background:#FDECEC;color:#D02E2E;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:14px;font-weight:700;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          {{ catMsgText }}
+        </div>
+      </sc-if>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;">
+        <sc-for list="{{ categoryRows }}" as="c" hint-placeholder-count="6">
+          <div style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:14px 16px;">
+            <div style="{{ c.swatchStyle }}"><span style="{{ c.dotStyle }}"></span></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:15px;color:#0F2A1B;line-height:1.2;">{{ c.label }}</div>
+              <div style="font-size:13px;color:#7C95A8;margin-top:2px;">{{ c.countStr }}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;">
+              <button onClick="{{ c.onEdit }}" title="Editar categoría" style="width:30px;height:30px;border:1px solid #E1E5EE;background:#fff;color:#7C95A8;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              </button>
+              <button onClick="{{ c.onDelete }}" title="Eliminar categoría" style="width:30px;height:30px;border:1px solid #F5C2C2;background:#fff;color:#D02E2E;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ---------- HISTORIAL ---------- -->
+    <sc-if value="{{ isHistorial }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Historial" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Hoy · {{ todayStr }}</div>
+      <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0 0 20px;letter-spacing:-.01em;">Ventas del día</h2>
+      <div style="display:flex;gap:16px;margin-bottom:22px;">
+        <div style="flex:1;background:#0F2A1B;border-radius:18px;padding:20px 22px;color:#fff;position:relative;overflow:hidden;"><div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(34,196,99,.40),transparent 70%);"></div><div style="font-size:13px;color:#97F2CC;font-weight:700;margin-bottom:6px;position:relative;">Total vendido</div><div style="font-size:32px;font-weight:900;position:relative;letter-spacing:-.02em;">{{ histTotalStr }}</div></div>
+        <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;">Ventas</div><div style="font-size:32px;font-weight:900;color:#0F2A1B;">{{ histCount }}</div></div>
+        <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;">Ticket promedio</div><div style="font-size:32px;font-weight:900;color:#0F2A1B;">{{ histAvgStr }}</div></div>
+      </div>
+      <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;margin-bottom:22px;">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px;">
+          <div>
+            <div style="font-weight:900;font-size:18px;color:#0F2A1B;letter-spacing:-.01em;">Ventas por hora</div>
+            <div style="font-size:13px;color:#7C95A8;margin-top:2px;">Cada punto es una venta · posición por hora e importe</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#2A3A2E;"><span style="width:11px;height:11px;border-radius:50%;background:#22C463;"></span>Efectivo</div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#2A3A2E;"><span style="width:11px;height:11px;border-radius:50%;background:#1E9E54;"></span>Tarjeta</div>
+            <div style="background:#E6F7EE;color:#0a6e36;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;">Hora pico {{ peakLabel }}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div style="position:relative;width:42px;flex:none;height:220px;">
+            <sc-for list="{{ yTicks }}" as="y" hint-placeholder-count="3">
+              <div style="position:absolute;right:6px;bottom:{{ y.bottomPct }}%;transform:translateY(50%);font-size:11px;color:#9aa8bd;font-weight:600;">{{ y.label }}</div>
+            </sc-for>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="position:relative;height:220px;border-left:1px solid #E1E5EE;border-bottom:1px solid #E1E5EE;">
+              <sc-for list="{{ gridLines }}" as="g" hint-placeholder-count="4">
+                <div style="position:absolute;left:0;right:0;bottom:{{ g.bottomPct }}%;border-top:1px dashed #F0F2F7;"></div>
+              </sc-for>
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;">
+                <polyline points="{{ scatterPolyline }}" fill="none" stroke="#b9c6dd" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></polyline>
+              </svg>
+              <sc-for list="{{ scatterDots }}" as="d" hint-placeholder-count="12">
+                <div style="{{ d.style }}" title="{{ d.title }}"></div>
+              </sc-for>
+            </div>
+            <div style="position:relative;height:20px;margin-top:6px;">
+              <sc-for list="{{ xTicks }}" as="x" hint-placeholder-count="6">
+                <span style="{{ x.style }}">{{ x.label }}</span>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;overflow:hidden;">
+        <sc-for list="{{ historyRows }}" as="h" hint-placeholder-count="4">
+          <button onClick="{{ h.onClick }}" style="width:100%;display:grid;grid-template-columns:90px 70px 1fr 130px 130px 24px;gap:14px;padding:15px 22px;border:0;border-bottom:1px solid #F0F2F7;background:#fff;align-items:center;cursor:pointer;text-align:left;font-family:inherit;">
+            <span style="font-weight:900;font-size:14px;color:#0F2A1B;">{{ h.folioStr }}</span>
+            <span style="font-size:13px;color:#7C95A8;">{{ h.time }}</span>
+            <span style="font-size:14px;font-weight:600;color:#0F2A1B;">{{ h.customerName }}<span style="color:#9aa8bd;font-weight:500;"> · {{ h.itemsStr }}</span></span>
+            <span style="{{ h.methodStyle }}">{{ h.methodLabel }}</span>
+            <span style="text-align:right;font-weight:900;font-size:15px;color:#0F2A1B;">{{ h.totalStr }}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cdd5e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ---------- CLIENTES ---------- -->
+    <sc-if value="{{ isClientes }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Clientes" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Fidelización</div>
+          <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">Clientes</h2>
+        </div>
+        <button onClick="{{ openAddCustomer }}" style="display:flex;align-items:center;gap:8px;border:1px solid #A7E3C0;background:#E6F7EE;color:#0a6e36;border-radius:12px;padding:12px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nuevo cliente
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
+        <sc-for list="{{ customerRows }}" as="c" hint-placeholder-count="4">
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+              <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(160deg,#1E9E54,#22C463);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;flex:none;">{{ c.initials }}</div>
+              <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:15px;color:#0F2A1B;line-height:1.2;">{{ c.name }}</div><div style="font-size:12px;color:#7C95A8;">{{ c.rut }}</div><div style="font-size:12px;color:#7C95A8;">{{ c.phone }}</div></div>
+              <div style="display:flex;align-items:center;gap:7px;flex:none;">
+                <button onClick="{{ c.onEdit }}" title="Editar cliente" style="width:30px;height:30px;border:1px solid #E1E5EE;background:#fff;color:#7C95A8;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </button>
+                <button onClick="{{ c.onDelete }}" title="Eliminar cliente" style="width:30px;height:30px;border:1px solid #F5C2C2;background:#fff;color:#D02E2E;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:14px;">
+              <div style="flex:1;background:#E6F7EE;border-radius:12px;padding:9px 12px;"><div style="font-size:11px;color:#0a6e36;font-weight:600;">Puntos</div><div style="font-size:18px;font-weight:900;color:#0a6e36;">{{ c.pointsStr }}</div></div>
+              <div style="flex:1;background:#F6F7FB;border-radius:12px;padding:9px 12px;"><div style="font-size:11px;color:#7C95A8;font-weight:600;">Gastado</div><div style="font-size:18px;font-weight:900;color:#0F2A1B;">{{ c.spentStr }}</div></div>
+            </div>
+            <button onClick="{{ c.onUse }}" style="width:100%;border:1px solid #1E9E54;background:#fff;color:#1E9E54;border-radius:11px;padding:9px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">Usar en venta actual</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ---------- CAJEROS (admin) ---------- -->
+    <sc-if value="{{ isCajeros }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Cajeros" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Administración</div>
+          <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">Usuarios y permisos</h2>
+          <p style="font-size:13px;color:#7C95A8;margin:6px 0 0;">Cajeros con acceso a este equipo. Su RUT es la credencial de ingreso.</p>
+        </div>
+        <button onClick="{{ openAddCajero }}" style="display:flex;align-items:center;gap:8px;border:1px solid #A7E3C0;background:#E6F7EE;color:#0a6e36;border-radius:12px;padding:12px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          Nuevo usuario
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
+        <sc-for list="{{ cajeroRows }}" as="c" hint-placeholder-count="3">
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+              <div style="{{ c.avatarStyle }}">{{ c.initials }}</div>
+              <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:15px;color:#0F2A1B;line-height:1.2;">{{ c.name }}</div><div style="font-size:12px;color:#7C95A8;">{{ c.rut }}</div></div>
+              <span style="{{ c.statusStyle }}">{{ c.statusLabel }}</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button onClick="{{ c.onToggle }}" style="flex:1;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:9px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">{{ c.toggleLabel }}</button>
+              <button onClick="{{ c.onEdit }}" title="Editar" style="width:38px;border:1px solid #E1E5EE;background:#fff;color:#7C95A8;border-radius:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex:none;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              </button>
+              <button onClick="{{ c.onDelete }}" title="Eliminar" style="width:38px;border:1px solid #F5C2C2;background:#fff;color:#D02E2E;border-radius:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex:none;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ---------- CIERRE DE CAJA ---------- -->
+    <sc-if value="{{ isCierre }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Cierre de caja" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
+      <div style="max-width:940px;margin:0 auto;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Arqueo</div>
+        <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0 0 4px;letter-spacing:-.01em;">Cierre de caja</h2>
+        <p style="font-size:14px;color:#7C95A8;margin:0 0 22px;">Turno de {{ sessionName }} · apertura {{ cierreOpenTime }}</p>
+        <div style="display:flex;gap:16px;margin-bottom:18px;">
+          <div style="flex:1;background:#0F2A1B;border-radius:18px;padding:20px 22px;color:#fff;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(34,196,99,.40),transparent 70%);"></div>
+            <div style="font-size:13px;color:#97F2CC;font-weight:700;margin-bottom:6px;position:relative;">Total del turno</div>
+            <div style="font-size:30px;font-weight:900;position:relative;letter-spacing:-.02em;">{{ cierreTotalStr }}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:4px;position:relative;">{{ cierreCountStr }}</div>
+          </div>
+          <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:7px;"><span style="width:10px;height:10px;border-radius:50%;background:#22C463;"></span>Efectivo</div><div style="font-size:28px;font-weight:900;color:#0F2A1B;">{{ cierreCashStr }}</div></div>
+          <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:7px;"><span style="width:10px;height:10px;border-radius:50%;background:#1E9E54;"></span>Tarjeta</div><div style="font-size:28px;font-weight:900;color:#0F2A1B;">{{ cierreCardStr }}</div></div>
+        </div>
+        <div style="display:flex;gap:16px;align-items:stretch;">
+          <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:22px;">
+            <div style="font-weight:900;font-size:16px;color:#0F2A1B;margin-bottom:3px;">Arqueo de efectivo</div>
+            <div style="font-size:13px;color:#7C95A8;margin-bottom:16px;">Cuente el efectivo en caja e ingrese el monto contado.</div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:7px;"><span>Fondo de apertura</span><span>{{ cierreFloatStr }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:7px;"><span>Ventas en efectivo</span><span>{{ cierreCashStr }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0F2A1B;border-top:1px solid #F0F2F7;padding-top:9px;margin-top:3px;"><span>Esperado en caja</span><span>{{ cierreExpectedStr }}</span></div>
+            <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin:16px 0 6px;">Efectivo contado</label>
+            <input value="{{ cierreCountedDisplay }}" onInput="{{ onCierreCounted }}" inputmode="numeric" placeholder="$0" style="width:100%;border:1px solid #E1E5EE;border-radius:12px;padding:13px 15px;font-family:inherit;font-size:18px;font-weight:700;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+            <div style="{{ cierreDiffBoxStyle }}"><span style="font-size:13px;font-weight:700;">{{ cierreDiffLabel }}</span><span style="font-size:18px;font-weight:900;">{{ cierreDiffStr }}</span></div>
+          </div>
+          <div style="width:300px;flex:none;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:18px;padding:22px;display:flex;flex-direction:column;">
+            <div style="font-weight:900;font-size:16px;color:#0F2A1B;margin-bottom:14px;">Resumen del turno</div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:10px;"><span>Ventas</span><span style="font-weight:700;color:#0F2A1B;">{{ cierreCountNum }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:10px;"><span>Ticket promedio</span><span style="font-weight:700;color:#0F2A1B;">{{ cierreAvgStr }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:10px;"><span>Hora pico</span><span style="font-weight:700;color:#0F2A1B;">{{ peakLabel }}</span></div>
+            <div style="flex:1;"></div>
+            <sc-if value="{{ cierreDone }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:9px;background:#E6F7EE;border:1px solid #A7E3C0;border-radius:12px;padding:12px 14px;margin-bottom:12px;color:#0a6e36;font-size:13px;font-weight:700;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Caja cerrada · turno finalizado</div>
+            </sc-if>
+            <button onClick="{{ cierreBtnAction }}" style="{{ cierreBtnStyle }}">{{ cierreBtnLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ---------- CONFIGURACIÓN ---------- -->
+    <sc-if value="{{ isConfig }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Configuración" style="position:absolute;inset:0;display:flex;min-height:0;">
+      <div class="cfg-subnav" style="width:252px;flex:none;background:#fff;border-right:1px solid #E1E5EE;padding:22px 14px;overflow:auto;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#94A3B5;padding:0 11px;margin-bottom:13px;">Configuración</div>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <button onClick="{{ goCfg.negocio }}" style="{{ cfgNav.negocio }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9M3 9v10a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V9M3 9h18M8 13h8"/></svg><span>Negocio</span></button>
+          <button onClick="{{ goCfg.marca }}" style="{{ cfgNav.marca }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2a10 10 0 1 0 0 20c1 0 1.5-.8 1.5-1.5 0-1.6-1-1.6-1-3 0-1 .8-1.5 1.8-1.5H16a4 4 0 0 0 4-4 8 8 0 0 0-8-8z"/></svg><span>Apariencia y marca</span></button>
+          <button onClick="{{ goCfg.login }}" style="{{ cfgNav.login }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg><span>Pantalla de login</span></button>
+          <button onClick="{{ goCfg.operacion }}" style="{{ cfgNav.operacion }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5 5 19M6.5 6.5h.01M17.5 17.5h.01"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg><span>Operación e impuestos</span></button>
+          <button onClick="{{ goCfg.modulos }}" style="{{ cfgNav.modulos }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Módulos</span></button>
+          <button onClick="{{ goCfg.recibo }}" style="{{ cfgNav.recibo }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v5h5M9 13h6M9 17h6"/></svg><span>Recibo y datos fiscales</span></button>
+        </div>
+      </div>
+
+      <div style="flex:1;overflow:auto;padding:26px 30px;background:#F6F7FB;min-width:0;">
+        <div style="display:flex;align-items:center;gap:10px;background:#FEF6DD;border:1px solid #F2E2A8;border-radius:12px;padding:11px 16px;margin-bottom:20px;color:#8A6D12;font-size:13px;font-weight:600;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>El equipo técnico ajusta estos valores una vez. La interfaz, el login y el recibo los toman automáticamente.</div>
+        <h2 style="font-size:23px;font-weight:900;color:#0F2A1B;margin:0 0 18px;letter-spacing:-.01em;">{{ cfgTitle }}</h2>
+
+        <sc-if value="{{ isCfgMarca }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:20px 22px;margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#94A3B5;margin-bottom:14px;">Color de acento</div>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+              <sc-for list="{{ cfgAccents }}" as="a" hint-placeholder-count="6">
+                <button onClick="{{ a.onClick }}" style="{{ a.style }}"></button>
+              </sc-for>
+              <div style="flex:1;min-width:120px;"></div>
+              <div style="font-size:12.5px;color:#94A3B5;max-width:210px;text-align:right;line-height:1.45;">Tiñe acciones, pestañas activas, login y recibo.</div>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:20px 22px;display:flex;gap:22px;align-items:center;">
+            <div style="flex:1;"><div style="font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#94A3B5;margin-bottom:8px;">Logo del negocio</div><div style="font-size:13px;color:#64748B;line-height:1.5;">Aparece en la barra superior, el login y el recibo. PNG o SVG con fondo transparente.</div></div>
+            <div style="{{ cfgLogoStyle }}">{{ brandInitial }}</div>
+            <button style="border:1px solid #E1E5EE;background:#fff;color:#475569;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;flex:none;">Reemplazar</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCfgNegocio }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:16px;">
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Nombre del negocio</label><input value="{{ brandName }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+            <div style="display:flex;gap:14px;">
+              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Rubro</label><div style="display:flex;align-items:center;justify-content:space-between;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-size:14px;color:#0F2A1B;">Vivero · plantas<span style="color:#9aa8bd;">▾</span></div></div>
+              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">RUT empresa</label><input value="76.987.330-1" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;background:#F8FAFC;outline:none;box-sizing:border-box;" /></div>
+            </div>
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Dirección</label><input value="Av. Las Acacias 1234, Santiago" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCfgLogin }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:16px;">
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Imagen de portada</label><div style="height:92px;border-radius:12px;border:2px dashed #C9D3DF;background-image:linear-gradient(135deg,rgba(8,40,26,.4),rgba(12,40,22,.2)),url('uploads/login-foliage.png');background-size:cover;background-position:center;display:flex;align-items:flex-end;padding:12px;color:#fff;font-weight:700;font-size:13px;">login-foliage.png</div></div>
+            <div style="display:flex;gap:14px;">
+              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Título</label><input value="Haz crecer tu vivero, una venta a la vez." style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;"><span onClick="{{ noop }}" style="width:44px;height:25px;border-radius:999px;background:#1E9E54;position:relative;flex:none;"><span style="position:absolute;top:2.5px;right:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;"></span></span><span style="font-size:14px;font-weight:700;color:#0F2A1B;">Mostrar logo sobre la portada</span></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCfgOperacion }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:16px;">
+            <div style="display:flex;gap:14px;">
+              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Moneda</label><div style="display:flex;align-items:center;justify-content:space-between;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-size:14px;color:#0F2A1B;">Peso chileno (CLP $)<span style="color:#9aa8bd;">▾</span></div></div>
+              <div style="width:130px;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">IVA %</label><input value="19" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;"><span style="width:44px;height:25px;border-radius:999px;background:#1E9E54;position:relative;flex:none;"><span style="position:absolute;top:2.5px;right:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;"></span></span><span style="font-size:14px;font-weight:700;color:#0F2A1B;">Precios con IVA incluido</span></div>
+            <div style="display:flex;align-items:center;gap:10px;"><span style="width:44px;height:25px;border-radius:999px;background:#cdd5e3;position:relative;flex:none;"><span style="position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;"></span></span><span style="font-size:14px;font-weight:700;color:#0F2A1B;">Solicitar propina al cobrar</span></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCfgModulos }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:6px 22px;">
+            <sc-for list="{{ cfgModuleRows }}" as="m" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid #F0F2F7;">
+                <div style="padding-right:16px;"><div style="font-weight:700;font-size:14.5px;color:#0F2A1B;">{{ m.title }}</div><div style="font-size:12.5px;color:#94A3B5;margin-top:2px;">{{ m.desc }}</div></div>
+                <button onClick="{{ m.onToggle }}" style="{{ m.togStyle }}"><span style="{{ m.knobStyle }}"></span></button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isCfgRecibo }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:16px;">
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Encabezado del recibo</label><input value="Brota · Vivero" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Pie de página</label><input value="¡Gracias por su compra! Cuide sus plantas con cariño." style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+            <div style="display:flex;gap:14px;">
+              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Teléfono</label><input value="+56 2 2987 3300" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Ancho de impresión</label><div style="display:flex;align-items:center;justify-content:space-between;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-size:14px;color:#0F2A1B;">58 mm (térmica)<span style="color:#9aa8bd;">▾</span></div></div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div class="cfg-preview" style="width:380px;flex:none;background:#fff;border-left:1px solid #E1E5EE;padding:22px;display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#94A3B5;">Vista previa en vivo</div>
+          <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:#0a6e36;"><span style="width:7px;height:7px;border-radius:50%;background:#22C463;"></span>Login</span>
+        </div>
+        <div style="flex:1;border:1px solid #E1E5EE;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;">
+          <div style="flex:1.05;background-image:linear-gradient(150deg,rgba(8,40,26,.55),rgba(12,40,22,.3)),url('uploads/bg-login.png');background-size:cover;background-position:center;color:#fff;padding:20px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;"><div style="{{ cfgPreviewLogoStyle }}">{{ brandInitial }}</div><div style="font-weight:900;font-size:15px;">{{ brandName }}</div></div>
+            <div style="font-size:18px;font-weight:900;line-height:1.15;">Haz crecer tu vivero,<br/>una venta a la vez.</div>
+          </div>
+          <div style="flex:.95;background:#fff;padding:20px;">
+            <div style="font-weight:900;font-size:16px;color:#0F2A1B;margin-bottom:14px;">Iniciar sesión</div>
+            <div style="height:36px;border:1px solid #E1E5EE;border-radius:10px;margin-bottom:10px;background:#F8FAFC;"></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;"><span style="height:26px;border:1px solid #EEF1F6;border-radius:7px;"></span><span style="height:26px;border:1px solid #EEF1F6;border-radius:7px;"></span><span style="height:26px;border:1px solid #EEF1F6;border-radius:7px;"></span></div>
+            <div style="{{ cfgPreviewBtnStyle }}">Ingresar</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:#94A3B5;margin-top:14px;line-height:1.5;">Los cambios se reflejan al instante. El POS, los recibos y el login toman estos valores.</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ---------- RESPALDO Y DATOS ---------- -->
+    <sc-if value="{{ isRespaldo }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Respaldo y datos" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
+      <div style="max-width:920px;margin:0 auto;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Mantención</div>
+        <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0 0 4px;letter-spacing:-.01em;">Respaldo y datos</h2>
+        <p style="font-size:14px;color:#7C95A8;margin:0 0 22px;">Exporte una copia de seguridad o restaure datos en este equipo.</p>
+
+        <div style="display:flex;gap:16px;margin-bottom:16px;">
+          <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:22px;">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px;"><span style="width:42px;height:42px;border-radius:12px;background:#E6F7EE;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#1E9E54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg></span><div style="font-weight:900;font-size:16px;color:#0F2A1B;">Exportar datos</div></div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+              <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#5a6b7e;"><span>Productos</span><span style="font-weight:700;color:#0F2A1B;">{{ backupProducts }}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#5a6b7e;"><span>Clientes</span><span style="font-weight:700;color:#0F2A1B;">{{ backupCustomers }}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#5a6b7e;"><span>Ventas</span><span style="font-weight:700;color:#0F2A1B;">{{ backupSales }}</span></div>
+            </div>
+            <div style="display:flex;gap:10px;"><button style="flex:1;border:0;background:#1E9E54;color:#fff;border-radius:11px;padding:11px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Exportar JSON</button><button style="flex:1;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">CSV</button></div>
+          </div>
+          <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:22px;">
+            <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px;"><span style="width:42px;height:42px;border-radius:12px;background:#EEF1F6;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 9 5-5 5 5"/><path d="M12 4v12"/></svg></span><div style="font-weight:900;font-size:16px;color:#0F2A1B;">Importar respaldo</div></div>
+            <div style="border:2px dashed #C9D3DF;border-radius:13px;padding:24px;text-align:center;color:#94A3B5;margin-bottom:14px;"><div style="font-weight:700;font-size:13.5px;color:#475569;">Arrastre un archivo .json</div><div style="font-size:12.5px;margin-top:3px;">o haga clic para explorar</div></div>
+            <div style="display:flex;align-items:center;gap:9px;background:#FEF6DD;border:1px solid #F2E2A8;border-radius:11px;padding:10px 13px;color:#8A6D12;font-size:12.5px;font-weight:600;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Reemplaza los datos actuales del equipo.</div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:22px;display:flex;align-items:center;gap:16px;">
+          <span style="width:42px;height:42px;border-radius:12px;background:#E6F7EE;display:flex;align-items:center;justify-content:center;flex:none;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#1E9E54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg></span>
+          <div style="flex:1;"><div style="font-weight:900;font-size:15.5px;color:#0F2A1B;">Respaldo automático diario</div><div style="font-size:13px;color:#7C95A8;margin-top:2px;">{{ backupAutoDesc }}</div></div>
+          <button onClick="{{ toggleBackupAuto }}" style="{{ backupTogStyle }}"><span style="{{ backupKnobStyle }}"></span></button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+  </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= PAYMENT MODAL ================= -->
+  <sc-if value="{{ payOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px;">
+    <div style="width:440px;max-width:100%;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px;border-bottom:1px solid #E1E5EE;">
+        <div style="display:flex;align-items:center;gap:13px;margin-bottom:14px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:#E6F7EE;display:flex;align-items:center;justify-content:center;flex:none;">
+            <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1E9E54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>
+          </div>
+          <div style="font-weight:900;font-size:19px;color:#0F2A1B;">Cobro · Venta {{ nextFolioStr }}</div>
+        </div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:14px;padding:12px 16px;">
+          <span style="font-size:14px;color:#7C95A8;font-weight:600;">Total a cobrar</span>
+          <span style="font-size:30px;font-weight:900;color:#0F2A1B;letter-spacing:-.02em;">{{ totalStr }}</span>
+        </div>
+      </div>
+      <div style="padding:22px 24px;">
+        <div style="display:flex;gap:10px;margin-bottom:18px;">
+          <button onClick="{{ setEfectivo }}" style="{{ efStyle }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>Efectivo</button>
+          <button onClick="{{ setTarjeta }}" style="{{ tjStyle }}">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Tarjeta</button>
+        </div>
+
+        <sc-if value="{{ isEfectivo }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:10px;margin-bottom:14px;">
+            <div style="flex:1;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:14px;padding:11px 14px;"><div style="font-size:11px;color:#7C95A8;font-weight:600;margin-bottom:2px;">Recibido</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ cashDisplay }}</div></div>
+            <div style="{{ changeBoxStyle }}"><div style="font-size:11px;font-weight:600;margin-bottom:2px;opacity:.8;">Vuelto</div><div style="font-size:22px;font-weight:900;">{{ changeStr }}</div></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <sc-for list="{{ quickAmounts }}" as="q" hint-placeholder-count="4">
+              <button onClick="{{ q.onClick }}" style="flex:1;border:1px solid #E1E5EE;background:#fff;border-radius:10px;padding:9px 6px;font-weight:700;font-size:12px;color:#0F2A1B;cursor:pointer;font-family:inherit;">{{ q.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;">
+            <sc-for list="{{ keypad }}" as="k" hint-placeholder-count="12">
+              <button onClick="{{ k.onPress }}" style="{{ k.style }}">{{ k.label }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isTarjeta }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#F6F7FB;border:1px dashed #cdd5e3;border-radius:16px;padding:28px 20px;text-align:center;margin-bottom:18px;">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#1E9E54" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px;"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+            <div style="font-weight:700;font-size:15px;color:#0F2A1B;">Inserta o acerca la tarjeta</div>
+            <div style="font-size:13px;color:#7C95A8;margin-top:4px;">Esperando confirmación del terminal…</div>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;gap:10px;">
+          <button onClick="{{ closePay }}" style="width:120px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:14px;padding:14px;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;">Cancelar</button>
+          <button onClick="{{ confirmPay }}" style="{{ confirmStyle }}">Confirmar cobro</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= TICKET MODAL ================= -->
+  <sc-if value="{{ ticketOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px;">
+    <div style="width:400px;max-width:100%;max-height:92vh;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);display:flex;flex-direction:column;">
+      <div style="padding:20px 24px;display:flex;flex-direction:column;align-items:center;border-bottom:1px dashed #E1E5EE;">
+        <div style="width:46px;height:46px;border-radius:14px;background:linear-gradient(150deg,#22C463,#97F2CC);display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F2A1B" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:18px;color:#0F2A1B;">{{ brandName }} · Vivero</div>
+        <div style="font-size:12px;color:#7C95A8;">Comprobante {{ tkFolioStr }} · {{ tkDate }} {{ tkTime }}</div>
+      </div>
+      <div style="flex:1;overflow:auto;padding:16px 24px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:12px;"><span>Cliente: <b style="color:#0F2A1B;font-weight:700;">{{ tkCustomer }}</b></span><span>Cajero/a: M. Jara</span></div>
+        <sc-for list="{{ tkLines }}" as="l" hint-placeholder-count="3">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid #F6F7FB;">
+            <div style="min-width:0;"><div style="font-weight:700;font-size:14px;color:#0F2A1B;">{{ l.name }}</div><div style="font-size:12px;color:#9aa8bd;">{{ l.qtyStr }}</div></div>
+            <span style="font-weight:700;font-size:14px;color:#0F2A1B;">{{ l.lineStr }}</span>
+          </div>
+        </sc-for>
+        <div style="margin-top:14px;border-top:1px dashed #E1E5EE;padding-top:12px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:5px;"><span>Neto</span><span>{{ tkNetoStr }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:8px;"><span>IVA 19%</span><span>{{ tkIvaStr }}</span></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;"><span style="font-weight:900;font-size:17px;color:#0F2A1B;">Total</span><span style="font-weight:900;font-size:24px;color:#0F2A1B;letter-spacing:-.02em;">{{ tkTotalStr }}</span></div>
+          <div style="background:#F6F7FB;border-radius:12px;padding:11px 14px;display:flex;flex-direction:column;gap:5px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:#7C95A8;">Pago</span><span style="font-weight:700;color:#0F2A1B;">{{ tkMethodLabel }}</span></div>
+            <sc-if value="{{ tkIsEfectivo }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:#7C95A8;">Recibido</span><span style="font-weight:700;color:#0F2A1B;">{{ tkRecvStr }}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:#7C95A8;">Vuelto</span><span style="font-weight:700;color:#0F2A1B;">{{ tkChangeStr }}</span></div>
+            </sc-if>
+          </div>
+          <sc-if value="{{ tkRegistered }}" hint-placeholder-val="{{ true }}">
+            <div style="margin-top:12px;background:#E6F7EE;border-radius:12px;padding:11px 14px;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:13px;color:#0a6e36;font-weight:600;">Puntos sumados</span><span style="font-weight:900;font-size:16px;color:#0a6e36;">+{{ tkPointsStr }}</span></div>
+          </sc-if>
+          <sc-if value="{{ tkGeneral }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:12px;background:#F6F7FB;border:1px dashed #cdd5e3;border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:10px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+              <span style="font-size:12px;line-height:1.4;color:#5a6b7e;">Si estuvieras registrado, habrías acumulado <b style="color:#0a6e36;font-weight:700;">{{ tkPointsStr }} puntos</b>.</span>
+            </div>
+          </sc-if>
+        </div>
+        <div style="text-align:center;font-size:13px;color:#7C95A8;margin-top:16px;">¡Gracias por su compra! Cuide sus plantas con cariño.</div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;display:flex;gap:10px;">
+        <button onClick="{{ printTicket }}" style="width:120px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:13px;padding:13px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Imprimir</button>
+        <button onClick="{{ closeTicket }}" style="flex:1;border:0;background:#1E9E54;color:#fff;border-radius:13px;padding:13px;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;">Nueva venta</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="thermal-receipt" style="font-family:'Courier New',ui-monospace,monospace;color:#000;background:#fff;width:58mm;box-sizing:border-box;padding:3mm 3mm 6mm;font-size:11px;line-height:1.45;">
+    <div style="text-align:center;">
+      <div style="font-size:19px;font-weight:700;letter-spacing:.06em;">{{ brandName }}</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;">Vivero · Punto de venta</div>
+      <div style="font-size:10px;margin-top:2px;">Av. Las Acacias 1234, Santiago</div>
+      <div style="font-size:10px;">Tel. +56 2 2987 3300</div>
+    </div>
+    <div style="border-top:1px dashed #000;margin:7px 0;"></div>
+    <div style="display:flex;justify-content:space-between;"><span>Comprobante</span><span>{{ tkFolioStr }}</span></div>
+    <div style="display:flex;justify-content:space-between;"><span>Fecha</span><span>{{ tkDate }} {{ tkTime }}</span></div>
+    <div style="display:flex;justify-content:space-between;"><span>Cajero/a</span><span>M. Jara</span></div>
+    <div style="display:flex;justify-content:space-between;"><span>Cliente</span><span>{{ tkCustomer }}</span></div>
+    <div style="border-top:1px dashed #000;margin:7px 0;"></div>
+    <sc-for list="{{ tkLines }}" as="l" hint-placeholder-count="3">
+      <div style="margin-bottom:4px;">
+        <div style="font-weight:700;">{{ l.name }}</div>
+        <div style="display:flex;justify-content:space-between;"><span>{{ l.qtyStr }}</span><span>{{ l.lineStr }}</span></div>
+      </div>
+    </sc-for>
+    <div style="border-top:1px dashed #000;margin:7px 0;"></div>
+    <div style="display:flex;justify-content:space-between;"><span>Neto</span><span>{{ tkNetoStr }}</span></div>
+    <div style="display:flex;justify-content:space-between;"><span>IVA 19%</span><span>{{ tkIvaStr }}</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:15px;margin-top:3px;"><span>TOTAL</span><span>{{ tkTotalStr }}</span></div>
+    <div style="border-top:1px dashed #000;margin:7px 0;"></div>
+    <div style="display:flex;justify-content:space-between;"><span>Pago</span><span>{{ tkMethodLabel }}</span></div>
+    <sc-if value="{{ tkIsEfectivo }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;justify-content:space-between;"><span>Recibido</span><span>{{ tkRecvStr }}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>Vuelto</span><span>{{ tkChangeStr }}</span></div>
+    </sc-if>
+    <sc-if value="{{ tkRegistered }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;justify-content:space-between;"><span>Puntos sumados</span><span>+{{ tkPointsStr }}</span></div>
+    </sc-if>
+    <sc-if value="{{ tkGeneral }}" hint-placeholder-val="{{ false }}">
+      <div style="font-size:10px;line-height:1.4;">Si estuvieras registrado, habrías acumulado {{ tkPointsStr }} puntos.</div>
+    </sc-if>
+    <div style="border-top:1px dashed #000;margin:7px 0;"></div>
+    <div style="text-align:center;font-size:10px;">¡Gracias por su compra!<br/>Cuide sus plantas con cariño.</div>
+    <div style="text-align:center;font-family:'Libre Barcode 39',monospace;letter-spacing:1px;font-size:11px;margin-top:6px;word-break:break-all;">*{{ tkFolioStr }}*</div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ formOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:24px;">
+    <div style="width:440px;max-width:100%;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px 16px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#E6F7EE;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1E9E54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;flex:1;">{{ formTitle }}</div>
+        <button onClick="{{ closeForm }}" style="width:32px;height:32px;border:0;background:#F6F7FB;border-radius:9px;color:#7C95A8;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex:none;">✕</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Imagen del producto</label>
+          <label style="display:flex;align-items:center;gap:13px;border:1px dashed #cdd5e3;border-radius:12px;padding:10px 12px;cursor:pointer;">
+            <div style="{{ formImgBoxStyle }}">{{ formImgThumb }}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:13px;color:#0a6e36;">{{ formImgLabel }}</div>
+              <div style="font-size:12px;color:#7C95A8;">PNG o JPG · se ve en el catálogo</div>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+            <input type="file" accept="image/*" onChange="{{ onFormImage }}" style="display:none;" />
+          </label>
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Nombre del producto</label>
+          <input value="{{ formName }}" onInput="{{ onFormName }}" placeholder="Ej. Monstera Deliciosa" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Categoría</label>
+          <select value="{{ formCat }}" onChange="{{ onFormCat }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;font-weight:600;color:#0F2A1B;outline:none;cursor:pointer;box-sizing:border-box;background:#fff;">
+            <sc-for list="{{ catSelectOptions }}" as="o" hint-placeholder-count="6">
+              <option value="{{ o.value }}">{{ o.label }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <div style="flex:1;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Precio (CLP)</label>
+            <input value="{{ formPrice }}" onInput="{{ onFormPrice }}" inputmode="numeric" placeholder="0" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+          </div>
+          <div style="flex:1;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Stock (unidades)</label>
+            <input value="{{ formStock }}" onInput="{{ onFormStock }}" inputmode="numeric" placeholder="0" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+          </div>
+        </div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ closeForm }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ saveProduct }}" style="{{ saveProductStyle }}">{{ saveProductLabel }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= CUSTOMER FORM MODAL ================= -->
+  <sc-if value="{{ custFormOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:55;padding:24px;">
+    <div style="width:420px;max-width:100%;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px 16px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#E7EFE8;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E9E54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;flex:1;">{{ custFormTitle }}</div>
+        <button onClick="{{ closeCustForm }}" style="width:32px;height:32px;border:0;background:#F6F7FB;border-radius:9px;color:#7C95A8;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex:none;">✕</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Nombre</label>
+          <input value="{{ custFormName }}" onInput="{{ onCustName }}" placeholder="Nombre y apellido" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">RUT</label>
+          <input value="{{ custFormRut }}" onInput="{{ onCustRut }}" placeholder="Ej. 12.345.678-9" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Teléfono</label>
+          <input value="{{ custFormPhone }}" onInput="{{ onCustPhone }}" placeholder="Ej. +56 9 1234 5678" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+        </div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ closeCustForm }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ saveCustomer }}" style="{{ saveCustStyle }}">{{ saveCustLabel }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= CONFIRM DELETE CUSTOMER MODAL ================= -->
+  <sc-if value="{{ custConfirmOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;">
+    <div style="width:420px;max-width:100%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px 18px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#FDECEC;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#D02E2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;line-height:1.2;">Eliminar cliente</div>
+      </div>
+      <div style="padding:20px 24px;font-size:14px;line-height:1.55;color:#5a6b7e;">Se eliminará a <b style="color:#0F2A1B;font-weight:700;">{{ custConfirmName }}</b> de la base de clientes de forma permanente. Esta acción no se puede deshacer.</div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ cancelCustDelete }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ confirmCustDelete }}" style="min-width:110px;border:0;background:#D02E2E;color:#fff;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Eliminar</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= CAJERO FORM MODAL ================= -->
+  <sc-if value="{{ cajeroFormOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:55;padding:24px;">
+    <div style="width:420px;max-width:100%;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px 16px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#E7EFE8;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E9E54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;flex:1;">{{ cajeroFormTitle }}</div>
+        <button onClick="{{ closeCajeroForm }}" style="width:32px;height:32px;border:0;background:#F6F7FB;border-radius:9px;color:#7C95A8;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex:none;">✕</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Nombre</label>
+          <input value="{{ cajeroFormName }}" onInput="{{ onCajeroName }}" placeholder="Nombre y apellido" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">RUT</label>
+          <input value="{{ cajeroFormRut }}" onInput="{{ onCajeroRut }}" placeholder="Ej. 12.345.678-9" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Contraseña</label>
+          <input value="{{ cajeroFormPass }}" onInput="{{ onCajeroPass }}" placeholder="Contraseña de acceso" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+        </div>
+        <div onClick="{{ toggleCajeroActive }}" style="{{ activeToggleStyle }}">
+          <div style="{{ activeSwitchStyle }}"><div style="{{ activeKnobStyle }}"></div></div>
+          <span style="font-size:14px;font-weight:700;color:#0F2A1B;">Cuenta activa</span>
+        </div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ closeCajeroForm }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ saveCajero }}" style="{{ saveCajeroStyle }}">{{ saveCajeroLabel }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= CONFIRM DELETE CAJERO MODAL ================= -->
+  <sc-if value="{{ cajeroConfirmOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;">
+    <div style="width:420px;max-width:100%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px 18px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#FDECEC;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#D02E2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;line-height:1.2;">Eliminar cajero</div>
+      </div>
+      <div style="padding:20px 24px;font-size:14px;line-height:1.55;color:#5a6b7e;">Se eliminará a <b style="color:#0F2A1B;font-weight:700;">{{ cajeroConfirmName }}</b> del sistema de forma permanente. Esta acción no se puede deshacer.</div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ cancelCajeroDelete }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ confirmCajeroDelete }}" style="min-width:110px;border:0;background:#D02E2E;color:#fff;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Eliminar</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= SCAN PICKER MODAL ================= -->
+  <sc-if value="{{ scanPickerOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:55;padding:24px;">
+    <div style="width:480px;max-width:100%;max-height:80vh;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);display:flex;flex-direction:column;">
+      <div style="padding:18px 22px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#1E9E54;">Simular lectura</div><div style="font-weight:900;font-size:18px;color:#0F2A1B;">Seleccione un producto</div></div>
+        <button onClick="{{ closeScanPicker }}" style="width:32px;height:32px;border:0;background:#F6F7FB;border-radius:9px;color:#7C95A8;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;">✕</button>
+      </div>
+      <div style="flex:1;overflow:auto;">
+        <sc-for list="{{ scanList }}" as="s" hint-placeholder-count="8">
+          <button onClick="{{ s.onSim }}" style="width:100%;display:flex;align-items:center;gap:14px;padding:12px 22px;border:0;border-bottom:1px solid #F6F7FB;background:#fff;cursor:pointer;font-family:inherit;text-align:left;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/></svg>
+            <span style="font-weight:700;font-size:14px;color:#0F2A1B;flex:1;min-width:0;">{{ s.name }}</span>
+            <span style="font-family:ui-monospace,monospace;font-size:12px;color:#7C95A8;letter-spacing:.04em;">{{ s.code }}</span>
+            <span style="font-weight:900;font-size:14px;color:#0F2A1B;min-width:78px;text-align:right;">{{ s.priceStr }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= CATEGORY FORM MODAL ================= -->
+  <sc-if value="{{ catFormOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:55;padding:24px;">
+    <div style="width:420px;max-width:100%;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px 16px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#E7EFE8;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1E9E54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7"/><path d="M3 7l2.5-3.5A2 2 0 0 1 7 3h10a2 2 0 0 1 1.5.7L21 7"/><path d="M3 7h18"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;flex:1;">{{ catFormTitle }}</div>
+        <button onClick="{{ closeCatForm }}" style="width:32px;height:32px;border:0;background:#F6F7FB;border-radius:9px;color:#7C95A8;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex:none;">✕</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:18px;">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Nombre de la categoría</label>
+          <input value="{{ catFormLabel }}" onInput="{{ onCatLabel }}" placeholder="Ej. Plantas acuáticas" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:8px;">Color de etiqueta</label>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <sc-for list="{{ catColorOptions }}" as="o" hint-placeholder-count="8">
+              <button onClick="{{ o.onClick }}" style="{{ o.style }}"></button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ closeCatForm }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ saveCategory }}" style="{{ saveCatStyle }}">{{ saveCatLabel }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= CONFIRM DELETE CATEGORY MODAL ================= -->
+  <sc-if value="{{ catConfirmOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;">
+    <div style="width:420px;max-width:100%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px 18px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#FDECEC;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#D02E2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;line-height:1.2;">Eliminar categoría</div>
+      </div>
+      <div style="padding:20px 24px;font-size:14px;line-height:1.55;color:#5a6b7e;">Se eliminará la categoría <b style="color:#0F2A1B;font-weight:700;">{{ catConfirmName }}</b> de forma permanente. Esta acción no se puede deshacer.</div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ cancelCatDelete }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ confirmCatDelete }}" style="min-width:110px;border:0;background:#D02E2E;color:#fff;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Eliminar</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= CONFIRM DELETE MODAL ================= -->
+  <sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;">
+    <div style="width:420px;max-width:100%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px 18px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#FDECEC;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#D02E2E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6M14 11v6"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;line-height:1.2;">Eliminar producto</div>
+      </div>
+      <div style="padding:20px 24px;font-size:14px;line-height:1.55;color:#5a6b7e;">Se eliminará <b style="color:#0F2A1B;font-weight:700;">{{ confirmName }}</b> del inventario de forma permanente. Esta acción no se puede deshacer.</div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ cancelDelete }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ confirmDelete }}" style="min-width:110px;border:0;background:#D02E2E;color:#fff;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Eliminar</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:830},&quot;brandName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Brota&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#22C463&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.scanRef = React.createRef();
+    const P = (id, name, cat, price, stock, img) => ({ id, name, cat, price, stock, img: img ? 'uploads/' + encodeURI(img) : null });
+    this.PALETTE = [
+      { dot: '#22C463', tile: '#E6F7EE', pillBg: '#D3F4E0', pillFg: '#0a6e36' },
+      { dot: '#DD5771', tile: '#FCEFF2', pillBg: '#FCE4E9', pillFg: '#A4264A' },
+      { dot: '#5a8f3c', tile: '#EAF0E6', pillBg: '#E2EDD8', pillFg: '#3f6b1e' },
+      { dot: '#DEA35D', tile: '#FBF1E0', pillBg: '#F6E5C5', pillFg: '#7a5a20' },
+      { dot: '#8a7a4a', tile: '#EFEAE0', pillBg: '#EAE0CC', pillFg: '#6b5a30' },
+      { dot: '#7764E0', tile: '#EEEBFB', pillBg: '#E0DAF9', pillFg: '#4632a8' },
+      { dot: '#C2693C', tile: '#F7EBE3', pillBg: '#F0D9CA', pillFg: '#8A4423' },
+      { dot: '#9C4F86', tile: '#F3E9F0', pillBg: '#EBD7E5', pillFg: '#6E2F5C' },
+    ];
+    this.state = {
+      categories: [
+        { key: 'interior', label: 'Interior', dot: '#22C463', tile: '#E6F7EE', pillBg: '#D3F4E0', pillFg: '#0a6e36' },
+        { key: 'exterior', label: 'Exterior', dot: '#DD5771', tile: '#FCEFF2', pillBg: '#FCE4E9', pillFg: '#A4264A' },
+        { key: 'suculentas', label: 'Suculentas', dot: '#5a8f3c', tile: '#EAF0E6', pillBg: '#E2EDD8', pillFg: '#3f6b1e' },
+        { key: 'macetas', label: 'Macetas', dot: '#DEA35D', tile: '#FBF1E0', pillBg: '#F6E5C5', pillFg: '#7a5a20' },
+        { key: 'sustratos', label: 'Sustratos', dot: '#8a7a4a', tile: '#EFEAE0', pillBg: '#EAE0CC', pillFg: '#6b5a30' },
+        { key: 'herramientas', label: 'Herramientas', dot: '#C2693C', tile: '#F7EBE3', pillBg: '#F0D9CA', pillFg: '#8A4423' },
+      ],
+      catForm: null,
+      catMsg: null,
+      catConfirmKey: null,
+      session: null,
+      users: [
+        { id: 'u1', name: 'Daniela Soto', rut: '11.111.111-1', password: 'admin', role: 'admin', active: true },
+        { id: 'u2', name: 'M. Jara', rut: '22.222.222-2', password: 'caja', role: 'cajero', active: true },
+        { id: 'u3', name: 'Pedro Lillo', rut: '17.654.321-K', password: 'caja', role: 'cajero', active: true },
+      ],
+      loginRut: '',
+      loginPass: '',
+      loginError: '',
+      cajeroForm: null,
+      cajeroConfirmId: null,
+      screen: 'inicio',
+      branch: 'centro',
+      loginAt: null,
+      adminMenuOpen: false,
+      cfgSection: 'marca',
+      cfgAccent: '#1E9E54',
+      cfgModules: { stock: true, clientes: true, historial: true, categorias: true },
+      cierreCounted: '',
+      cierreDone: false,
+      backupAuto: true,
+      cat: 'todas',
+      ventaView: 'grid',
+      query: '',
+      cart: [],
+      customerId: null,
+      payOpen: false,
+      payMethod: 'efectivo',
+      cashStr: '',
+      ticket: null,
+      folioSeq: 443,
+      custForm: null,
+      custConfirmId: null,
+      prodForm: null,
+      confirmDeleteId: null,
+      bumping: false,
+      bumpCount: 0,
+      flashId: null,
+      scanMode: false,
+      scanInput: '',
+      scanMsg: null,
+      scanPickerOpen: false,
+      products: [
+        P(1,'Monstera Deliciosa','interior',14990,8,'monstera.png'),
+        P(2,'Pothos Dorado','interior',6490,23,'pothos.png'),
+        P(3,'Sansevieria','interior',9990,12,'sansevieria.png'),
+        P(4,'Zamioculca (ZZ)','interior',13990,9,'zamioculca.png'),
+        P(5,'Calathea','interior',11490,5,'calathea.png'),
+        P(6,'Helecho','interior',5990,14,'helecho.png'),
+        P(7,'Lavanda','exterior',7990,18,'lavanda.png'),
+        P(8,'Hortensia','exterior',9490,6,'hortensia.png'),
+        P(9,'Romero','exterior',4490,22,'romero.png'),
+        P(10,'Buganvilia','exterior',12990,4,'bungavilia.png'),
+        P(11,'Echeveria','suculentas',3490,40,'echeveria.png'),
+        P(12,'Cactus Bola','suculentas',4290,27,'cactus bola.png'),
+        P(13,'Aloe Vera','suculentas',5490,15,'aloevera.png'),
+        P(14,'Haworthia','suculentas',3990,19,'haworthia.png'),
+        P(15,'Maceta cerámica 18cm','macetas',8990,31,'maceta18.png'),
+        P(16,'Maceta terracota 14cm','macetas',4990,26,'maceta14.png'),
+        P(17,'Maceta colgante','macetas',6990,11,'macetacolgante.png'),
+        P(18,'Sustrato universal 5L','sustratos',4990,38,'sustrato.png'),
+        P(19,'Tierra de hojas 10L','sustratos',7490,17,'tierrahojas.png'),
+        P(20,'Perlita 2L','sustratos',3290,24,'perlita.png'),
+        P(21,'Tijera de podar','herramientas',9990,13,'tijeras.png'),
+        P(22,'Regadera 2L','herramientas',6490,9,'regadera.png'),
+        P(23,'Guantes de jardín','herramientas',3990,20,'guantes.png'),
+      ],
+      customers: [
+        { id:'c1', name:'Camila Rojas',  rut:'15.842.107-9', phone:'+56 9 5512 4480', points:320, spent:86990,  visits:7 },
+        { id:'c2', name:'Andrés Fuentes',rut:'12.408.551-K', phone:'+56 9 4408 1190', points:150, spent:41200,  visits:4 },
+        { id:'c3', name:'Vivero La Quinta',rut:'76.987.330-1', phone:'+56 2 2987 3300', points:980, spent:312400, visits:22 },
+        { id:'c4', name:'Josefa Méndez', rut:'18.221.905-4', phone:'+56 9 7781 2055', points:60,  spent:18900,  visits:2 },
+      ],
+      sales: ((MK) => [
+        MK(426, '09:18', 'efectivo', 7990, 'c4', [{ name: 'Lavanda', qty: 1, price: 7990, cat: 'exterior' }]),
+        MK(427, '09:46', 'tarjeta', 14990, 'c1', [{ name: 'Monstera Deliciosa', qty: 1, price: 14990, cat: 'interior' }]),
+        MK(428, '10:21', 'efectivo', 6980, null, [{ name: 'Echeveria', qty: 2, price: 3490, cat: 'suculentas' }]),
+        MK(429, '11:34', 'tarjeta', 28480, 'c1', [{ name: 'Monstera Deliciosa', qty: 1, price: 14990, cat: 'interior' }, { name: 'Maceta cerámica 18cm', qty: 1, price: 8990, cat: 'macetas' }, { name: 'Sustrato universal 5L', qty: 1, price: 4990, cat: 'sustratos' }]),
+        MK(430, '12:08', 'efectivo', 13990, null, [{ name: 'Zamioculca (ZZ)', qty: 1, price: 13990, cat: 'interior' }]),
+        MK(431, '12:27', 'tarjeta', 32970, 'c3', [{ name: 'Calathea', qty: 2, price: 11490, cat: 'interior' }, { name: 'Pothos Dorado', qty: 1, price: 6490, cat: 'interior' }, { name: 'Perlita 2L', qty: 1, price: 3290, cat: 'sustratos' }]),
+        MK(432, '12:49', 'efectivo', 8990, null, [{ name: 'Maceta cerámica 18cm', qty: 1, price: 8990, cat: 'macetas' }]),
+        MK(433, '13:12', 'tarjeta', 41960, 'c2', [{ name: 'Monstera Deliciosa', qty: 2, price: 14990, cat: 'interior' }, { name: 'Maceta colgante', qty: 1, price: 6990, cat: 'macetas' }, { name: 'Tijera de podar', qty: 1, price: 9990, cat: 'herramientas' }]),
+        MK(434, '13:31', 'efectivo', 6490, null, [{ name: 'Pothos Dorado', qty: 1, price: 6490, cat: 'interior' }]),
+        MK(435, '14:20', 'tarjeta', 11490, 'c4', [{ name: 'Calathea', qty: 1, price: 11490, cat: 'interior' }]),
+        MK(436, '15:44', 'efectivo', 4290, null, [{ name: 'Cactus Bola', qty: 1, price: 4290, cat: 'suculentas' }]),
+        MK(437, '16:25', 'tarjeta', 18980, 'c1', [{ name: 'Hortensia', qty: 2, price: 9490, cat: 'exterior' }]),
+        MK(438, '17:06', 'efectivo', 27450, 'c2', [{ name: 'Buganvilia', qty: 1, price: 12990, cat: 'exterior' }, { name: 'Sansevieria', qty: 1, price: 9990, cat: 'interior' }, { name: 'Perlita 2L', qty: 1, price: 3290, cat: 'sustratos' }]),
+        MK(439, '17:35', 'tarjeta', 13980, null, [{ name: 'Echeveria', qty: 4, price: 3490, cat: 'suculentas' }]),
+        MK(440, '18:02', 'efectivo', 36960, 'c3', [{ name: 'Monstera Deliciosa', qty: 2, price: 14990, cat: 'interior' }, { name: 'Maceta cerámica 18cm', qty: 1, price: 8990, cat: 'macetas' }]),
+        MK(441, '18:29', 'tarjeta', 9990, null, [{ name: 'Sansevieria', qty: 1, price: 9990, cat: 'interior' }]),
+        MK(442, '18:51', 'efectivo', 21980, 'c1', [{ name: 'Hortensia', qty: 1, price: 9490, cat: 'exterior' }, { name: 'Lavanda', qty: 1, price: 7990, cat: 'exterior' }, { name: 'Romero', qty: 1, price: 4490, cat: 'exterior' }]),
+      ].reverse())((folio, time, method, total, customerId, lines) => {
+        const neto = Math.round(total / 1.19);
+        const recv = method === 'efectivo' ? Math.ceil(total / 1000) * 1000 : total;
+        return { folio, time, method, total, neto, iva: total - neto, recv, change: recv - total, points: Math.floor(total / 1000), customerId, date: 'lun 23 jun', lines };
+      }),
+    };
+  }
+
+  fmt = (n) => '$' + Math.round(n).toLocaleString('es-CL');
+  lighten = (hex) => { const h = hex.replace('#', ''); const n = parseInt(h, 16); let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255; r = Math.round(r + (255 - r) * .4); g = Math.round(g + (255 - g) * .4); b = Math.round(b + (255 - b) * .4); return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1); };
+  find = (id) => this.state.products.find(p => p.id === id);
+  inCart = (id) => { const c = this.state.cart.find(x => x.id === id); return c ? c.qty : 0; };
+  avail = (id) => this.find(id).stock - this.inCart(id);
+  catMeta = (key) => this.state.categories.find(c => c.key === key) || { key, label: key, dot: '#7C95A8', tile: '#EEF1F6', pillBg: '#E7EFE8', pillFg: '#0F2A1B' };
+
+  icon(cat, size) {
+    const c = this.catMeta(cat).dot;
+    const e = React.createElement;
+    const p = (d) => e('path', { d, key: d });
+    let kids;
+    if (cat === 'interior') kids = [p('M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z'), p('M2 21c0-3 1.85-5.36 5.08-6')];
+    else if (cat === 'suculentas') kids = [p('M7 20h10'), p('M10 20c5.5-2.5.8-6.4 3-10'), p('M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z'), p('M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z')];
+    else if (cat === 'exterior') kids = [e('circle', { cx:12, cy:12, r:3, key:'c' }), p('M12 16.5A4.5 4.5 0 1 1 7.5 12 4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 1 1 4.5 4.5 4.5 4.5 0 1 1-4.5 4.5')];
+    else if (cat === 'macetas') kids = [p('M5 9h14l-1.4 10.3a2 2 0 0 1-2 1.7H8.4a2 2 0 0 1-2-1.7L5 9Z'), p('M4 6.5h16V9H4z')];
+    else if (cat === 'sustratos') kids = [p('M6 8l1.6-3.2A1 1 0 0 1 8.5 4h7a1 1 0 0 1 .9.6L18 8'), p('M6 8h12v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z'), p('M10 13h4')];
+    else kids = [e('circle',{cx:6,cy:6,r:3,key:1}), e('circle',{cx:6,cy:18,r:3,key:2}), e('line',{x1:20,y1:4,x2:8.12,y2:15.88,key:3}), e('line',{x1:14.47,y1:14.48,x2:20,y2:20,key:4}), e('line',{x1:8.12,y1:8.12,x2:12,y2:12,key:5})];
+    return e('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none', stroke:c, strokeWidth:1.5, strokeLinecap:'round', strokeLinejoin:'round' }, kids);
+  }
+
+  mediaEl(p, iconSize) {
+    if (p.img) return React.createElement('img', { src: p.img, alt: p.name, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block' } });
+    return this.icon(p.cat, iconSize);
+  }
+
+  totals() {
+    const items = this.state.cart.reduce((a, c) => a + c.qty, 0);
+    const total = this.state.cart.reduce((a, c) => a + c.qty * this.find(c.id).price, 0);
+    const neto = Math.round(total / 1.19);
+    return { items, total, neto, iva: total - neto };
+  }
+
+  normRut = (r) => (r || '').toUpperCase().replace(/[^0-9K]/g, '');
+  fmtRut = (raw) => { if (!raw) return ''; const dv = raw.slice(-1); let body = raw.slice(0, -1); body = body.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); return body ? body + '-' + dv : dv; };
+  loginPress = (ch) => this.setState(s => ({ loginRut: (s.loginRut + ch).replace(/[^0-9Kk]/g, '').slice(0, 9), loginError: '' }));
+  loginBack = () => this.setState(s => ({ loginRut: s.loginRut.slice(0, -1), loginError: '' }));
+  doLogin = () => {
+    const rut = this.normRut(this.state.loginRut);
+    if (!rut) { this.setState({ loginError: 'Ingrese un RUT para continuar.' }); return; }
+    const u = this.state.users.find(x => this.normRut(x.rut) === rut && x.active);
+    if (!u) { this.setState({ loginError: 'RUT no registrado en este equipo. Consulte con el administrador.' }); return; }
+    this.setState({ session: { id: u.id, name: u.name, rut: u.rut, role: u.role }, screen: 'inicio', loginAt: Date.now(), loginRut: '', loginError: '' });
+  };
+  logout = () => this.setState({ session: null, cart: [], scanMode: false, screen: 'inicio', adminMenuOpen: false });
+
+  componentDidMount() {
+    this._onKey = (e) => {
+      if (this.state.session) return;
+      if (e.key === 'Enter') { e.preventDefault(); this.doLogin(); return; }
+      if (e.key === 'Backspace') { e.preventDefault(); this.loginBack(); return; }
+      if (/^[0-9]$/.test(e.key)) { e.preventDefault(); this.loginPress(e.key); return; }
+      if (e.key === 'k' || e.key === 'K') { e.preventDefault(); this.loginPress('K'); return; }
+    };
+    window.addEventListener('keydown', this._onKey);
+  }
+  componentWillUnmount() { if (this._onKey) window.removeEventListener('keydown', this._onKey); }
+
+  openAddCajero = () => this.setState({ cajeroForm: { id: null, name: '', rut: '', password: '', active: true } });
+  openEditCajero = (id) => { const u = this.state.users.find(x => x.id === id); if (!u) return; this.setState({ cajeroForm: { id: u.id, name: u.name, rut: u.rut, password: u.password, active: u.active } }); };
+  closeCajeroForm = () => this.setState({ cajeroForm: null });
+  onCajeroField = (field, value) => this.setState(s => ({ cajeroForm: { ...s.cajeroForm, [field]: value } }));
+  toggleCajeroActive = () => this.setState(s => ({ cajeroForm: { ...s.cajeroForm, active: !s.cajeroForm.active } }));
+  saveCajero = () => {
+    const f = this.state.cajeroForm;
+    if (!f) return;
+    const name = f.name.trim(), rut = f.rut.trim(), password = f.password.trim();
+    if (!name || !rut || !password) return;
+    this.setState(s => {
+      if (f.id == null) {
+        const id = 'u' + Date.now();
+        return { users: [...s.users, { id, name, rut, password, role: 'cajero', active: f.active }], cajeroForm: null };
+      }
+      return { users: s.users.map(u => u.id === f.id ? { ...u, name, rut, password, active: f.active } : u), cajeroForm: null };
+    });
+  };
+  setCajeroActive = (id, active) => this.setState(s => ({ users: s.users.map(u => u.id === id ? { ...u, active } : u) }));
+  deleteCajero = (id) => this.setState({ cajeroConfirmId: id });
+  cancelCajeroDelete = () => this.setState({ cajeroConfirmId: null });
+  confirmCajeroDelete = () => { const id = this.state.cajeroConfirmId; if (!id) return; this.setState(s => ({ users: s.users.filter(u => u.id !== id), cajeroConfirmId: null })); };
+
+  setScreen = (s) => this.setState({ screen: s });
+  setBranch = (e) => this.setState({ branch: e.target.value });
+  branchStock = (id, baseStock) => {
+    const norte = (id * 5 + 7) % 34;
+    const sur = (id * 3 + 11) % 28;
+    const bodega = ((id * 7 + 13) % 40) + 12;
+    return { centro: baseStock, norte, sur, bodega };
+  };
+  toggleAdminMenu = () => this.setState(s => ({ adminMenuOpen: !s.adminMenuOpen }));
+  closeAdminMenu = () => this.setState({ adminMenuOpen: false });
+  goAdmin = (id) => this.setState({ screen: id, adminMenuOpen: false });
+  setCfgSection = (k) => this.setState({ cfgSection: k });
+  setCfgAccent = (c) => this.setState({ cfgAccent: c });
+  toggleCfgModule = (k) => this.setState(s => ({ cfgModules: { ...s.cfgModules, [k]: !s.cfgModules[k] } }));
+  onCierreCounted = (e) => this.setState({ cierreCounted: (e.target.value || '').replace(/[^\d]/g, '') });
+  doCierre = () => this.setState({ cierreDone: true });
+  resetCierre = () => this.setState({ cierreDone: false, cierreCounted: '' });
+  toggleBackupAuto = () => this.setState(s => ({ backupAuto: !s.backupAuto }));
+  noop = () => {};
+  setCat = (c) => this.setState({ cat: c });
+  setView = (v) => this.setState({ ventaView: v });
+  onQuery = (e) => this.setState({ query: e.target.value });
+  onCustomer = (e) => this.setState({ customerId: e.target.value || null });
+
+  addToCart = (id) => {
+    if (this.avail(id) <= 0) return;
+    this.setState(s => {
+      const c = s.cart.slice();
+      const i = c.findIndex(x => x.id === id);
+      if (i >= 0) c[i] = { ...c[i], qty: c[i].qty + 1 };
+      else c.push({ id, qty: 1 });
+      return { cart: c, bumpCount: s.bumpCount + 1, flashId: id };
+    });
+    clearTimeout(this._flashT); this._flashT = setTimeout(() => this.setState({ flashId: null }), 700);
+  };
+  incCart = (id, d) => {
+    this.setState(s => {
+      const c = s.cart.slice();
+      const i = c.findIndex(x => x.id === id);
+      if (i < 0) return {};
+      const prod = s.products.find(x => x.id === id);
+      const q = c[i].qty + d;
+      if (d > 0 && q > prod.stock) return {};
+      if (q <= 0) c.splice(i, 1);
+      else c[i] = { ...c[i], qty: q };
+      return { cart: c };
+    });
+  };
+  removeCart = (id) => this.setState(s => ({ cart: s.cart.filter(x => x.id !== id) }));
+  clearCart = () => this.setState({ cart: [] });
+
+  openPay = () => { if (this.state.cart.length === 0) return; this.setState({ payOpen: true, payMethod: 'efectivo', cashStr: '' }); };
+  closePay = () => this.setState({ payOpen: false });
+  setMethod = (m) => this.setState({ payMethod: m, cashStr: '' });
+  pushCash = (k) => this.setState(s => {
+    let v = s.cashStr;
+    if (k === 'C') v = '';
+    else if (k === 'back') v = v.slice(0, -1);
+    else v = (v + k).replace(/^0+(?=\d)/, '').slice(0, 9);
+    return { cashStr: v };
+  });
+  setCash = (n) => this.setState({ cashStr: String(n) });
+
+  confirmPay = () => {
+    const t = this.totals();
+    if (t.total <= 0) return;
+    const efectivo = this.state.payMethod === 'efectivo';
+    const recv = efectivo ? parseInt(this.state.cashStr || '0', 10) : t.total;
+    if (efectivo && recv < t.total) return;
+    const now = new Date();
+    const folio = this.state.folioSeq;
+    const cust = this.state.customerId;
+    const points = Math.floor(t.total / 1000);
+    const sale = {
+      folio, method: this.state.payMethod, total: t.total, neto: t.neto, iva: t.iva,
+      recv, change: efectivo ? recv - t.total : 0, points, customerId: cust,
+      time: now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
+      date: now.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' }),
+      lines: this.state.cart.map(c => { const p = this.find(c.id); return { name: p.name, qty: c.qty, price: p.price, cat: p.cat }; }),
+    };
+    const products = this.state.products.map(p => { const c = this.state.cart.find(x => x.id === p.id); return c ? { ...p, stock: p.stock - c.qty } : p; });
+    let customers = this.state.customers;
+    if (cust) customers = customers.map(cu => cu.id === cust ? { ...cu, points: cu.points + points, spent: cu.spent + t.total, visits: cu.visits + 1 } : cu);
+    this.setState({ products, customers, sales: [sale, ...this.state.sales], folioSeq: folio + 1, cart: [], payOpen: false, ticket: sale, customerId: null });
+  };
+
+  openTicket = (sale) => this.setState({ ticket: sale });
+  closeTicket = () => this.setState({ ticket: null });
+  printTicket = () => { try { window.print(); } catch (e) {} };
+
+  adjustStock = (id, d) => this.setState(s => ({ products: s.products.map(p => p.id === id ? { ...p, stock: Math.max(0, p.stock + d) } : p) }));
+
+  barcodeOf = (id) => '750' + String(10000000 + id * 7919).padStart(10, '0');
+  setScanMode = (on) => this.setState({ scanMode: on, scanMsg: null, scanInput: '' });
+  onScanInput = (e) => this.setState({ scanInput: e.target.value });
+  focusScan = () => { const el = this.scanRef.current; if (el) { el.focus(); } };
+  submitScan = () => {
+    const code = (this.state.scanInput || '').trim();
+    if (!code) return;
+    const p = this.state.products.find(x => this.barcodeOf(x.id) === code);
+    if (!p) { this.setState({ scanMsg: { ok: false, text: 'Código no reconocido: ' + code }, scanInput: '' }); this.focusScan(); return; }
+    if (this.avail(p.id) <= 0) { this.setState({ scanMsg: { ok: false, text: p.name + ' · sin stock disponible' }, scanInput: '' }); this.focusScan(); return; }
+    this.addToCart(p.id);
+    this.setState({ scanMsg: null, scanInput: '' });
+    this.focusScan();
+  };
+  onScanKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); this.submitScan(); } };
+  openScanPicker = () => this.setState({ scanPickerOpen: true });
+  closeScanPicker = () => this.setState({ scanPickerOpen: false });
+  simulateScan = (id) => { this.setState({ scanInput: this.barcodeOf(id), scanPickerOpen: false }, () => this.submitScan()); };
+
+  componentDidUpdate(prevProps, prevState) {
+    const s = this.state;
+    const overlay = s.payOpen || s.ticket || s.scanPickerOpen || s.prodForm || s.catForm || s.confirmDeleteId != null || s.catConfirmKey != null;
+    if (s.scanMode && !overlay) this.focusScan();
+  }
+
+  openAddProduct = () => this.setState(s => ({ prodForm: { id: null, name: '', cat: (s.categories[0] && s.categories[0].key) || '', price: '', stock: '', img: null } }));
+
+  slugify = (s) => (s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'cat');
+  openAddCategory = () => this.setState(s => ({ catForm: { key: null, label: '', colorIdx: s.categories.length % this.PALETTE.length }, catMsg: null }));
+  openEditCategory = (key) => { const c = this.catMeta(key); const idx = this.PALETTE.findIndex(pp => pp.dot === c.dot); this.setState({ catForm: { key, label: c.label, colorIdx: idx < 0 ? 0 : idx }, catMsg: null }); };
+  closeCatForm = () => this.setState({ catForm: null });
+  onCatLabel = (e) => this.setState(s => ({ catForm: { ...s.catForm, label: e.target.value } }));
+  setCatColor = (idx) => this.setState(s => ({ catForm: { ...s.catForm, colorIdx: idx } }));
+  saveCategory = () => {
+    const f = this.state.catForm;
+    if (!f) return;
+    const label = f.label.trim();
+    if (!label) return;
+    const pal = this.PALETTE[f.colorIdx] || this.PALETTE[0];
+    this.setState(s => {
+      if (f.key == null) {
+        let base = this.slugify(label), key = base, n = 2;
+        while (s.categories.some(c => c.key === key)) key = base + '-' + (n++);
+        return { categories: [...s.categories, { key, label, ...pal }], catForm: null };
+      }
+      return { categories: s.categories.map(c => c.key === f.key ? { ...c, label, ...pal } : c), catForm: null };
+    });
+  };
+  deleteCategory = (key) => {
+    const count = this.state.products.filter(p => p.cat === key).length;
+    if (count > 0) { this.setState({ catMsg: { ok: false, text: 'No se puede eliminar “' + this.catMeta(key).label + '”: tiene ' + count + ' producto(s). Reasigne o elimine esos productos primero.' } }); return; }
+    this.setState({ catConfirmKey: key });
+  };
+  cancelCatDelete = () => this.setState({ catConfirmKey: null });
+  confirmCatDelete = () => { const key = this.state.catConfirmKey; if (!key) return; this.setState(s => ({ categories: s.categories.filter(c => c.key !== key), catConfirmKey: null })); };
+  openEditProduct = (id) => {
+    const p = this.find(id);
+    if (!p) return;
+    this.setState({ prodForm: { id: p.id, name: p.name, cat: p.cat, price: String(p.price), stock: String(p.stock), img: p.img } });
+  };
+  closeForm = () => this.setState({ prodForm: null });
+  onFormField = (field, value) => this.setState(s => ({ prodForm: { ...s.prodForm, [field]: value } }));
+  onFormImage = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => this.setState(s => s.prodForm ? ({ prodForm: { ...s.prodForm, img: reader.result } }) : {});
+    reader.readAsDataURL(file);
+  };
+  onlyDigits = (v) => v.replace(/[^\d]/g, '');
+  saveProduct = () => {
+    const f = this.state.prodForm;
+    if (!f) return;
+    const name = f.name.trim();
+    const price = parseInt(f.price || '0', 10) || 0;
+    const stock = parseInt(f.stock || '0', 10) || 0;
+    if (!name) return;
+    this.setState(s => {
+      if (f.id == null) {
+        const nextId = s.products.reduce((m, p) => Math.max(m, p.id), 0) + 1;
+        return { products: [...s.products, { id: nextId, name, cat: f.cat, price, stock, img: f.img || null }], prodForm: null };
+      }
+      return { products: s.products.map(p => p.id === f.id ? { ...p, name, cat: f.cat, price, stock, img: f.img || null } : p), prodForm: null };
+    });
+  };
+  deleteProduct = () => {
+    const f = this.state.prodForm;
+    if (!f || f.id == null) return;
+    this.setState({ confirmDeleteId: f.id });
+  };
+  deleteProductById = (id) => this.setState({ confirmDeleteId: id });
+  cancelDelete = () => this.setState({ confirmDeleteId: null });
+  confirmDelete = () => {
+    const id = this.state.confirmDeleteId;
+    if (id == null) return;
+    this.setState(s => ({
+      products: s.products.filter(p => p.id !== id),
+      cart: s.cart.filter(c => c.id !== id),
+      confirmDeleteId: null,
+      prodForm: (s.prodForm && s.prodForm.id === id) ? null : s.prodForm,
+    }));
+  };
+
+  openAddCustomer = () => this.setState({ custForm: { id: null, name: '', rut: '', phone: '' } });
+  openEditCustomer = (id) => { const c = this.state.customers.find(x => x.id === id); if (!c) return; this.setState({ custForm: { id: c.id, name: c.name, rut: c.rut || '', phone: c.phone || '' } }); };
+  closeCustForm = () => this.setState({ custForm: null });
+  onCustField = (field, value) => this.setState(s => ({ custForm: { ...s.custForm, [field]: value } }));
+  saveCustomer = () => {
+    const f = this.state.custForm;
+    if (!f) return;
+    const name = f.name.trim();
+    if (!name) return;
+    const rut = f.rut.trim() || '—', phone = f.phone.trim() || '—';
+    this.setState(s => {
+      if (f.id == null) {
+        const id = 'c' + Date.now();
+        return { customers: [...s.customers, { id, name, rut, phone, points: 0, spent: 0, visits: 0 }], custForm: null };
+      }
+      return { customers: s.customers.map(c => c.id === f.id ? { ...c, name, rut, phone } : c), custForm: null };
+    });
+  };
+  deleteCustomer = (id) => this.setState({ custConfirmId: id });
+  cancelCustDelete = () => this.setState({ custConfirmId: null });
+  confirmCustDelete = () => {
+    const id = this.state.custConfirmId;
+    if (!id) return;
+    this.setState(s => ({ customers: s.customers.filter(c => c.id !== id), custConfirmId: null, customerId: s.customerId === id ? null : s.customerId }));
+  };
+  custName = (id) => { const c = this.state.customers.find(x => x.id === id); return c ? c.name : 'Público general'; };
+
+  renderVals() {
+    const S = this.state;
+    const accent = this.props.accent ?? '#22C463';
+    const brandName = this.props.brandName ?? 'Brota';
+    const T = this.totals();
+    const fmt = this.fmt;
+
+    const navBase = { border: 0, padding: '8px 15px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, borderRadius: 999, cursor: 'pointer' };
+    const role = S.session ? S.session.role : 'cajero';
+    const isAdmin = role === 'admin';
+    const tabDefs = [['inicio', 'Inicio'], ['venta', 'Venta'], ['stock', 'Stock'], ['clientes', 'Clientes'], ['cierre', 'Cierre de caja']];
+    const cE = React.createElement;
+    const pth = (d) => cE('path', { d, key: d });
+    const mIcon = (kids) => cE('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }, kids);
+    const navItemStyle = (active) => ({ display: 'flex', alignItems: 'center', gap: 11, width: '100%', textAlign: 'left', border: 0, borderRadius: 11, padding: '10px 12px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer', background: active ? '#E6F7EE' : 'transparent', color: active ? '#0a6e36' : '#2A3A2E' });
+    const navIcons = {
+      inicio: mIcon([pth('M3 10.5 12 3l9 7.5'), pth('M5 9.5V21h14V9.5'), pth('M9.5 21v-6h5v6')]),
+      venta: mIcon([cE('circle', { cx: 9, cy: 21, r: 1, key: 'a' }), cE('circle', { cx: 20, cy: 21, r: 1, key: 'b' }), pth('M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6')]),
+      stock: mIcon([pth('M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'), pth('M3.3 7L12 12l8.7-5M12 22V12')]),
+      clientes: mIcon([cE('circle', { cx: 9, cy: 8, r: 3.2, key: 'c' }), pth('M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 4.5a3 3 0 0 1 0 6M21 20c0-2.6-1.5-4.4-3.5-5.1')]),
+      cierre: mIcon([cE('rect', { x: 2, y: 6, width: 20, height: 12, rx: 2, key: 'r' }), cE('circle', { cx: 12, cy: 12, r: 2.5, key: 'c' }), pth('M6 12h.01M18 12h.01')]),
+    };
+    const navTabs = tabDefs.map(([id, label]) => ({ id, label, icon: navIcons[id], onClick: () => this.setScreen(id), style: navItemStyle(S.screen === id) }));
+    const adminScreens = ['historial', 'categorias', 'cajeros', 'config', 'respaldo'];
+    const adminMenuDefs = [
+      ['historial', 'Historial', mIcon([pth('M3 3v18h18'), pth('M7 15l3-4 3 2 4-6')])],
+      ['categorias', 'Categorías', mIcon([pth('M3 7v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7'), pth('M3 7l2.5-3.5A2 2 0 0 1 7 3h10a2 2 0 0 1 1.5.7L21 7'), pth('M3 7h18')])],
+      ['cajeros', 'Usuarios', mIcon([cE('circle', { cx: 9, cy: 8, r: 3.2, key: 'c' }), pth('M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 8h5M18.5 5.5v5')])],
+      ['config', 'Configuración', mIcon([cE('circle', { cx: 12, cy: 12, r: 3, key: 'c' }), pth('M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.2a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.2A1.6 1.6 0 0 0 4.7 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.2a1.6 1.6 0 0 0-1.4 1z')])],
+      ['respaldo', 'Respaldo', mIcon([cE('ellipse', { cx: 12, cy: 5, rx: 9, ry: 3, key: 'e' }), pth('M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6')])],
+    ];
+    const adminMenuItems = adminMenuDefs.map(([id, label, icon]) => ({
+      id, label, icon,
+      onClick: () => this.goAdmin(id),
+      style: navItemStyle(S.screen === id),
+    }));
+    const adminActive = adminScreens.includes(S.screen);
+
+    const chipBase = { padding: '7px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' };
+    const cats = [['todas', 'Todas'], ...S.categories.map(c => [c.key, c.label])];
+    const catChips = cats.map(([id, label]) => ({
+      id, label, onClick: () => this.setCat(id),
+      style: { ...chipBase, ...(S.cat === id ? { background: '#E6F7EE', color: '#0a6e36', border: '1px solid #A7E3C0' } : { background: '#fff', color: '#2A3A2E', border: '1px solid #E1E5EE' }) },
+    }));
+
+    const q = S.query.trim().toLowerCase();
+    const BRANCHES = [{ key: 'centro', label: 'Centro' }, { key: 'norte', label: 'Norte' }, { key: 'sur', label: 'Sur' }, { key: 'bodega', label: 'Bodega' }];
+    const cardBase = { background: '#fff', border: '1px solid #E1E5EE', borderRadius: 16, padding: 0, overflow: 'hidden', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', transition: 'transform .12s, box-shadow .35s, border-color .35s' };
+    const catalogCard = (p) => {
+      const av = this.avail(p.id);
+      const out = av <= 0;
+      const low = av > 0 && av <= 5;
+      const flashed = S.flashId === p.id;
+      const bs = this.branchStock(p.id, p.stock);
+      const branchStock = BRANCHES.map(b => {
+        const qty = bs[b.key];
+        const sel = b.key === S.branch;
+        return { label: b.label + ' ' + qty, style: { fontSize: 10.5, fontWeight: 700, padding: '2px 7px', borderRadius: 999, whiteSpace: 'nowrap', background: sel ? '#0F2A1B' : '#F0F2F7', color: sel ? '#fff' : (qty <= 0 ? '#A4264A' : '#5a6b7e') } };
+      });
+      return {
+        id: p.id, name: p.name, priceStr: fmt(p.price), branchStock,
+        availStr: out ? 'Sin stock' : av + ' u. acá',
+        availStyle: { fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', color: out ? '#A4264A' : (low ? '#DEA35D' : '#7C95A8') },
+        icon: this.mediaEl(p, 34),
+        tileStyle: { height: 176, background: this.catMeta(p.cat).tile, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+        cardStyle: { ...cardBase, opacity: out ? 0.5 : 1, pointerEvents: out ? 'none' : 'auto', borderColor: flashed ? '#22C463' : '#E1E5EE', boxShadow: flashed ? '0 0 0 2px #22C463, 0 8px 20px rgba(34,196,99,.18)' : 'none' },
+        rowStyle: { display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', border: 0, borderBottom: '1px solid #F0F2F7', background: flashed ? '#E6F7EE' : '#fff', cursor: out ? 'not-allowed' : 'pointer', fontFamily: 'inherit', width: '100%', opacity: out ? 0.5 : 1, pointerEvents: out ? 'none' : 'auto', transition: 'background .35s ease' },
+        rowAddStyle: { width: 28, height: 28, borderRadius: 8, background: '#D3F4E0', color: '#1E9E54', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flex: 'none' },
+        onAdd: () => this.addToCart(p.id),
+      };
+    };
+    const catOrderCat = S.categories.map(c => c.key);
+    const matches = (p) => (S.cat === 'todas' || p.cat === S.cat) && (!q || p.name.toLowerCase().includes(q));
+    const catalogGroups = catOrderCat.map(key => {
+      const items = S.products.filter(p => p.cat === key && matches(p));
+      return { key, label: this.catMeta(key).label, dot: this.catMeta(key).dot, countStr: items.length + (items.length === 1 ? ' producto' : ' productos'), items: items.map(catalogCard) };
+    }).filter(g => g.items.length > 0);
+
+    const cartItems = S.cart.map(c => {
+      const p = this.find(c.id);
+      return {
+        id: p.id, name: p.name, perStr: fmt(p.price) + ' c/u', qty: c.qty, unitStr: fmt(p.price), lineStr: fmt(p.price * c.qty),
+        scanRowStyle: { display: 'grid', gridTemplateColumns: '1fr 110px 104px 120px 34px', gap: 10, alignItems: 'center', padding: '13px 20px', borderBottom: '1px solid #F6F7FB', transition: 'background .55s ease', background: S.flashId === p.id ? '#E6F7EE' : '#fff' },
+        tintStyle: { width: 40, height: 40, borderRadius: 9, background: this.catMeta(p.cat).tile, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+        icon: this.mediaEl(p, 22),
+        rowStyle: { display: 'flex', alignItems: 'center', gap: 12, padding: '12px 8px', margin: '0 -8px', borderRadius: 10, borderBottom: '1px solid #F0F2F7', transition: 'background .55s ease', background: S.flashId === p.id ? '#E6F7EE' : 'transparent' },
+        onInc: () => this.incCart(p.id, 1), onDec: () => this.incCart(p.id, -1), onRemove: () => this.removeCart(p.id),
+      };
+    });
+
+    const customerOptions = [{ value: '', label: 'Público general' }, ...S.customers.map(c => ({ value: c.id, label: c.name }))];
+
+    // payment
+    const efectivo = S.payMethod === 'efectivo';
+    const recv = parseInt(S.cashStr || '0', 10);
+    const change = recv - T.total;
+    const canConfirm = T.total > 0 && (!efectivo || recv >= T.total);
+    const methodBase = { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px', borderRadius: 14, fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: 'pointer' };
+    const efStyle = { ...methodBase, ...(efectivo ? { background: '#E6F7EE', color: '#0a6e36', border: '1px solid #A7E3C0' } : { background: '#fff', color: '#2A3A2E', border: '1px solid #E1E5EE' }) };
+    const tjStyle = { ...methodBase, ...(!efectivo ? { background: '#E6F7EE', color: '#0a6e36', border: '1px solid #A7E3C0' } : { background: '#fff', color: '#2A3A2E', border: '1px solid #E1E5EE' }) };
+    const keyBase = { height: 48, borderRadius: 12, border: '1px solid #E1E5EE', background: '#F6F7FB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18, color: '#0F2A1B', cursor: 'pointer', fontFamily: 'inherit' };
+    const keypad = ['7','8','9','4','5','6','1','2','3','C','0','back'].map(k => ({
+      label: k === 'back' ? '⌫' : k,
+      onPress: () => this.pushCash(k),
+      style: k === 'C'
+        ? { ...keyBase, background: '#FCEFF2', border: '1px solid #F3D4DC', color: '#DD5771', fontSize: 15 }
+        : (k === 'back' ? { ...keyBase, fontSize: 20, color: '#7C95A8' } : keyBase),
+    }));
+    const quickAmounts = [
+      { label: 'Exacto', onClick: () => this.setCash(T.total) },
+      { label: '$10.000', onClick: () => this.setCash(10000) },
+      { label: '$20.000', onClick: () => this.setCash(20000) },
+      { label: '$50.000', onClick: () => this.setCash(50000) },
+    ];
+    const changeBoxStyle = { flex: 1, borderRadius: 14, padding: '11px 14px', background: change >= 0 && recv > 0 ? '#E6F7EE' : '#F6F7FB', border: '1px solid ' + (change >= 0 && recv > 0 ? '#bfe9cf' : '#E1E5EE'), color: change >= 0 && recv > 0 ? '#0a6e36' : '#7C95A8' };
+    const confirmStyle = { flex: 1, border: 0, borderRadius: 14, padding: 14, fontWeight: 700, fontSize: 15, fontFamily: 'inherit', color: canConfirm ? '#fff' : '#9aa8bd', background: canConfirm ? '#1E9E54' : '#EEF1F6', cursor: canConfirm ? 'pointer' : 'not-allowed' };
+
+    // stock — agrupado por categoría
+    const stockCard = (p) => {
+      const out = p.stock === 0;
+      const low = p.stock > 0 && p.stock <= 5;
+      const meta = this.catMeta(p.cat);
+      let border = '#E1E5EE', bg = '#fff', accent = '#7C95A8', caption = 'En stock';
+      if (out) { border = '#F5C2C2'; bg = '#FDECEC'; accent = '#D02E2E'; caption = 'Sin stock'; }
+      else if (low) { border = '#F2DF9E'; bg = '#FEF6DD'; accent = '#9A6F12'; caption = 'Stock bajo'; }
+      const numColor = out ? '#D02E2E' : (low ? '#9A6F12' : '#0F2A1B');
+      return {
+        id: p.id, name: p.name, priceStr: fmt(p.price), stockStr: String(p.stock),
+        canEdit: isAdmin, readOnly: !isAdmin,
+        cardStyle: { display: 'flex', gap: 0, padding: 0, borderRadius: 16, overflow: 'hidden', border: '1px solid ' + border, background: bg },
+        thumbStyle: { width: 104, alignSelf: 'stretch', background: meta.tile, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', overflow: 'hidden' },
+        stockCaption: caption,
+        stockCaptionStyle: { fontSize: 12, fontWeight: 700, color: accent },
+        stockStyle: { minWidth: 28, textAlign: 'center', fontWeight: 900, fontSize: 17, color: numColor },
+        icon: this.mediaEl(p, 28),
+        onPlus: () => this.adjustStock(p.id, 1), onMinus: () => this.adjustStock(p.id, -1),
+        onEdit: () => this.openEditProduct(p.id),
+        onDelete: () => this.deleteProductById(p.id),
+      };
+    };
+    const catOrder = S.categories.map(c => c.key);
+    const stockGroups = catOrder.map(key => {
+      const items = S.products.filter(p => p.cat === key);
+      return { key, label: this.catMeta(key).label, dot: this.catMeta(key).dot, countStr: items.length + (items.length === 1 ? ' producto' : ' productos'), items: items.map(stockCard) };
+    }).filter(g => g.items.length > 0);
+
+    // history
+    const methodChip = (m) => m === 'efectivo'
+      ? { justifySelf: 'start', background: '#D3F4E0', color: '#0a6e36', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700 }
+      : { justifySelf: 'start', background: '#EEEBFB', color: '#4632a8', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700 };
+    const historyRows = S.sales.map(s => ({
+      folioStr: '#' + String(s.folio).padStart(4, '0'), time: s.time,
+      customerName: this.custName(s.customerId),
+      itemsStr: s.lines.reduce((a, l) => a + l.qty, 0) + ' ítems',
+      methodLabel: s.method === 'efectivo' ? 'Efectivo' : 'Tarjeta', methodStyle: methodChip(s.method),
+      totalStr: fmt(s.total), onClick: () => this.openTicket(s),
+    }));
+    const histTotal = S.sales.reduce((a, s) => a + s.total, 0);
+    const histCount = S.sales.length;
+    const histAvg = histCount ? histTotal / histCount : 0;
+
+    // scatter chart — ventas por hora del día
+    const dayStart = 9 * 60, dayEnd = 20 * 60, span = dayEnd - dayStart;
+    const toMin = (t) => { const a = t.split(':'); return (+a[0]) * 60 + (+a[1]); };
+    const rawMax = S.sales.reduce((m, s) => Math.max(m, s.total), 0);
+    const yMax = Math.max(10000, Math.ceil(rawMax / 10000) * 10000);
+    const scatterDots = S.sales.map(s => {
+      const mins = toMin(s.time);
+      const left = Math.max(0, Math.min(100, (mins - dayStart) / span * 100));
+      const bottom = Math.max(2, Math.min(98, s.total / yMax * 100));
+      return {
+        title: s.time + ' · ' + fmt(s.total) + ' · ' + (s.method === 'efectivo' ? 'Efectivo' : 'Tarjeta'),
+        style: { position: 'absolute', left: left + '%', bottom: bottom + '%', width: 13, height: 13, borderRadius: '50%', transform: 'translate(-50%,50%)', background: s.method === 'efectivo' ? '#22C463' : '#1E9E54', border: '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,64,.25)', cursor: 'default' },
+      };
+    });
+    const xTicks = [9, 11, 13, 15, 17, 19].map(h => ({ label: String(h).padStart(2, '0') + 'h', style: { position: 'absolute', left: ((h * 60 - dayStart) / span * 100) + '%', transform: 'translateX(-50%)', fontSize: 11, color: '#9aa8bd', fontWeight: 600 } }));
+    const yTicks = [0, 0.5, 1].map(f => ({ label: f === 0 ? '$0' : '$' + Math.round(yMax * f / 1000) + 'k', bottomPct: f * 100 }));
+    const gridLines = [0.25, 0.5, 0.75, 1].map(f => ({ bottomPct: f * 100 }));
+    const buckets = {};
+    S.sales.forEach(s => { const h = Math.floor(toMin(s.time) / 60); buckets[h] = (buckets[h] || 0) + 1; });
+    let peakH = 9, peakN = 0;
+    Object.keys(buckets).forEach(h => { if (buckets[h] > peakN) { peakN = buckets[h]; peakH = +h; } });
+    const peakLabel = String(peakH).padStart(2, '0') + '–' + String(peakH + 1).padStart(2, '0') + ' h';
+    const orderedSales = [...S.sales].sort((a, b) => toMin(a.time) - toMin(b.time));
+    const scatterPolyline = orderedSales.map(s => {
+      const x = (toMin(s.time) - dayStart) / span * 100;
+      const y = 100 - Math.max(2, Math.min(98, s.total / yMax * 100));
+      return x.toFixed(2) + ',' + y.toFixed(2);
+    }).join(' ');
+
+    // clientes
+    const customerRows = S.customers.map(c => ({
+      name: c.name, rut: c.rut || '—', phone: c.phone, pointsStr: c.points.toLocaleString('es-CL'), spentStr: fmt(c.spent),
+      initials: c.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase(),
+      onUse: () => this.setState({ customerId: c.id, screen: 'venta' }),
+      onEdit: () => this.openEditCustomer(c.id),
+      onDelete: () => this.deleteCustomer(c.id),
+    }));
+
+    // ticket
+    const tk = S.ticket;
+    const tkLines = tk ? tk.lines.map(l => ({ name: l.name, qtyStr: l.qty + ' × ' + fmt(l.price), lineStr: fmt(l.qty * l.price) })) : [];
+
+    // ---- configuración ----
+    const cfgAccent = S.cfgAccent, cfgSec = S.cfgSection;
+    const cfgNavBtn = (k) => ({ display: 'flex', alignItems: 'center', gap: 11, width: '100%', textAlign: 'left', border: 0, borderRadius: 11, padding: '11px 12px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, cursor: 'pointer', background: cfgSec === k ? '#E6F7EE' : 'transparent', color: cfgSec === k ? '#0a6e36' : '#475569' });
+    const cfgNav = { negocio: cfgNavBtn('negocio'), marca: cfgNavBtn('marca'), login: cfgNavBtn('login'), operacion: cfgNavBtn('operacion'), modulos: cfgNavBtn('modulos'), recibo: cfgNavBtn('recibo') };
+    const goCfg = { negocio: () => this.setCfgSection('negocio'), marca: () => this.setCfgSection('marca'), login: () => this.setCfgSection('login'), operacion: () => this.setCfgSection('operacion'), modulos: () => this.setCfgSection('modulos'), recibo: () => this.setCfgSection('recibo') };
+    const cfgTitleMap = { negocio: 'Negocio', marca: 'Apariencia y marca', login: 'Pantalla de login', operacion: 'Operación e impuestos', modulos: 'Módulos del sistema', recibo: 'Recibo y datos fiscales' };
+    const cfgAccents = ['#1E9E54', '#B5651D', '#C2410C', '#004FFF', '#7764E0', '#DD5771'].map(c => ({ onClick: () => this.setCfgAccent(c), style: { width: 38, height: 38, borderRadius: 11, background: c, cursor: 'pointer', border: 0, boxShadow: cfgAccent === c ? '0 0 0 2px #fff, 0 0 0 4px ' + c : 'none' } }));
+    const cfgModDefs = [['stock', 'Stock e inventario', 'Productos, categorías y ajuste de existencias.'], ['historial', 'Historial y métricas', 'Ventas del día, gráfico por hora y arqueo.'], ['clientes', 'Clientes y fidelización', 'Registro de clientes y acumulación de puntos.'], ['categorias', 'Categorías', 'Organización del catálogo por categorías.']];
+    const cfgModuleRows = cfgModDefs.map(([k, title, desc]) => { const on = S.cfgModules[k]; return { title, desc, onToggle: () => this.toggleCfgModule(k), togStyle: { width: 44, height: 25, borderRadius: 999, position: 'relative', flex: 'none', border: 0, cursor: 'pointer', background: on ? '#1E9E54' : '#cdd5e3' }, knobStyle: { position: 'absolute', top: 2.5, left: on ? 21 : 2.5, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .18s' } }; });
+
+    // ---- cierre de caja ----
+    const cashSales = S.sales.filter(s => s.method === 'efectivo').reduce((a, s) => a + s.total, 0);
+    const cardSales = S.sales.filter(s => s.method === 'tarjeta').reduce((a, s) => a + s.total, 0);
+    const cierreTotal = cashSales + cardSales, cierreFloat = 50000, cierreExpected = cierreFloat + cashSales;
+    const counted = parseInt(S.cierreCounted || '0', 10);
+    const cierreDiff = counted - cierreExpected, cierreHasCount = (S.cierreCounted || '').length > 0;
+
+    return {
+      brandName,
+      windowTitle: 'Mostrador POS — ' + brandName,
+      todayStr: 'Lun 23 jun 2026',
+      loggedIn: !!S.session, loggedOut: !S.session,
+      loginError: S.loginError, loginHasError: !!S.loginError, doLogin: this.doLogin, logout: this.logout,
+      loginRutDisplay: (this.fmtRut(this.normRut(S.loginRut)) || '00.000.000-0'),
+      loginIconColor: S.loginError ? '#D02E2E' : (this.normRut(S.loginRut).length ? '#0a6e36' : '#9aa8bd'),
+      loginRutTextStyle: { flex: 1, fontSize: 19, fontWeight: 700, letterSpacing: '.02em', color: this.normRut(S.loginRut).length ? '#0F2A1B' : '#B6C0CC' },
+      loginInputWrapStyle: { display: 'flex', alignItems: 'center', gap: 11, height: 54, borderRadius: 13, padding: '0 16px', background: '#fff', border: '1.5px solid ' + (S.loginError ? '#E5484D' : '#D7DEE8'), animation: S.loginError ? 'brotaShake .4s' : 'none' },
+      loginKeys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'K', '0', '⌫'].map(l => ({ label: l, onClick: l === '⌫' ? this.loginBack : () => this.loginPress(l) })),
+      sessionName: S.session ? S.session.name : '',
+      sessionRoleLabel: S.session ? (S.session.role === 'admin' ? 'Administrador/a' : 'Cajero/a') : '',
+      sessionInitials: S.session ? S.session.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() : '',
+      isCajeros: S.screen === 'cajeros',
+      showCaja: !!S.session,
+      navTabs, catChips, query: S.query, onQuery: this.onQuery,
+      ventaIsGrid: S.ventaView === 'grid', ventaIsList: S.ventaView === 'list',
+      setViewGrid: () => this.setView('grid'), setViewList: () => this.setView('list'),
+      viewGridStyle: { width: 34, height: 30, border: 0, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', background: S.ventaView === 'grid' ? '#E6F7EE' : 'transparent', color: S.ventaView === 'grid' ? '#0a6e36' : '#9aa8bd' },
+      viewListStyle: { width: 34, height: 30, border: 0, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', background: S.ventaView === 'list' ? '#E6F7EE' : 'transparent', color: S.ventaView === 'list' ? '#0a6e36' : '#9aa8bd' },
+      scanMode: S.scanMode,
+      catalogMode: !S.scanMode,
+      setScanOn: () => this.setScanMode(true), setScanOff: () => this.setScanMode(false),
+      modeCatalogStyle: { display: 'flex', alignItems: 'center', gap: 7, border: 0, borderRadius: 9, padding: '8px 14px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer', background: !S.scanMode ? '#fff' : 'transparent', color: !S.scanMode ? '#0F2A1B' : '#7C95A8', boxShadow: !S.scanMode ? '0 1px 3px rgba(0,0,64,.10)' : 'none' },
+      modeScanStyle: { display: 'flex', alignItems: 'center', gap: 7, border: 0, borderRadius: 9, padding: '8px 14px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13, cursor: 'pointer', background: S.scanMode ? '#fff' : 'transparent', color: S.scanMode ? '#0F2A1B' : '#7C95A8', boxShadow: S.scanMode ? '0 1px 3px rgba(0,0,64,.10)' : 'none' },
+      scanInput: S.scanInput, onScanInput: this.onScanInput, onScanKey: this.onScanKey, submitScan: this.submitScan, scanRef: this.scanRef,
+      scanHasMsg: !!S.scanMsg,
+      scanMsgText: S.scanMsg ? S.scanMsg.text : '',
+      scanMsgStyle: S.scanMsg
+        ? { display: 'flex', alignItems: 'center', gap: 8, borderRadius: 11, padding: '11px 14px', fontSize: 14, fontWeight: 700, background: S.scanMsg.ok ? '#E6F7EE' : '#FDECEC', color: S.scanMsg.ok ? '#0a6e36' : '#D02E2E' }
+        : { display: 'none' },
+      scanList: S.products.map(p => ({ id: p.id, name: p.name, code: this.barcodeOf(p.id), priceStr: fmt(p.price), onSim: () => this.simulateScan(p.id) })),
+      scanPickerOpen: S.scanPickerOpen, openScanPicker: this.openScanPicker, closeScanPicker: this.closeScanPicker,
+      scanItemsCount: T.items,
+      scanCobrarStyle: { border: 0, borderRadius: 13, padding: '14px 26px', fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: S.cart.length ? 'pointer' : 'not-allowed', color: S.cart.length ? '#fff' : '#9aa8bd', background: S.cart.length ? '#1E9E54' : '#EEF1F6' },
+      isVenta: S.screen === 'venta', isStock: S.screen === 'stock', isHistorial: S.screen === 'historial', isClientes: S.screen === 'clientes', isCategorias: S.screen === 'categorias',
+      isInicio: S.screen === 'inicio',
+      showSidebar: S.screen !== 'venta',
+      branch: S.branch, setBranch: this.setBranch,
+      branchOptions: BRANCHES.map(b => ({ value: b.key, label: 'Sucursal ' + b.label })),
+      exitVenta: () => this.setScreen('inicio'),
+      goVenta: () => this.setScreen('venta'),
+      goHistorialFromInicio: () => this.setScreen('historial'),
+      verHistorialStyle: { display: isAdmin ? 'inline-flex' : 'none', alignItems: 'center', gap: 5, border: 0, background: 'transparent', color: '#1E9E54', fontWeight: 700, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' },
+      verHistorialLabel: 'Ver historial →',
+      shiftOpenStr: '09:00',
+      shiftDurationStr: '1h 32m',
+      myShiftCount: histCount,
+      myShiftTotalStr: fmt(histTotal),
+      myShiftAvgStr: fmt(histAvg),
+      recentActivity: S.sales.slice(0, 6).map(s => {
+        const itemsCount = s.lines.reduce((a, l) => a + l.qty, 0);
+        const first = s.lines[0] || { name: 'Venta', cat: 'interior' };
+        const more = s.lines.length - 1;
+        const meta = this.catMeta(first.cat);
+        return {
+          summary: first.name + (more > 0 ? ' + ' + more + ' más' : ''),
+          meta: s.time + ' · ' + itemsCount + (itemsCount === 1 ? ' artículo' : ' artículos') + ' · #' + s.folio,
+          method: s.method === 'efectivo' ? 'Efectivo' : 'Tarjeta',
+          methodStyle: { fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 999, whiteSpace: 'nowrap', background: s.method === 'efectivo' ? '#E6F7EE' : '#EAF0FF', color: s.method === 'efectivo' ? '#0a6e36' : '#0036b3' },
+          amount: fmt(s.total),
+          dotStyle: { width: 40, height: 40, borderRadius: 11, background: meta.tile, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' },
+          icon: cE('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: meta.dot, strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }, [pth('M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z'), pth('M3 6h18'), pth('M16 10a4 4 0 0 1-8 0')]),
+        };
+      }),
+      openAddCategory: this.openAddCategory,
+      categoryRows: S.categories.map(c => {
+        const count = S.products.filter(p => p.cat === c.key).length;
+        return {
+          key: c.key, label: c.label,
+          countStr: count + (count === 1 ? ' producto' : ' productos'),
+          swatchStyle: { width: 46, height: 46, borderRadius: 13, background: c.tile, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' },
+          dotStyle: { width: 18, height: 18, borderRadius: '50%', background: c.dot },
+          onEdit: () => this.openEditCategory(c.key),
+          onDelete: () => this.deleteCategory(c.key),
+        };
+      }),
+      catMsgHas: !!S.catMsg,
+      catMsgText: S.catMsg ? S.catMsg.text : '',
+      catFormOpen: !!S.catForm,
+      catFormTitle: (S.catForm && S.catForm.key != null) ? 'Editar categoría' : 'Nueva categoría',
+      catFormLabel: S.catForm ? S.catForm.label : '',
+      onCatLabel: this.onCatLabel,
+      catColorOptions: this.PALETTE.map((pal, i) => ({
+        idx: i,
+        style: { width: 38, height: 38, borderRadius: 11, background: pal.dot, cursor: 'pointer', border: (S.catForm && S.catForm.colorIdx === i) ? '3px solid #0F2A1B' : '3px solid transparent', boxSizing: 'border-box' },
+        onClick: () => this.setCatColor(i),
+      })),
+      closeCatForm: this.closeCatForm, saveCategory: this.saveCategory,
+      saveCatLabel: (S.catForm && S.catForm.key != null) ? 'Guardar cambios' : 'Crear categoría',
+      saveCatStyle: { minWidth: 110, border: 0, borderRadius: 11, padding: '11px 18px', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', color: (S.catForm && S.catForm.label.trim()) ? '#fff' : '#9aa8bd', background: (S.catForm && S.catForm.label.trim()) ? '#1E9E54' : '#EEF1F6' },
+      catConfirmOpen: S.catConfirmKey != null,
+      catConfirmName: S.catConfirmKey ? this.catMeta(S.catConfirmKey).label : '',
+      cancelCatDelete: this.cancelCatDelete, confirmCatDelete: this.confirmCatDelete,
+      gridProducts: catalogGroups, catalogGroups,
+      cartItems, hasCart: S.cart.length > 0, cartEmpty: S.cart.length === 0,
+      itemCount: T.items + (T.items === 1 ? ' ítem' : ' ítems'),
+      itemCountBadge: React.createElement('span', {
+        key: 'bump' + S.bumpCount,
+        style: { display: 'inline-block', background: '#E7EFE8', color: '#0F2A1B', borderRadius: 999, padding: '3px 11px', fontSize: 12, fontWeight: 700, animation: S.bumpCount > 0 ? 'brotaPop .42s cubic-bezier(0.22,1,0.36,1)' : 'none' },
+      }, T.items + (T.items === 1 ? ' ítem' : ' ítems')),
+      customerOptions, selectedCustomerId: S.customerId || '', onCustomer: this.onCustomer,
+      netoStr: fmt(T.neto), ivaStr: fmt(T.iva), totalStr: fmt(T.total),
+      openPay: this.openPay, clearCart: this.clearCart,
+      cobrarStyle: { flex: 1, height: 54, border: 0, borderRadius: 14, background: S.cart.length ? '#1E9E54' : '#EEF1F6', color: S.cart.length ? '#fff' : '#9aa8bd', fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: S.cart.length ? 'pointer' : 'not-allowed' },
+      // stock
+      stockGroups, openAddProduct: this.openAddProduct,
+      formOpen: !!S.prodForm,
+      formEditing: !!(S.prodForm && S.prodForm.id != null),
+      formTitle: S.prodForm && S.prodForm.id != null ? 'Editar producto' : 'Nuevo producto',
+      formName: S.prodForm ? S.prodForm.name : '',
+      formCat: S.prodForm ? S.prodForm.cat : 'interior',
+      formPrice: S.prodForm ? S.prodForm.price : '',
+      formStock: S.prodForm ? S.prodForm.stock : '',
+      catSelectOptions: S.categories.map(c => ({ value: c.key, label: c.label })),
+      onFormName: (e) => this.onFormField('name', e.target.value),
+      onFormCat: (e) => this.onFormField('cat', e.target.value),
+      onFormPrice: (e) => this.onFormField('price', this.onlyDigits(e.target.value)),
+      onFormStock: (e) => this.onFormField('stock', this.onlyDigits(e.target.value)),
+      onFormImage: this.onFormImage,
+      formImgLabel: (S.prodForm && S.prodForm.img) ? 'Cambiar imagen' : 'Subir imagen',
+      formImgBoxStyle: { width: 52, height: 52, borderRadius: 11, background: '#F6F7FB', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flex: 'none' },
+      formImgThumb: (S.prodForm && S.prodForm.img)
+        ? React.createElement('img', { src: S.prodForm.img, alt: '', style: { width: '100%', height: '100%', objectFit: 'cover' } })
+        : React.createElement('svg', { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: '#9aa8bd', strokeWidth: 1.7, strokeLinecap: 'round', strokeLinejoin: 'round' },
+            React.createElement('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2, key: 1 }),
+            React.createElement('circle', { cx: 9, cy: 9, r: 2, key: 2 }),
+            React.createElement('path', { d: 'm21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21', key: 3 })),
+      closeForm: this.closeForm, saveProduct: this.saveProduct, deleteProduct: this.deleteProduct,
+      confirmOpen: S.confirmDeleteId != null,
+      confirmName: (() => { const p = this.find(S.confirmDeleteId); return p ? p.name : ''; })(),
+      cancelDelete: this.cancelDelete, confirmDelete: this.confirmDelete,
+      saveProductLabel: S.prodForm && S.prodForm.id != null ? 'Guardar cambios' : 'Agregar al inventario',
+      saveProductStyle: { minWidth: 110, border: 0, borderRadius: 11, padding: '11px 18px', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', color: (S.prodForm && S.prodForm.name.trim()) ? '#fff' : '#9aa8bd', background: (S.prodForm && S.prodForm.name.trim()) ? '#1E9E54' : '#EEF1F6' },
+      // history
+      historyRows, histTotalStr: fmt(histTotal), histCount, histAvgStr: fmt(histAvg),
+      scatterDots, xTicks, yTicks, gridLines, peakLabel, peakCount: peakN, scatterPolyline,
+      // clientes
+      // cajeros (admin)
+      cajeroRows: S.users.filter(u => u.role === 'cajero').map(u => ({
+        name: u.name, rut: u.rut, active: u.active,
+        statusLabel: u.active ? 'Activo' : 'Inactivo',
+        statusStyle: { background: u.active ? '#D3F4E0' : '#EEF1F6', color: u.active ? '#0a6e36' : '#7C95A8', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700 },
+        initials: u.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase(),
+        avatarStyle: { width: 46, height: 46, borderRadius: '50%', background: u.active ? 'linear-gradient(160deg,#1E9E54,#22C463)' : '#cdd5e3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 15, flex: 'none' },
+        toggleLabel: u.active ? 'Dar de baja' : 'Reactivar',
+        onToggle: () => this.setCajeroActive(u.id, !u.active),
+        onEdit: () => this.openEditCajero(u.id),
+        onDelete: () => this.deleteCajero(u.id),
+      })),
+      openAddCajero: this.openAddCajero,
+      cajeroFormOpen: !!S.cajeroForm,
+      cajeroFormTitle: (S.cajeroForm && S.cajeroForm.id != null) ? 'Editar cajero' : 'Nuevo cajero',
+      cajeroFormName: S.cajeroForm ? S.cajeroForm.name : '',
+      cajeroFormRut: S.cajeroForm ? S.cajeroForm.rut : '',
+      cajeroFormPass: S.cajeroForm ? S.cajeroForm.password : '',
+      cajeroFormActive: S.cajeroForm ? S.cajeroForm.active : true,
+      onCajeroName: (e) => this.onCajeroField('name', e.target.value),
+      onCajeroRut: (e) => this.onCajeroField('rut', e.target.value),
+      onCajeroPass: (e) => this.onCajeroField('password', e.target.value),
+      toggleCajeroActive: this.toggleCajeroActive,
+      activeToggleStyle: { display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' },
+      activeSwitchStyle: { width: 42, height: 24, borderRadius: 999, background: (S.cajeroForm && S.cajeroForm.active) ? '#1E9E54' : '#cdd5e3', position: 'relative', transition: 'background .2s', flex: 'none' },
+      activeKnobStyle: { position: 'absolute', top: 3, left: (S.cajeroForm && S.cajeroForm.active) ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .2s' },
+      closeCajeroForm: this.closeCajeroForm, saveCajero: this.saveCajero,
+      saveCajeroLabel: (S.cajeroForm && S.cajeroForm.id != null) ? 'Guardar cambios' : 'Crear cajero',
+      saveCajeroStyle: { minWidth: 110, border: 0, borderRadius: 11, padding: '11px 18px', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', color: (S.cajeroForm && S.cajeroForm.name.trim() && S.cajeroForm.rut.trim() && S.cajeroForm.password.trim()) ? '#fff' : '#9aa8bd', background: (S.cajeroForm && S.cajeroForm.name.trim() && S.cajeroForm.rut.trim() && S.cajeroForm.password.trim()) ? '#1E9E54' : '#EEF1F6' },
+      cajeroConfirmOpen: S.cajeroConfirmId != null,
+      cajeroConfirmName: S.cajeroConfirmId ? ((this.state.users.find(u => u.id === S.cajeroConfirmId) || {}).name || '') : '',
+      cancelCajeroDelete: this.cancelCajeroDelete, confirmCajeroDelete: this.confirmCajeroDelete,
+      customerRows, openAddCustomer: this.openAddCustomer,
+      custFormOpen: !!S.custForm,
+      custFormTitle: (S.custForm && S.custForm.id != null) ? 'Editar cliente' : 'Nuevo cliente',
+      custFormName: S.custForm ? S.custForm.name : '',
+      custFormRut: S.custForm ? S.custForm.rut : '',
+      custFormPhone: S.custForm ? S.custForm.phone : '',
+      onCustName: (e) => this.onCustField('name', e.target.value),
+      onCustRut: (e) => this.onCustField('rut', e.target.value),
+      onCustPhone: (e) => this.onCustField('phone', e.target.value),
+      closeCustForm: this.closeCustForm, saveCustomer: this.saveCustomer,
+      saveCustLabel: (S.custForm && S.custForm.id != null) ? 'Guardar cambios' : 'Agregar cliente',
+      saveCustStyle: { minWidth: 110, border: 0, borderRadius: 11, padding: '11px 18px', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', color: (S.custForm && S.custForm.name.trim()) ? '#fff' : '#9aa8bd', background: (S.custForm && S.custForm.name.trim()) ? '#1E9E54' : '#EEF1F6' },
+      custConfirmOpen: S.custConfirmId != null,
+      custConfirmName: S.custConfirmId ? this.custName(S.custConfirmId) : '',
+      cancelCustDelete: this.cancelCustDelete, confirmCustDelete: this.confirmCustDelete,
+      // payment modal
+      payOpen: S.payOpen, isEfectivo: efectivo, isTarjeta: !efectivo,
+      setEfectivo: () => this.setMethod('efectivo'), setTarjeta: () => this.setMethod('tarjeta'),
+      efStyle, tjStyle, keypad, quickAmounts,
+      cashDisplay: fmt(recv), changeStr: recv > 0 && change >= 0 ? fmt(change) : '—', changeBoxStyle,
+      closePay: this.closePay, confirmPay: this.confirmPay, confirmStyle,
+      nextFolioStr: '#' + String(S.folioSeq).padStart(4, '0'),
+      // ticket modal
+      ticketOpen: !!tk,
+      tkFolioStr: tk ? '#' + String(tk.folio).padStart(4, '0') : '', tkDate: tk ? tk.date : '', tkTime: tk ? tk.time : '',
+      tkCustomer: tk ? this.custName(tk.customerId) : '', tkLines,
+      tkNetoStr: tk ? fmt(tk.neto) : '', tkIvaStr: tk ? fmt(tk.iva) : '', tkTotalStr: tk ? fmt(tk.total) : '',
+      tkMethodLabel: tk ? (tk.method === 'efectivo' ? 'Efectivo' : 'Tarjeta') : '', tkIsEfectivo: tk ? tk.method === 'efectivo' : false,
+      tkRecvStr: tk ? fmt(tk.recv) : '', tkChangeStr: tk ? fmt(tk.change) : '', tkPointsStr: tk ? String(tk.points) : '',
+      tkRegistered: tk ? tk.customerId != null : false, tkGeneral: tk ? tk.customerId == null : false,
+      closeTicket: this.closeTicket, printTicket: this.printTicket,
+      // admin menu
+      showAdminMenu: isAdmin, adminMenuOpen: S.adminMenuOpen, adminMenuItems,
+      toggleAdminMenu: this.toggleAdminMenu, closeAdminMenu: this.closeAdminMenu,
+      adminMenuBtnStyle: { ...navBase, display: 'flex', alignItems: 'center', gap: 6, background: adminActive ? '#E7EFE8' : 'transparent', color: adminActive ? '#0F2A1B' : '#2A3A2E' },
+      // screen flags
+      isCierre: S.screen === 'cierre', isConfig: S.screen === 'config', isRespaldo: S.screen === 'respaldo',
+      // stock role
+      canManageStock: isAdmin, stockReadOnly: !isAdmin,
+      stockEyebrow: isAdmin ? 'Inventario' : 'Consulta',
+      stockTitle: isAdmin ? 'Gestión de stock' : 'Consulta de stock',
+      // configuración
+      cfgNav, goCfg, noop: this.noop, cfgAccents, cfgModuleRows,
+      cfgTitle: cfgTitleMap[cfgSec],
+      isCfgNegocio: cfgSec === 'negocio', isCfgMarca: cfgSec === 'marca', isCfgLogin: cfgSec === 'login', isCfgOperacion: cfgSec === 'operacion', isCfgModulos: cfgSec === 'modulos', isCfgRecibo: cfgSec === 'recibo',
+      brandInitial: (brandName || 'B')[0].toUpperCase(),
+      cfgLogoStyle: { width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(150deg,' + cfgAccent + ',' + this.lighten(cfgAccent) + ')', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: 28, flex: 'none' },
+      cfgPreviewLogoStyle: { width: 30, height: 30, borderRadius: 9, background: cfgAccent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14, color: '#fff' },
+      cfgPreviewBtnStyle: { height: 40, borderRadius: 11, background: cfgAccent, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 },
+      // cierre
+      cierreOpenTime: '09:00',
+      cierreTotalStr: fmt(cierreTotal), cierreCountStr: S.sales.length + ' ventas en el turno',
+      cierreCashStr: fmt(cashSales), cierreCardStr: fmt(cardSales),
+      cierreFloatStr: fmt(cierreFloat), cierreExpectedStr: fmt(cierreExpected),
+      cierreCountedDisplay: cierreHasCount ? fmt(counted) : '', onCierreCounted: this.onCierreCounted,
+      cierreCountNum: S.sales.length, cierreAvgStr: fmt(histAvg),
+      cierreDiffLabel: !cierreHasCount ? 'Diferencia' : (cierreDiff === 0 ? 'Caja cuadrada' : (cierreDiff > 0 ? 'Sobrante' : 'Faltante')),
+      cierreDiffStr: !cierreHasCount ? '—' : (cierreDiff > 0 ? '+' : '') + fmt(cierreDiff),
+      cierreDiffBoxStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, borderRadius: 12, padding: '12px 14px', background: !cierreHasCount ? '#F6F7FB' : (cierreDiff === 0 ? '#E6F7EE' : (cierreDiff > 0 ? '#EAF0FF' : '#FDECEC')), color: !cierreHasCount ? '#7C95A8' : (cierreDiff === 0 ? '#0a6e36' : (cierreDiff > 0 ? '#0036b3' : '#D02E2E')) },
+      cierreDone: S.cierreDone,
+      cierreBtnLabel: S.cierreDone ? 'Iniciar nuevo turno' : 'Cerrar caja',
+      cierreBtnAction: S.cierreDone ? this.resetCierre : this.doCierre,
+      cierreBtnStyle: { width: '100%', border: 0, borderRadius: 13, padding: 14, fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: 'pointer', color: '#fff', background: S.cierreDone ? '#0F2A1B' : '#1E9E54' },
+      // respaldo
+      backupProducts: S.products.length, backupCustomers: S.customers.length, backupSales: S.sales.length,
+      backupAutoDesc: S.backupAuto ? 'Activado · último respaldo hoy 03:00' : 'Desactivado · respalde manualmente',
+      toggleBackupAuto: this.toggleBackupAuto,
+      backupTogStyle: { width: 48, height: 27, borderRadius: 999, position: 'relative', flex: 'none', border: 0, cursor: 'pointer', background: S.backupAuto ? '#1E9E54' : '#cdd5e3' },
+      backupKnobStyle: { position: 'absolute', top: 3, left: S.backupAuto ? 24 : 3, width: 21, height: 21, borderRadius: '50%', background: '#fff', transition: 'left .18s' },
+    };
+  }
+}
+</script>
+</body>
+</html>
