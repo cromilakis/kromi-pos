@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<style id="kromi-tauri-overrides">
+/* App de escritorio: la ventana nativa de Tauri ya aporta barra de título + semáforo.
+   Neutralizamos el marco de ventana simulado del prototipo para llenar la ventana real. */
+div[style*="radial-gradient(120% 120% at 70% 10%"]{padding:0!important;background:#F6F7FB!important;align-items:stretch!important;justify-content:stretch!important;}
+div[style*="width:1200px"][style*="height:760px"]{width:100%!important;height:100vh!important;max-width:none!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;}
+div[style*="height:36px"][style*="#ECEDF1"]{display:none!important;}
+</style>
 <script src="./vendor/react.production.min.js"></script>
 <script src="./vendor/react-dom.production.min.js"></script>
 <script src="./vendor/babel.min.js"></script>
@@ -235,6 +242,12 @@ input::placeholder{color:#9aa8bd;}
             Escáner
           </button>
         </div>
+        <sc-if value="{{ catalogMode }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:10px;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:11px;padding:8px 14px;flex:1;max-width:420px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="Buscar planta, maceta, accesorio…" style="border:0;outline:none;background:transparent;flex:1;min-width:0;font-family:inherit;font-size:14px;color:#0F2A1B;" />
+        </div>
+        </sc-if>
         <div style="flex:1;"></div>
         <div style="display:flex;align-items:center;gap:9px;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:11px;padding:7px 12px;flex:none;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01"/></svg>
@@ -254,10 +267,6 @@ input::placeholder{color:#9aa8bd;}
       <!-- catalog -->
       <div style="flex:1;display:flex;flex-direction:column;min-width:0;padding:18px 22px 0;">
         <sc-if value="{{ catalogMode }}" hint-placeholder-val="{{ true }}">
-        <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E1E5EE;border-radius:14px;padding:12px 16px;margin-bottom:14px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="Buscar planta, maceta, accesorio…" style="border:0;outline:none;background:transparent;flex:1;font-family:inherit;font-size:15px;color:#0F2A1B;" />
-        </div>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:0;">
             <sc-for list="{{ catChips }}" as="c" hint-placeholder-count="7">
@@ -446,6 +455,24 @@ input::placeholder{color:#9aa8bd;}
         </span>
         </sc-if>
       </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #E1E5EE;border-radius:12px;padding:10px 15px;flex:1;max-width:440px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input value="{{ stockQuery }}" onInput="{{ onStockQuery }}" placeholder="Buscar producto en el inventario…" style="border:0;outline:none;background:transparent;flex:1;min-width:0;font-family:inherit;font-size:14px;color:#0F2A1B;" />
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
+        <sc-for list="{{ stockChips }}" as="c" hint-placeholder-count="5">
+          <button onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ stockEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 20px;color:#9aa8bd;">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#cdd5e3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:14px;"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <div style="font-weight:700;font-size:16px;color:#7C95A8;">Sin resultados</div>
+          <div style="font-size:13.5px;color:#9aa8bd;margin-top:3px;">Ningún producto coincide con la búsqueda o el filtro.</div>
+        </div>
+      </sc-if>
       <sc-for list="{{ stockGroups }}" as="g" hint-placeholder-count="3">
         <div style="margin-bottom:26px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px;">
@@ -658,7 +685,10 @@ input::placeholder{color:#9aa8bd;}
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
               <div style="{{ c.avatarStyle }}">{{ c.initials }}</div>
               <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:15px;color:#0F2A1B;line-height:1.2;">{{ c.name }}</div><div style="font-size:12px;color:#7C95A8;">{{ c.rut }}</div></div>
-              <span style="{{ c.statusStyle }}">{{ c.statusLabel }}</span>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                <span style="{{ c.statusStyle }}">{{ c.statusLabel }}</span>
+                <span style="{{ c.roleStyle }}">{{ c.roleLabel }}</span>
+              </div>
             </div>
             <div style="display:flex;gap:8px;">
               <button onClick="{{ c.onToggle }}" style="flex:1;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:9px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">{{ c.toggleLabel }}</button>
@@ -749,9 +779,9 @@ input::placeholder{color:#9aa8bd;}
               <div style="font-size:12.5px;color:#94A3B5;max-width:210px;text-align:right;line-height:1.45;">Tiñe acciones, pestañas activas, login y recibo.</div>
             </div>
           </div>
-          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:20px 22px;display:flex;gap:22px;align-items:center;">
-            <div style="flex:1;"><div style="font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#94A3B5;margin-bottom:8px;">Logo del negocio</div><div style="font-size:13px;color:#64748B;line-height:1.5;">Aparece en la barra superior, el login y el recibo. PNG o SVG con fondo transparente.</div></div>
+          <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:20px 22px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;">
             <div style="{{ cfgLogoStyle }}">{{ brandInitial }}</div>
+            <div style="flex:1;min-width:200px;"><div style="font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#94A3B5;margin-bottom:6px;">Logo del negocio</div><div style="font-size:13px;color:#64748B;line-height:1.5;">Aparece en la barra superior, el login y el recibo. PNG o SVG con fondo transparente.</div></div>
             <button style="border:1px solid #E1E5EE;background:#fff;color:#475569;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;flex:none;">Reemplazar</button>
           </div>
         </sc-if>
@@ -1147,6 +1177,13 @@ input::placeholder{color:#9aa8bd;}
           <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Contraseña</label>
           <input value="{{ cajeroFormPass }}" onInput="{{ onCajeroPass }}" placeholder="Contraseña de acceso" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
         </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Rol y permisos</label>
+          <div style="display:flex;gap:5px;background:#F0F2F7;border-radius:12px;padding:5px;">
+            <button onClick="{{ setCajeroCajero }}" style="{{ roleCajeroStyle }}">Cajero<span style="{{ roleCajeroSub }}">Venta, stock (consulta) y cierre</span></button>
+            <button onClick="{{ setCajeroAdmin }}" style="{{ roleAdminStyle }}">Administrador<span style="{{ roleAdminSub }}">Acceso total y mantención</span></button>
+          </div>
+        </div>
         <div onClick="{{ toggleCajeroActive }}" style="{{ activeToggleStyle }}">
           <div style="{{ activeSwitchStyle }}"><div style="{{ activeKnobStyle }}"></div></div>
           <span style="font-size:14px;font-weight:700;color:#0F2A1B;">Cuenta activa</span>
@@ -1325,6 +1362,8 @@ class Component extends DCLogic {
       cierreDone: false,
       backupAuto: true,
       cat: 'todas',
+      stockQuery: '',
+      stockCat: 'todas',
       ventaView: 'grid',
       query: '',
       cart: [],
@@ -1460,10 +1499,11 @@ class Component extends DCLogic {
   }
   componentWillUnmount() { if (this._onKey) window.removeEventListener('keydown', this._onKey); }
 
-  openAddCajero = () => this.setState({ cajeroForm: { id: null, name: '', rut: '', password: '', active: true } });
-  openEditCajero = (id) => { const u = this.state.users.find(x => x.id === id); if (!u) return; this.setState({ cajeroForm: { id: u.id, name: u.name, rut: u.rut, password: u.password, active: u.active } }); };
+  openAddCajero = () => this.setState({ cajeroForm: { id: null, name: '', rut: '', password: '', role: 'cajero', active: true } });
+  openEditCajero = (id) => { const u = this.state.users.find(x => x.id === id); if (!u) return; this.setState({ cajeroForm: { id: u.id, name: u.name, rut: u.rut, password: u.password, role: u.role, active: u.active } }); };
   closeCajeroForm = () => this.setState({ cajeroForm: null });
   onCajeroField = (field, value) => this.setState(s => ({ cajeroForm: { ...s.cajeroForm, [field]: value } }));
+  setCajeroRole = (role) => this.setState(s => ({ cajeroForm: { ...s.cajeroForm, role } }));
   toggleCajeroActive = () => this.setState(s => ({ cajeroForm: { ...s.cajeroForm, active: !s.cajeroForm.active } }));
   saveCajero = () => {
     const f = this.state.cajeroForm;
@@ -1473,9 +1513,9 @@ class Component extends DCLogic {
     this.setState(s => {
       if (f.id == null) {
         const id = 'u' + Date.now();
-        return { users: [...s.users, { id, name, rut, password, role: 'cajero', active: f.active }], cajeroForm: null };
+        return { users: [...s.users, { id, name, rut, password, role: f.role || 'cajero', active: f.active }], cajeroForm: null };
       }
-      return { users: s.users.map(u => u.id === f.id ? { ...u, name, rut, password, active: f.active } : u), cajeroForm: null };
+      return { users: s.users.map(u => u.id === f.id ? { ...u, name, rut, password, role: f.role || u.role, active: f.active } : u), cajeroForm: null };
     });
   };
   setCajeroActive = (id, active) => this.setState(s => ({ users: s.users.map(u => u.id === id ? { ...u, active } : u) }));
@@ -1846,10 +1886,21 @@ class Component extends DCLogic {
       };
     };
     const catOrder = S.categories.map(c => c.key);
+    const stockQ = (S.stockQuery || '').trim().toLowerCase();
+    const stockCat = S.stockCat || 'todas';
     const stockGroups = catOrder.map(key => {
-      const items = S.products.filter(p => p.cat === key);
+      const items = S.products.filter(p => p.cat === key
+        && (stockCat === 'todas' || p.cat === stockCat)
+        && (!stockQ || p.name.toLowerCase().includes(stockQ)));
       return { key, label: this.catMeta(key).label, dot: this.catMeta(key).dot, countStr: items.length + (items.length === 1 ? ' producto' : ' productos'), items: items.map(stockCard) };
     }).filter(g => g.items.length > 0);
+    const stockChips = [{ key: 'todas', label: 'Todas' }, ...S.categories.map(c => ({ key: c.key, label: c.label }))].map(c => ({
+      label: c.label,
+      onClick: () => this.setState({ stockCat: c.key }),
+      style: stockCat === c.key
+        ? { border: 0, background: '#1E9E54', color: '#fff', borderRadius: 999, padding: '8px 16px', fontWeight: 700, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' }
+        : { border: '1px solid #E1E5EE', background: '#fff', color: '#475569', borderRadius: 999, padding: '8px 16px', fontWeight: 600, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' },
+    }));
 
     // history
     const methodChip = (m) => m === 'efectivo'
@@ -2033,6 +2084,8 @@ class Component extends DCLogic {
       cobrarStyle: { flex: 1, height: 54, border: 0, borderRadius: 14, background: S.cart.length ? '#1E9E54' : '#EEF1F6', color: S.cart.length ? '#fff' : '#9aa8bd', fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: S.cart.length ? 'pointer' : 'not-allowed' },
       // stock
       stockGroups, openAddProduct: this.openAddProduct,
+      stockQuery: S.stockQuery || '', onStockQuery: (e) => this.setState({ stockQuery: e.target.value }),
+      stockChips, stockEmpty: stockGroups.length === 0,
       formOpen: !!S.prodForm,
       formEditing: !!(S.prodForm && S.prodForm.id != null),
       formTitle: S.prodForm && S.prodForm.id != null ? 'Editar producto' : 'Nuevo producto',
@@ -2065,10 +2118,12 @@ class Component extends DCLogic {
       scatterDots, xTicks, yTicks, gridLines, peakLabel, peakCount: peakN, scatterPolyline,
       // clientes
       // cajeros (admin)
-      cajeroRows: S.users.filter(u => u.role === 'cajero').map(u => ({
+      cajeroRows: S.users.map(u => ({
         name: u.name, rut: u.rut, active: u.active,
         statusLabel: u.active ? 'Activo' : 'Inactivo',
         statusStyle: { background: u.active ? '#D3F4E0' : '#EEF1F6', color: u.active ? '#0a6e36' : '#7C95A8', borderRadius: 999, padding: '4px 12px', fontSize: 12, fontWeight: 700 },
+        roleLabel: u.role === 'admin' ? 'Administrador' : 'Cajero',
+        roleStyle: { background: u.role === 'admin' ? '#EAF0FF' : '#F0F2F7', color: u.role === 'admin' ? '#0036b3' : '#5a6b7e', borderRadius: 999, padding: '4px 12px', fontSize: 11.5, fontWeight: 700 },
         initials: u.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase(),
         avatarStyle: { width: 46, height: 46, borderRadius: '50%', background: u.active ? 'linear-gradient(160deg,#1E9E54,#22C463)' : '#cdd5e3', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 15, flex: 'none' },
         toggleLabel: u.active ? 'Dar de baja' : 'Reactivar',
@@ -2078,11 +2133,18 @@ class Component extends DCLogic {
       })),
       openAddCajero: this.openAddCajero,
       cajeroFormOpen: !!S.cajeroForm,
-      cajeroFormTitle: (S.cajeroForm && S.cajeroForm.id != null) ? 'Editar cajero' : 'Nuevo cajero',
+      cajeroFormTitle: (S.cajeroForm && S.cajeroForm.id != null) ? 'Editar usuario' : 'Nuevo usuario',
       cajeroFormName: S.cajeroForm ? S.cajeroForm.name : '',
       cajeroFormRut: S.cajeroForm ? S.cajeroForm.rut : '',
       cajeroFormPass: S.cajeroForm ? S.cajeroForm.password : '',
       cajeroFormActive: S.cajeroForm ? S.cajeroForm.active : true,
+      cajeroFormRole: S.cajeroForm ? S.cajeroForm.role : 'cajero',
+      setCajeroCajero: () => this.setCajeroRole('cajero'),
+      setCajeroAdmin: () => this.setCajeroRole('admin'),
+      roleCajeroStyle: { flex: 1, border: 0, borderRadius: 9, padding: '10px 8px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', background: (S.cajeroForm && S.cajeroForm.role === 'cajero') ? '#fff' : 'transparent', color: '#0F2A1B', boxShadow: (S.cajeroForm && S.cajeroForm.role === 'cajero') ? '0 1px 4px rgba(0,0,40,.12)' : 'none' },
+      roleAdminStyle: { flex: 1, border: 0, borderRadius: 9, padding: '10px 8px', fontFamily: 'inherit', fontWeight: 700, fontSize: 13.5, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', background: (S.cajeroForm && S.cajeroForm.role === 'admin') ? '#fff' : 'transparent', color: '#0F2A1B', boxShadow: (S.cajeroForm && S.cajeroForm.role === 'admin') ? '0 1px 4px rgba(0,0,40,.12)' : 'none' },
+      roleCajeroSub: { fontSize: 11, fontWeight: 500, color: '#9aa8bd' },
+      roleAdminSub: { fontSize: 11, fontWeight: 500, color: '#9aa8bd' },
       onCajeroName: (e) => this.onCajeroField('name', e.target.value),
       onCajeroRut: (e) => this.onCajeroField('rut', e.target.value),
       onCajeroPass: (e) => this.onCajeroField('password', e.target.value),
@@ -2091,7 +2153,7 @@ class Component extends DCLogic {
       activeSwitchStyle: { width: 42, height: 24, borderRadius: 999, background: (S.cajeroForm && S.cajeroForm.active) ? '#1E9E54' : '#cdd5e3', position: 'relative', transition: 'background .2s', flex: 'none' },
       activeKnobStyle: { position: 'absolute', top: 3, left: (S.cajeroForm && S.cajeroForm.active) ? 21 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .2s' },
       closeCajeroForm: this.closeCajeroForm, saveCajero: this.saveCajero,
-      saveCajeroLabel: (S.cajeroForm && S.cajeroForm.id != null) ? 'Guardar cambios' : 'Crear cajero',
+      saveCajeroLabel: (S.cajeroForm && S.cajeroForm.id != null) ? 'Guardar cambios' : 'Crear usuario',
       saveCajeroStyle: { minWidth: 110, border: 0, borderRadius: 11, padding: '11px 18px', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', color: (S.cajeroForm && S.cajeroForm.name.trim() && S.cajeroForm.rut.trim() && S.cajeroForm.password.trim()) ? '#fff' : '#9aa8bd', background: (S.cajeroForm && S.cajeroForm.name.trim() && S.cajeroForm.rut.trim() && S.cajeroForm.password.trim()) ? '#1E9E54' : '#EEF1F6' },
       cajeroConfirmOpen: S.cajeroConfirmId != null,
       cajeroConfirmName: S.cajeroConfirmId ? ((this.state.users.find(u => u.id === S.cajeroConfirmId) || {}).name || '') : '',
