@@ -1372,7 +1372,7 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.scanRef = React.createRef();
-    const P = (id, name, cat, price, stock, img) => ({ id, name, cat, price, stock, img: null }); // ponytail: fotos del catálogo llegaron truncadas del export (cap 256KiB del MCP); usamos el tile de color del diseño. Reponer pasando img completas en uploads/.
+    const P = (id, name, cat, price, stock, img) => ({ id, name, cat, price, stock, img: img ? "uploads/" + encodeURI(img).replace(".png", ".jpg") : null }); // fotos redimensionadas a JPEG 720px en uploads/
     this.PALETTE = [
       { dot: '#22C463', tile: '#E6F7EE', pillBg: '#D3F4E0', pillFg: '#0a6e36' },
       { dot: '#DD5771', tile: '#FCEFF2', pillBg: '#FCE4E9', pillFg: '#A4264A' },
