@@ -571,7 +571,7 @@ input::placeholder{color:#9aa8bd;}
           </div>
           <div style="display:flex;align-items:center;gap:16px;">
             <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#2A3A2E;"><span style="width:11px;height:11px;border-radius:50%;background:#22C463;"></span>Efectivo</div>
-            <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#2A3A2E;"><span style="width:11px;height:11px;border-radius:50%;background:#1E9E54;"></span>Tarjeta</div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#2A3A2E;"><span style="width:11px;height:11px;border-radius:50%;background:#2563EB;"></span>Tarjeta</div>
             <div style="background:#E6F7EE;color:#0a6e36;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;">Hora pico {{ peakLabel }}</div>
           </div>
         </div>
@@ -710,7 +710,7 @@ input::placeholder{color:#9aa8bd;}
             <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:4px;position:relative;">{{ cierreCountStr }}</div>
           </div>
           <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:7px;"><span style="width:10px;height:10px;border-radius:50%;background:#22C463;"></span>Efectivo</div><div style="font-size:28px;font-weight:900;color:#0F2A1B;">{{ cierreCashStr }}</div></div>
-          <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:7px;"><span style="width:10px;height:10px;border-radius:50%;background:#1E9E54;"></span>Tarjeta</div><div style="font-size:28px;font-weight:900;color:#0F2A1B;">{{ cierreCardStr }}</div></div>
+          <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:7px;"><span style="width:10px;height:10px;border-radius:50%;background:#2563EB;"></span>Tarjeta</div><div style="font-size:28px;font-weight:900;color:#0F2A1B;">{{ cierreCardStr }}</div></div>
         </div>
         <div style="display:flex;gap:16px;align-items:stretch;">
           <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:22px;">
@@ -1307,7 +1307,7 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.scanRef = React.createRef();
-    const P = (id, name, cat, price, stock, img) => ({ id, name, cat, price, stock, img: img ? 'uploads/' + encodeURI(img) : null });
+    const P = (id, name, cat, price, stock, img) => ({ id, name, cat, price, stock, img: null }); // ponytail: fotos del catálogo llegaron truncadas del export (cap 256KiB del MCP); usamos el tile de color del diseño. Reponer pasando img completas en uploads/.
     this.PALETTE = [
       { dot: '#22C463', tile: '#E6F7EE', pillBg: '#D3F4E0', pillFg: '#0a6e36' },
       { dot: '#DD5771', tile: '#FCEFF2', pillBg: '#FCE4E9', pillFg: '#A4264A' },
@@ -1796,8 +1796,8 @@ class Component extends DCLogic {
       });
       return {
         id: p.id, name: p.name, priceStr: fmt(p.price), branchStock,
-        availStr: out ? 'Sin stock' : av + ' u. acá',
-        availStyle: { fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', color: out ? '#A4264A' : (low ? '#DEA35D' : '#7C95A8') },
+        availStr: out ? 'Sin stock' : 'Disponible: ' + av,
+        availStyle: { fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '3px 10px', borderRadius: 999, background: out ? '#FBE3E8' : (low ? '#FBF1E0' : '#E6F7EE'), color: out ? '#A4264A' : (low ? '#9a6a1e' : '#0a6e36') },
         icon: this.mediaEl(p, 34),
         tileStyle: { height: 176, background: this.catMeta(p.cat).tile, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
         cardStyle: { ...cardBase, opacity: out ? 0.5 : 1, pointerEvents: out ? 'none' : 'auto', borderColor: flashed ? '#22C463' : '#E1E5EE', boxShadow: flashed ? '0 0 0 2px #22C463, 0 8px 20px rgba(34,196,99,.18)' : 'none' },
@@ -1918,7 +1918,7 @@ class Component extends DCLogic {
       const bottom = Math.max(2, Math.min(98, s.total / yMax * 100));
       return {
         title: s.time + ' · ' + fmt(s.total) + ' · ' + (s.method === 'efectivo' ? 'Efectivo' : 'Tarjeta'),
-        style: { position: 'absolute', left: left + '%', bottom: bottom + '%', width: 13, height: 13, borderRadius: '50%', transform: 'translate(-50%,50%)', background: s.method === 'efectivo' ? '#22C463' : '#1E9E54', border: '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,64,.25)', cursor: 'default' },
+        style: { position: 'absolute', left: left + '%', bottom: bottom + '%', width: 13, height: 13, borderRadius: '50%', transform: 'translate(-50%,50%)', background: s.method === 'efectivo' ? '#22C463' : '#2563EB', border: '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,64,.25)', cursor: 'default' },
       };
     });
     const xTicks = [9, 11, 13, 15, 17, 19].map(h => ({ label: String(h).padStart(2, '0') + 'h', style: { position: 'absolute', left: ((h * 60 - dayStart) / span * 100) + '%', transform: 'translateX(-50%)', fontSize: 11, color: '#9aa8bd', fontWeight: 600 } }));
