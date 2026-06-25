@@ -461,6 +461,10 @@ input::placeholder{color:#9aa8bd;}
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
           <input value="{{ stockQuery }}" onInput="{{ onStockQuery }}" placeholder="Buscar producto en el inventario…" style="border:0;outline:none;background:transparent;flex:1;min-width:0;font-family:inherit;font-size:14px;color:#0F2A1B;" />
         </div>
+        <div style="display:flex;gap:3px;background:#fff;border:1px solid #E1E5EE;border-radius:11px;padding:3px;flex:none;margin-left:auto;">
+          <button onClick="{{ setStockGrid }}" title="Vista cuadrícula" style="{{ stockViewGridStyle }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+          <button onClick="{{ setStockList }}" title="Vista lista" style="{{ stockViewListStyle }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
         <sc-for list="{{ stockChips }}" as="c" hint-placeholder-count="5">
@@ -481,7 +485,7 @@ input::placeholder{color:#9aa8bd;}
             <span style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">{{ g.label }}</span>
             <span style="background:#E7EFE8;color:#0F2A1B;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;">{{ g.countStr }}</span>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">
+          <div style="display:grid;grid-template-columns:{{ stockGridCols }};gap:14px;">
             <sc-for list="{{ g.items }}" as="r" hint-placeholder-count="4">
               <div style="{{ r.cardStyle }}">
                 <div style="{{ r.thumbStyle }}">{{ r.icon }}</div>
@@ -1369,6 +1373,7 @@ class Component extends DCLogic {
       stockQuery: '',
       stockCat: 'todas',
       ventaView: 'grid',
+      stockView: 'grid',
       query: '',
       cart: [],
       customerId: null,
@@ -2016,6 +2021,10 @@ class Component extends DCLogic {
       setViewGrid: () => this.setView('grid'), setViewList: () => this.setView('list'),
       viewGridStyle: { width: 34, height: 30, border: 0, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', background: S.ventaView === 'grid' ? '#E6F7EE' : 'transparent', color: S.ventaView === 'grid' ? '#0a6e36' : '#9aa8bd' },
       viewListStyle: { width: 34, height: 30, border: 0, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', background: S.ventaView === 'list' ? '#E6F7EE' : 'transparent', color: S.ventaView === 'list' ? '#0a6e36' : '#9aa8bd' },
+      stockGridCols: S.stockView === 'list' ? '1fr' : 'repeat(auto-fill,minmax(320px,1fr))',
+      setStockGrid: () => this.setState({ stockView: 'grid' }), setStockList: () => this.setState({ stockView: 'list' }),
+      stockViewGridStyle: { width: 34, height: 30, border: 0, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', background: S.stockView !== 'list' ? '#E6F7EE' : 'transparent', color: S.stockView !== 'list' ? '#0a6e36' : '#9aa8bd' },
+      stockViewListStyle: { width: 34, height: 30, border: 0, borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', background: S.stockView === 'list' ? '#E6F7EE' : 'transparent', color: S.stockView === 'list' ? '#0a6e36' : '#9aa8bd' },
       scanMode: S.scanMode,
       catalogMode: !S.scanMode,
       setScanOn: () => this.setScanMode(true), setScanOff: () => this.setScanMode(false),
