@@ -109,15 +109,58 @@ input::placeholder{color:#9aa8bd;}
         <button onClick="{{ doLogin }}" style="width:100%;height:52px;margin-top:16px;border:0;border-radius:13px;background:#1E9E54;color:#fff;font-weight:800;font-size:16px;font-family:inherit;cursor:pointer;box-shadow:0 8px 20px rgba(30,158,84,.28);">Ingresar</button>
         <div style="display:flex;align-items:center;gap:9px;margin-top:20px;padding:12px 14px;background:#F6F7FB;border:1px solid #ECEFF4;border-radius:12px;">
           <span style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9aa8bd;flex:none;">Demo</span>
-          <div style="font-size:12.5px;color:#7C95A8;line-height:1.5;"><b style="color:#0F2A1B;">11.111.111-1</b> admin · PIN <b style="color:#0F2A1B;">1234</b> · <b style="color:#0F2A1B;">22.222.222-2</b> cajero · PIN <b style="color:#0F2A1B;">2222</b></div>
+          <div style="font-size:12.5px;color:#7C95A8;line-height:1.5;"><b style="color:#0F2A1B;">11.111.111-1</b> admin · PIN <b style="color:#0F2A1B;">1234</b> · <b style="color:#0F2A1B;">22.222.222-2</b> cajero · PIN <b style="color:#0F2A1B;">2222</b> · <b style="color:#0F2A1B;">99.999.999-9</b> Kromi · PIN <b style="color:#0F2A1B;">0000</b></div>
         </div>
       </div>
     </div>
   </div>
   </sc-if>
 
+  <!-- ================= CONSOLA KROMI (administrador del sistema) ================= -->
+  <sc-if value="{{ isKromiConsole }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;display:flex;flex-direction:column;min-height:0;background:#0B1020;color:#E7E9F0;overflow:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 34px;border-bottom:1px solid #1C2540;flex:none;">
+      <div style="display:flex;align-items:center;gap:13px;">
+        <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(150deg,#2563EB,#7764E0);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;color:#fff;">K</div>
+        <div style="line-height:1.15;">
+          <div style="font-weight:900;font-size:18px;color:#fff;">Mostrador POS · Consola</div>
+          <div style="font-size:12.5px;color:#8C97B8;">Administración del sistema · {{ kromiName }}</div>
+        </div>
+      </div>
+      <button onClick="{{ logout }}" style="display:flex;align-items:center;gap:8px;border:1px solid #2A3550;background:#131B33;color:#C9D2EC;border-radius:11px;padding:10px 14px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+    <div style="padding:30px 34px;max-width:1120px;width:100%;margin:0 auto;box-sizing:border-box;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6F7DA8;margin-bottom:5px;">Tus negocios</div>
+      <h2 style="font-size:27px;font-weight:900;color:#fff;margin:0 0 20px;letter-spacing:-.01em;">Administración de negocios</h2>
+      <div style="display:flex;gap:14px;margin-bottom:26px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:180px;background:#121A30;border:1px solid #1C2540;border-radius:16px;padding:18px 20px;"><div style="font-size:12.5px;color:#8C97B8;font-weight:600;margin-bottom:6px;">Negocios activos</div><div style="font-size:26px;font-weight:900;color:#fff;">{{ kromiActiveStr }} / {{ kromiCountStr }}</div></div>
+        <div style="flex:1;min-width:180px;background:#121A30;border:1px solid #1C2540;border-radius:16px;padding:18px 20px;"><div style="font-size:12.5px;color:#8C97B8;font-weight:600;margin-bottom:6px;">Ventas de hoy (consolidado)</div><div style="font-size:26px;font-weight:900;color:#fff;">{{ kromiTotalStr }}</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">
+        <sc-for list="{{ businessCards }}" as="b" hint-placeholder-count="4">
+          <div style="background:#121A30;border:1px solid #1C2540;border-radius:18px;padding:18px 20px;">
+            <div style="display:flex;align-items:center;gap:13px;margin-bottom:16px;">
+              <div style="{{ b.avatarStyle }}">{{ b.initial }}</div>
+              <div style="flex:1;min-width:0;"><div style="font-weight:800;font-size:16px;color:#fff;line-height:1.2;">{{ b.name }}</div><div style="font-size:12.5px;color:#8C97B8;">{{ b.rubro }}</div></div>
+              <span style="{{ b.statusStyle }}">{{ b.statusLabel }}</span>
+            </div>
+            <div style="display:flex;gap:10px;margin-bottom:16px;">
+              <div style="flex:1;background:#0E1526;border-radius:12px;padding:10px 12px;"><div style="font-size:11px;color:#8C97B8;font-weight:600;">Ventas hoy</div><div style="font-size:16px;font-weight:900;color:#fff;">{{ b.salesStr }}</div></div>
+              <div style="flex:1;background:#0E1526;border-radius:12px;padding:10px 12px;"><div style="font-size:11px;color:#8C97B8;font-weight:600;">Operaciones</div><div style="font-size:16px;font-weight:900;color:#fff;">{{ b.opsStr }}</div></div>
+            </div>
+            <button onClick="{{ b.onEnter }}" style="width:100%;border:0;border-radius:12px;background:linear-gradient(150deg,#2563EB,#5B6BE0);color:#fff;padding:11px;font-weight:800;font-size:14px;font-family:inherit;cursor:pointer;">Entrar al POS</button>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
   <!-- ================= APP ================= -->
-  <sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{ isBusinessApp }}" hint-placeholder-val="{{ false }}">
   <div style="flex:1;display:flex;min-height:0;">
 
   <!-- ================= SIDEBAR ================= -->
@@ -147,6 +190,12 @@ input::placeholder{color:#9aa8bd;}
 
     <div style="flex:1;min-height:16px;"></div>
 
+    <sc-if value="{{ isKromiViewing }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ exitToConsole }}" style="display:flex;align-items:center;gap:8px;width:100%;border:1px solid #1C2540;background:#0B1020;color:#fff;border-radius:11px;padding:10px 12px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;margin-bottom:10px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Volver a la consola
+    </button>
+    </sc-if>
     <div style="border-top:1px solid #F0F2F7;padding-top:12px;display:flex;align-items:center;gap:10px;">
       <div style="width:38px;height:38px;border-radius:50%;background:#0F2A1B;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none;">{{ sessionInitials }}</div>
       <div style="line-height:1.15;min-width:0;flex:1;"><div style="font-size:13px;font-weight:700;color:#0F2A1B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ sessionName }}</div><div style="font-size:11px;color:#7C95A8;">{{ sessionRoleLabel }}</div></div>
@@ -1346,6 +1395,7 @@ class Component extends DCLogic {
         { id: 'u1', name: 'Daniela Soto', rut: '11.111.111-1', password: '1234', role: 'admin', active: true },
         { id: 'u2', name: 'M. Jara', rut: '22.222.222-2', password: '2222', role: 'cajero', active: true },
         { id: 'u3', name: 'Pedro Lillo', rut: '17.654.321-K', password: '3333', role: 'cajero', active: true },
+        { id: 'k1', name: 'Equipo Kromi', rut: '99.999.999-9', password: '0000', role: 'kromi', active: true },
       ],
       loginRut: '',
       loginStep: 'rut',
@@ -1357,6 +1407,13 @@ class Component extends DCLogic {
       cajeroConfirmId: null,
       screen: 'inicio',
       branch: 'centro',
+      viewingBiz: null,
+      businesses: [
+        { id: 'b1', name: 'Brota', rubro: 'Vivero · plantas', accent: '#22C463', plan: 'Pro', salesToday: 307960, ops: 17, status: 'active' },
+        { id: 'b2', name: 'Aroma Café', rubro: 'Cafetería de especialidad', accent: '#B5651D', plan: 'Básico', salesToday: 184500, ops: 92, status: 'active' },
+        { id: 'b3', name: 'Ferretería El Roble', rubro: 'Ferretería', accent: '#2563EB', plan: 'Pro', salesToday: 521300, ops: 41, status: 'active' },
+        { id: 'b4', name: 'Boutique Lila', rubro: 'Indumentaria', accent: '#7764E0', plan: 'Básico', salesToday: 0, ops: 0, status: 'paused' },
+      ],
       loginAt: null,
       adminMenuOpen: false,
       cfgSection: 'marca',
@@ -1502,7 +1559,9 @@ class Component extends DCLogic {
     if ((s.loginPin || '') !== (u.password || '')) { this.setState({ loginError: 'PIN incorrecto.', loginPin: '' }); return; }
     this.setState({ session: { id: u.id, name: u.name, rut: u.rut, role: u.role }, screen: 'inicio', loginAt: Date.now(), loginRut: '', loginPin: '', loginStep: 'rut', loginUserId: null, loginError: '' });
   };
-  logout = () => this.setState({ session: null, cart: [], scanMode: false, screen: 'inicio', adminMenuOpen: false, loginStep: 'rut', loginPin: '', loginUserId: null, loginRut: '', loginError: '' });
+  logout = () => this.setState({ session: null, cart: [], scanMode: false, screen: 'inicio', adminMenuOpen: false, viewingBiz: null, loginStep: 'rut', loginPin: '', loginUserId: null, loginRut: '', loginError: '' });
+  enterBiz = (id) => this.setState({ viewingBiz: id, screen: 'inicio', cart: [], adminMenuOpen: false });
+  exitToConsole = () => this.setState({ viewingBiz: null, screen: 'inicio', cart: [], adminMenuOpen: false });
 
   componentDidMount() {
     this._onKey = (e) => {
@@ -1771,7 +1830,7 @@ class Component extends DCLogic {
 
     const navBase = { border: 0, padding: '8px 15px', fontFamily: 'inherit', fontWeight: 700, fontSize: 14, borderRadius: 999, cursor: 'pointer' };
     const role = S.session ? S.session.role : 'cajero';
-    const isAdmin = role === 'admin';
+    const isAdmin = role === 'admin' || role === 'kromi';
     const tabDefs = [['inicio', 'Inicio'], ['venta', 'Venta'], ['stock', 'Stock'], ['clientes', 'Clientes'], ['cierre', 'Cierre de caja']];
     const cE = React.createElement;
     const pth = (d) => cE('path', { d, key: d });
@@ -1997,6 +2056,22 @@ class Component extends DCLogic {
       windowTitle: 'Mostrador POS — ' + brandName,
       todayStr: 'Lun 23 jun 2026',
       loggedIn: !!S.session, loggedOut: !S.session,
+      isKromiConsole: !!S.session && S.session.role === 'kromi' && !S.viewingBiz,
+      isBusinessApp: !!S.session && !(S.session.role === 'kromi' && !S.viewingBiz),
+      isKromiViewing: !!S.session && S.session.role === 'kromi' && !!S.viewingBiz,
+      kromiName: S.session ? S.session.name : '',
+      exitToConsole: this.exitToConsole,
+      kromiTotalStr: fmt(S.businesses.reduce((a, b) => a + b.salesToday, 0)),
+      kromiActiveStr: String(S.businesses.filter(b => b.status === 'active').length),
+      kromiCountStr: String(S.businesses.length),
+      businessCards: S.businesses.map(b => ({
+        name: b.name, rubro: b.rubro, initial: b.name[0],
+        salesStr: fmt(b.salesToday), opsStr: b.ops + (b.ops === 1 ? ' venta' : ' ventas'),
+        avatarStyle: { width: 46, height: 46, borderRadius: 13, background: b.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 20, flex: 'none' },
+        statusStyle: { fontSize: 11.5, fontWeight: 700, padding: '3px 10px', borderRadius: 999, flex: 'none', background: b.status === 'active' ? 'rgba(34,196,99,.15)' : 'rgba(222,163,93,.18)', color: b.status === 'active' ? '#5BE49B' : '#E2B062' },
+        statusLabel: b.status === 'active' ? 'Activo' : 'Pausado',
+        onEnter: () => this.enterBiz(b.id),
+      })),
       loginError: S.loginError, loginHasError: !!S.loginError, doLogin: this.doLogin, logout: this.logout,
       loginIsPin: (S.loginStep === 'pin'),
       loginFieldLabel: (S.loginStep === 'pin') ? 'PIN de seguridad' : 'RUT',
@@ -2008,7 +2083,7 @@ class Component extends DCLogic {
       loginInputWrapStyle: { display: 'flex', alignItems: 'center', gap: 11, height: 54, borderRadius: 13, padding: '0 16px', background: '#fff', border: '1.5px solid ' + (S.loginError ? '#E5484D' : '#D7DEE8'), animation: S.loginError ? 'brotaShake .4s' : 'none' },
       loginKeys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'K', '0', '⌫'].map(l => ({ label: l, onClick: l === '⌫' ? this.loginBack : () => this.loginPress(l) })),
       sessionName: S.session ? S.session.name : '',
-      sessionRoleLabel: S.session ? (S.session.role === 'admin' ? 'Administrador/a' : 'Cajero/a') : '',
+      sessionRoleLabel: S.session ? (S.session.role === 'admin' ? 'Administrador/a' : (S.session.role === 'kromi' ? 'Admin. del sistema' : 'Cajero/a')) : '',
       sessionInitials: S.session ? S.session.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() : '',
       isCajeros: S.screen === 'cajeros',
       showCaja: !!S.session,
