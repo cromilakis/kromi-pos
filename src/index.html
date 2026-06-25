@@ -621,8 +621,13 @@ input::placeholder{color:#9aa8bd;}
     <!-- ---------- HISTORIAL ---------- -->
     <sc-if value="{{ isHistorial }}" hint-placeholder-val="{{ false }}">
     <div data-screen-label="Historial" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Hoy · {{ todayStr }}</div>
-      <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0 0 20px;letter-spacing:-.01em;">Ventas del día</h2>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Historial de ventas</div>
+      <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0 0 14px;letter-spacing:-.01em;">{{ histTitle }}</h2>
+      <div style="display:flex;gap:8px;margin-bottom:20px;">
+        <sc-for list="{{ histPeriodTabs }}" as="t" hint-placeholder-count="4">
+          <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
+        </sc-for>
+      </div>
       <div style="display:flex;gap:16px;margin-bottom:22px;">
         <div style="flex:1;background:#0F2A1B;border-radius:18px;padding:20px 22px;color:#fff;position:relative;overflow:hidden;"><div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(34,196,99,.40),transparent 70%);"></div><div style="font-size:13px;color:#97F2CC;font-weight:700;margin-bottom:6px;position:relative;">Total vendido</div><div style="font-size:32px;font-weight:900;position:relative;letter-spacing:-.02em;">{{ histTotalStr }}</div></div>
         <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;">Ventas</div><div style="font-size:32px;font-weight:900;color:#0F2A1B;">{{ histCount }}</div></div>
@@ -1408,6 +1413,7 @@ class Component extends DCLogic {
       screen: 'inicio',
       branch: 'centro',
       viewingBiz: null,
+      histPeriod: 'dia',
       businesses: [
         { id: 'b1', name: 'Brota', rubro: 'Vivero · plantas', accent: '#22C463', plan: 'Pro', salesToday: 307960, ops: 17, status: 'active' },
         { id: 'b2', name: 'Aroma Café', rubro: 'Cafetería de especialidad', accent: '#B5651D', plan: 'Básico', salesToday: 184500, ops: 92, status: 'active' },
@@ -1991,6 +1997,10 @@ class Component extends DCLogic {
     const histTotal = S.sales.reduce((a, s) => a + s.total, 0);
     const histCount = S.sales.length;
     const histAvg = histCount ? histTotal / histCount : 0;
+    const histFactor = ({ dia: 1, semana: 6, mes: 26, anio: 312 })[S.histPeriod || 'dia'] || 1;
+    const histPeriodDefs = [['dia', 'Día'], ['semana', 'Semana'], ['mes', 'Mes'], ['anio', 'Año']];
+    const histPeriodTabs = histPeriodDefs.map(([k, label]) => ({ label, onClick: () => this.setState({ histPeriod: k }), style: { border: '1px solid ' + (S.histPeriod === k ? '#1E9E54' : '#E1E5EE'), background: S.histPeriod === k ? '#E6F7EE' : '#fff', color: S.histPeriod === k ? '#0a6e36' : '#5a6b7e', borderRadius: 10, padding: '8px 16px', fontWeight: 700, fontSize: 13.5, fontFamily: 'inherit', cursor: 'pointer' } }));
+    const histTitle = ({ dia: 'Ventas del día', semana: 'Ventas de la semana', mes: 'Ventas del mes', anio: 'Ventas del año' })[S.histPeriod || 'dia'];
 
     // scatter chart — ventas por hora del día
     const dayStart = 9 * 60, dayEnd = 20 * 60, span = dayEnd - dayStart;
@@ -2215,7 +2225,7 @@ class Component extends DCLogic {
       saveProductLabel: S.prodForm && S.prodForm.id != null ? 'Guardar cambios' : 'Agregar al inventario',
       saveProductStyle: { minWidth: 110, border: 0, borderRadius: 11, padding: '11px 18px', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', color: (S.prodForm && S.prodForm.name.trim()) ? '#fff' : '#9aa8bd', background: (S.prodForm && S.prodForm.name.trim()) ? '#1E9E54' : '#EEF1F6' },
       // history
-      historyRows, histTotalStr: fmt(histTotal), histCount, histAvgStr: fmt(histAvg),
+      historyRows, histTotalStr: fmt(histTotal * histFactor), histCount: histCount * histFactor, histAvgStr: fmt(histAvg), histPeriodTabs, histTitle,
       scatterDots, xTicks, yTicks, gridLines, peakLabel, peakCount: peakN, scatterPolyline,
       // clientes
       // cajeros (admin)
