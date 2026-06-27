@@ -902,12 +902,19 @@ input::placeholder{color:#9aa8bd;}
 
         <sc-if value="{{ isCfgRecibo }}" hint-placeholder-val="{{ false }}">
           <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:16px;">
-            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Encabezado del recibo</label><input value="Brota · Vivero" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
-            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Pie de página</label><input value="¡Gracias por su compra! Cuide sus plantas con cariño." style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Bajada (bajo el logo)</label><input value="{{ crTagline }}" onInput="{{ onCrTagline }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Razon social</label><input value="{{ crRazon }}" onInput="{{ onCrRazon }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
             <div style="display:flex;gap:14px;">
-              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Teléfono</label><input value="+56 2 2987 3300" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
-              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Ancho de impresión</label><div style="display:flex;align-items:center;justify-content:space-between;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-size:14px;color:#0F2A1B;">58 mm (térmica)<span style="color:#9aa8bd;">▾</span></div></div>
+              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">RUT</label><input value="{{ crRut }}" onInput="{{ onCrRut }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Giro</label><input value="{{ crGiro }}" onInput="{{ onCrGiro }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
             </div>
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Direccion</label><input value="{{ crDireccion }}" onInput="{{ onCrDireccion }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Pie de pagina</label><input value="{{ crFooter }}" onInput="{{ onCrFooter }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+            <div style="display:flex;gap:14px;">
+              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Red social</label><input value="{{ crSocialRed }}" onInput="{{ onCrSocialRed }}" placeholder="Instagram" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Nombre de impresora</label><input value="{{ crPrinter }}" onInput="{{ onCrPrinter }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+            </div>
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">URL de la red social (para el QR)</label><input value="{{ crSocialUrl }}" onInput="{{ onCrSocialUrl }}" placeholder="https://..." style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
           </div>
         </sc-if>
       </div>
@@ -1494,6 +1501,17 @@ class Component extends DCLogic {
       cashStr: '',
       ticket: null,
       folioSeq: 443,
+      cfgRecibo: {
+        tagline: 'Vivero & Jardineria',
+        razonSocial: 'Planta con Mati SpA',
+        rut: '78.123.456-7',
+        giro: 'Venta de plantas y jardineria',
+        direccion: 'Av. Las Camelias 1234, Nunoa',
+        footer: 'Gracias por tu compra!',
+        printerName: 'TermalTest',
+        socialRed: 'Instagram',
+        socialUrl: 'https://www.instagram.com/plantaconmati',
+      },
       custForm: null,
       custConfirmId: null,
       prodForm: null,
@@ -1756,22 +1774,58 @@ class Component extends DCLogic {
     const folio = this.state.folioSeq;
     const cust = this.state.customerId;
     const points = Math.floor(t.total / 1000);
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const recFecha = `${pad2(now.getDate())}/${pad2(now.getMonth() + 1)}/${now.getFullYear()}`;
+    const recHora = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
     const sale = {
       folio, method: this.state.payMethod, total: t.total, neto: t.neto, iva: t.iva,
       recv, change: efectivo ? recv - t.total : 0, points, customerId: cust,
       time: now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
       date: now.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' }),
+      recFecha, recHora,
       lines: this.state.cart.map(c => { const p = this.find(c.id); return { name: p.name, qty: c.qty, price: p.price, cat: p.cat }; }),
     };
     const products = this.state.products.map(p => { const c = this.state.cart.find(x => x.id === p.id); return c ? { ...p, stock: p.stock - c.qty } : p; });
     let customers = this.state.customers;
     if (cust) customers = customers.map(cu => cu.id === cust ? { ...cu, points: cu.points + points, spent: cu.spent + t.total, visits: cu.visits + 1 } : cu);
-    this.setState({ products, customers, sales: [sale, ...this.state.sales], folioSeq: folio + 1, cart: [], payOpen: false, ticket: sale, customerId: null });
+    this.setState({ products, customers, sales: [sale, ...this.state.sales], folioSeq: folio + 1, cart: [], payOpen: false, ticket: sale, customerId: null },
+      () => this.printReceipt(sale));
   };
 
   openTicket = (sale) => this.setState({ ticket: sale });
   closeTicket = () => this.setState({ ticket: null });
-  printTicket = () => { try { window.print(); } catch (e) {} };
+  setCfgRecibo = (field, value) => this.setState(s => ({ cfgRecibo: { ...s.cfgRecibo, [field]: value } }));
+  printTicket = () => { if (this.state.ticket) this.printReceipt(this.state.ticket); };
+
+  buildReceiptPayload = (sale) => {
+    const cr = this.state.cfgRecibo;
+    const social = (cr.socialUrl && cr.socialUrl.trim())
+      ? { red: cr.socialRed || 'Redes', url: cr.socialUrl.trim(), etiqueta: '@' + cr.socialUrl.trim().replace(/[\/\s]+$/, '').split('/').pop() }
+      : null;
+    return {
+      negocio: {
+        tagline: cr.tagline, razon_social: cr.razonSocial, rut: cr.rut,
+        giro: cr.giro, direccion: cr.direccion, footer: cr.footer,
+        printer_name: cr.printerName, social,
+      },
+      folio: sale.folio,
+      fecha: sale.recFecha || sale.date, hora: sale.recHora || sale.time,
+      items: sale.lines.map(l => ({ nombre: l.name, qty: l.qty, precio: l.price })),
+      neto: sale.neto, iva: sale.iva, total: sale.total,
+      metodo: sale.method,
+      open_drawer: sale.method === 'efectivo',
+    };
+  };
+
+  printReceipt = (sale) => {
+    const tauri = window.__TAURI__;
+    if (tauri && tauri.core && typeof tauri.core.invoke === 'function') {
+      tauri.core.invoke('print_receipt', { payload: this.buildReceiptPayload(sale) })
+        .catch(err => console.error('print_receipt:', err));
+    } else {
+      try { window.print(); } catch (e) {}   // fallback navegador (preview)
+    }
+  };
 
   adjustStock = (id, d) => this.setState(s => ({ products: s.products.map(p => p.id === id ? { ...p, stock: Math.max(0, p.stock + d) } : p) }));
 
@@ -2402,6 +2456,15 @@ class Component extends DCLogic {
       stockTitle: isAdmin ? 'Gestión de stock' : 'Consulta de stock',
       // configuración
       cfgNav, goCfg, noop: this.noop, cfgAccents, cfgModuleRows,
+      crTagline: S.cfgRecibo.tagline, onCrTagline: (e) => this.setCfgRecibo('tagline', e.target.value),
+      crRazon: S.cfgRecibo.razonSocial, onCrRazon: (e) => this.setCfgRecibo('razonSocial', e.target.value),
+      crRut: S.cfgRecibo.rut, onCrRut: (e) => this.setCfgRecibo('rut', e.target.value),
+      crGiro: S.cfgRecibo.giro, onCrGiro: (e) => this.setCfgRecibo('giro', e.target.value),
+      crDireccion: S.cfgRecibo.direccion, onCrDireccion: (e) => this.setCfgRecibo('direccion', e.target.value),
+      crFooter: S.cfgRecibo.footer, onCrFooter: (e) => this.setCfgRecibo('footer', e.target.value),
+      crPrinter: S.cfgRecibo.printerName, onCrPrinter: (e) => this.setCfgRecibo('printerName', e.target.value),
+      crSocialRed: S.cfgRecibo.socialRed, onCrSocialRed: (e) => this.setCfgRecibo('socialRed', e.target.value),
+      crSocialUrl: S.cfgRecibo.socialUrl, onCrSocialUrl: (e) => this.setCfgRecibo('socialUrl', e.target.value),
       cfgTitle: cfgTitleMap[cfgSec],
       isCfgNegocio: cfgSec === 'negocio', isCfgMarca: cfgSec === 'marca', isCfgLogin: cfgSec === 'login', isCfgOperacion: cfgSec === 'operacion', isCfgModulos: cfgSec === 'modulos', isCfgRecibo: cfgSec === 'recibo',
       brandInitial: (brandName || 'B')[0].toUpperCase(),
