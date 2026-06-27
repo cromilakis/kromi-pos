@@ -144,7 +144,7 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
 
     // tagline + emisor (centrado)
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    line_center(&mut b, &format!("* {} *", p.negocio.tagline));
+    push_text(&mut b, &format!("* {} *", p.negocio.tagline)); nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
     nl(&mut b);
     line_center(&mut b, &p.negocio.razon_social);
@@ -190,7 +190,7 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     // red social (QR) — solo si esta configurada
     if let Some(s) = &p.negocio.social {
         b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-        line_center(&mut b, &format!("Siguenos en {}", s.red));
+        push_text(&mut b, &format!("Siguenos en {}", s.red)); nl(&mut b);
         qr_native(&mut b, &s.url);
         nl(&mut b);
         push_text(&mut b, &s.etiqueta); nl(&mut b);
@@ -200,16 +200,16 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
 
     // pie
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    line_center(&mut b, &p.negocio.footer);
+    push_text(&mut b, &p.negocio.footer); nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
     // timbre SII (DUMMY v1: barras raster generadas + leyenda fija)
     nl(&mut b);
     rule(&mut b, b'-');
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    line_center(&mut b, "Timbre Electronico SII");
+    push_text(&mut b, "Timbre Electronico SII"); nl(&mut b);
     timbre_dummy(&mut b);
-    line_center(&mut b, "Res. 80 de 2014 - www.sii.cl");
+    push_text(&mut b, "Res. 80 de 2014 - www.sii.cl"); nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
     // feed + corte
