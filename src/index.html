@@ -1774,11 +1774,15 @@ class Component extends DCLogic {
     const folio = this.state.folioSeq;
     const cust = this.state.customerId;
     const points = Math.floor(t.total / 1000);
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const recFecha = `${pad2(now.getDate())}/${pad2(now.getMonth() + 1)}/${now.getFullYear()}`;
+    const recHora = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
     const sale = {
       folio, method: this.state.payMethod, total: t.total, neto: t.neto, iva: t.iva,
       recv, change: efectivo ? recv - t.total : 0, points, customerId: cust,
       time: now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
       date: now.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' }),
+      recFecha, recHora,
       lines: this.state.cart.map(c => { const p = this.find(c.id); return { name: p.name, qty: c.qty, price: p.price, cat: p.cat }; }),
     };
     const products = this.state.products.map(p => { const c = this.state.cart.find(x => x.id === p.id); return c ? { ...p, stock: p.stock - c.qty } : p; });
@@ -1796,7 +1800,7 @@ class Component extends DCLogic {
   buildReceiptPayload = (sale) => {
     const cr = this.state.cfgRecibo;
     const social = (cr.socialUrl && cr.socialUrl.trim())
-      ? { red: cr.socialRed || 'Redes', url: cr.socialUrl.trim(), etiqueta: cr.socialUrl.replace(/^https?:\/\/(www\.)?/, '') }
+      ? { red: cr.socialRed || 'Redes', url: cr.socialUrl.trim(), etiqueta: '@' + cr.socialUrl.trim().replace(/[\/\s]+$/, '').split('/').pop() }
       : null;
     return {
       negocio: {
@@ -1805,7 +1809,7 @@ class Component extends DCLogic {
         printer_name: cr.printerName, social,
       },
       folio: sale.folio,
-      fecha: sale.date, hora: sale.time,
+      fecha: sale.recFecha || sale.date, hora: sale.recHora || sale.time,
       items: sale.lines.map(l => ({ nombre: l.name, qty: l.qty, precio: l.price })),
       neto: sale.neto, iva: sale.iva, total: sale.total,
       metodo: sale.method,
