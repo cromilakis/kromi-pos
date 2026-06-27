@@ -1792,6 +1792,36 @@ class Component extends DCLogic {
   setCfgRecibo = (field, value) => this.setState(s => ({ cfgRecibo: { ...s.cfgRecibo, [field]: value } }));
   printTicket = () => { try { window.print(); } catch (e) {} };
 
+  buildReceiptPayload = (sale) => {
+    const cr = this.state.cfgRecibo;
+    const social = (cr.socialUrl && cr.socialUrl.trim())
+      ? { red: cr.socialRed || 'Redes', url: cr.socialUrl.trim(), etiqueta: cr.socialUrl.replace(/^https?:\/\/(www\.)?/, '') }
+      : null;
+    return {
+      negocio: {
+        tagline: cr.tagline, razon_social: cr.razonSocial, rut: cr.rut,
+        giro: cr.giro, direccion: cr.direccion, footer: cr.footer,
+        printer_name: cr.printerName, social,
+      },
+      folio: sale.folio,
+      fecha: sale.date, hora: sale.time,
+      items: sale.lines.map(l => ({ nombre: l.name, qty: l.qty, precio: l.price })),
+      neto: sale.neto, iva: sale.iva, total: sale.total,
+      metodo: sale.method,
+      open_drawer: sale.method === 'efectivo',
+    };
+  };
+
+  printReceipt = (sale) => {
+    const tauri = window.__TAURI__;
+    if (tauri && tauri.core && typeof tauri.core.invoke === 'function') {
+      tauri.core.invoke('print_receipt', { payload: this.buildReceiptPayload(sale) })
+        .catch(err => console.error('print_receipt:', err));
+    } else {
+      try { window.print(); } catch (e) {}   // fallback navegador (preview)
+    }
+  };
+
   adjustStock = (id, d) => this.setState(s => ({ products: s.products.map(p => p.id === id ? { ...p, stock: Math.max(0, p.stock + d) } : p) }));
 
   barcodeOf = (id) => '750' + String(10000000 + id * 7919).padStart(10, '0');
