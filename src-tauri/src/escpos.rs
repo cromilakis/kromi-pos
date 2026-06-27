@@ -95,11 +95,52 @@ fn qr_native(buf: &mut Vec<u8>, url: &str) {
     buf.extend_from_slice(&[0x1D,0x28,0x6B,0x03,0x00,0x31,0x51,0x30]);      // print
 }
 
+fn timbre_dummy(buf: &mut Vec<u8>) {
+    // raster pseudo-PDF417: 384px de ancho, 12 filas de 5px. Patron deterministico.
+    let width = 384usize;
+    let bpr = (width + 7) / 8;
+    let row_h = 5usize;
+    let rows = 12usize;
+    let h = rows * row_h;
+    // genera 1 bit por pixel: barras segun una secuencia deterministica
+    let mut bits = vec![0u8; bpr * h];
+    let mut seed: u32 = 0x1234_5;
+    let mut next = || { seed = seed.wrapping_mul(1_103_515_245).wrapping_add(12_345); (seed >> 16) & 0x7FFF };
+    for r in 0..rows {
+        let mut x = 0usize;
+        // patron de inicio
+        for px in 0..3 { set_bit(&mut bits, bpr, px, r*row_h, row_h, width); let _ = px; }
+        x = 6;
+        while x < width - 8 {
+            let wd = (next() % 5 + 2) as usize;
+            if next() % 2 == 1 { for k in 0..wd { if x+k < width { set_bit(&mut bits, bpr, x+k, r*row_h, row_h, width); } } }
+            x += wd;
+        }
+        for px in (width-4)..(width-1) { set_bit(&mut bits, bpr, px, r*row_h, row_h, width); }
+    }
+    // emitir GS v 0 en una sola banda (h<256)
+    buf.extend_from_slice(&[0x1D,0x76,0x30,0x00]);
+    buf.push((bpr & 0xFF) as u8); buf.push((bpr >> 8) as u8);
+    buf.push((h & 0xFF) as u8); buf.push((h >> 8) as u8);
+    buf.extend_from_slice(&bits);
+    nl(buf);
+}
+
+fn set_bit(bits: &mut [u8], bpr: usize, x: usize, y0: usize, row_h: usize, width: usize) {
+    if x >= width { return; }
+    for dy in 0..row_h {
+        let idx = (y0 + dy) * bpr + (x / 8);
+        if idx < bits.len() { bits[idx] |= 0x80 >> (x % 8); }
+    }
+}
+
 pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     let mut b: Vec<u8> = Vec::new();
     b.extend_from_slice(&[0x1B, 0x40]); // init
 
-    // (logo va aqui en Task 3)
+    // logo (raster pre-generado: incluye ESC a 1 ... ESC a 0)
+    b.extend_from_slice(include_bytes!("../assets/logo.escpos"));
+    nl(&mut b);
 
     // tagline + emisor (centrado)
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
@@ -162,7 +203,14 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     line_center(&mut b, &p.negocio.footer);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
-    // (timbre SII dummy va aqui en Task 3)
+    // timbre SII (DUMMY v1: barras raster generadas + leyenda fija)
+    nl(&mut b);
+    rule(&mut b, b'-');
+    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+    line_center(&mut b, "Timbre Electronico SII");
+    timbre_dummy(&mut b);
+    line_center(&mut b, "Res. 80 de 2014 - www.sii.cl");
+    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
     // feed + corte
     b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
