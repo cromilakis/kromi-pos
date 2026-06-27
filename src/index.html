@@ -1784,13 +1784,14 @@ class Component extends DCLogic {
     const products = this.state.products.map(p => { const c = this.state.cart.find(x => x.id === p.id); return c ? { ...p, stock: p.stock - c.qty } : p; });
     let customers = this.state.customers;
     if (cust) customers = customers.map(cu => cu.id === cust ? { ...cu, points: cu.points + points, spent: cu.spent + t.total, visits: cu.visits + 1 } : cu);
-    this.setState({ products, customers, sales: [sale, ...this.state.sales], folioSeq: folio + 1, cart: [], payOpen: false, ticket: sale, customerId: null });
+    this.setState({ products, customers, sales: [sale, ...this.state.sales], folioSeq: folio + 1, cart: [], payOpen: false, ticket: sale, customerId: null },
+      () => this.printReceipt(sale));
   };
 
   openTicket = (sale) => this.setState({ ticket: sale });
   closeTicket = () => this.setState({ ticket: null });
   setCfgRecibo = (field, value) => this.setState(s => ({ cfgRecibo: { ...s.cfgRecibo, [field]: value } }));
-  printTicket = () => { try { window.print(); } catch (e) {} };
+  printTicket = () => { if (this.state.ticket) this.printReceipt(this.state.ticket); };
 
   buildReceiptPayload = (sale) => {
     const cr = this.state.cfgRecibo;
