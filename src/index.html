@@ -229,55 +229,119 @@ input::placeholder{color:#9aa8bd;}
     <sc-if value="{{ isInicio }}" hint-placeholder-val="{{ false }}">
     <div data-screen-label="Inicio" style="position:absolute;inset:0;overflow:auto;padding:30px 34px;">
       <div style="max-width:1080px;margin:0 auto;">
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:24px;">
-          <div>
-            <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:6px;">{{ todayStr }} · Sucursal Centro</div>
-            <h2 style="font-size:28px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">Tu turno de hoy</h2>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;">
-          </div>
+        <div style="margin-bottom:24px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:6px;">{{ inicioEyebrow }}</div>
+          <h2 style="font-size:28px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">{{ inicioTitle }}</h2>
         </div>
 
         <!-- stat cards -->
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px;">
           <div style="background:#0F2A1B;border-radius:18px;padding:20px 22px;color:#fff;position:relative;overflow:hidden;">
             <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(34,196,99,.40),transparent 70%);"></div>
-            <div style="font-size:12.5px;color:#97F2CC;font-weight:700;margin-bottom:8px;position:relative;">Ventas del turno</div>
-            <div style="font-size:32px;font-weight:900;position:relative;letter-spacing:-.02em;">{{ myShiftCount }}</div>
+            <div style="font-size:12.5px;color:#97F2CC;font-weight:700;margin-bottom:8px;position:relative;">Ventas de hoy</div>
+            <div style="font-size:32px;font-weight:900;position:relative;letter-spacing:-.02em;">{{ inicioCountStr }}</div>
             <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:3px;position:relative;">operaciones cobradas</div>
           </div>
           <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
             <div style="font-size:12.5px;color:#7C95A8;font-weight:700;margin-bottom:8px;">Total vendido</div>
-            <div style="font-size:30px;font-weight:900;color:#0F2A1B;letter-spacing:-.02em;">{{ myShiftTotalStr }}</div>
+            <div style="font-size:30px;font-weight:900;color:#0F2A1B;letter-spacing:-.02em;">{{ inicioTotalStr }}</div>
             <div style="font-size:12px;color:#9aa8bd;margin-top:3px;">IVA incluido</div>
           </div>
           <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
-            <div style="font-size:12.5px;color:#7C95A8;font-weight:700;margin-bottom:8px;">Tiempo en turno</div>
-            <div style="font-size:30px;font-weight:900;color:#0F2A1B;letter-spacing:-.02em;">{{ shiftDurationStr }}</div>
-            <div style="font-size:12px;color:#9aa8bd;margin-top:3px;">desde las {{ shiftOpenStr }}</div>
+            <div style="font-size:12.5px;color:#7C95A8;font-weight:700;margin-bottom:8px;">Nuevos clientes</div>
+            <div style="font-size:30px;font-weight:900;color:#0F2A1B;letter-spacing:-.02em;">{{ inicioNewStr }}</div>
+            <div style="font-size:12px;color:#9aa8bd;margin-top:3px;">registrados hoy</div>
           </div>
           <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
-            <div style="font-size:12.5px;color:#7C95A8;font-weight:700;margin-bottom:8px;">Ticket promedio</div>
-            <div style="font-size:30px;font-weight:900;color:#0F2A1B;letter-spacing:-.02em;">{{ myShiftAvgStr }}</div>
-            <div style="font-size:12px;color:#9aa8bd;margin-top:3px;">por venta</div>
+            <div style="font-size:12.5px;color:#7C95A8;font-weight:700;margin-bottom:8px;">Sin registrar</div>
+            <div style="font-size:30px;font-weight:900;color:#0F2A1B;letter-spacing:-.02em;">{{ inicioWalkinsStr }}</div>
+            <div style="font-size:12px;color:#9aa8bd;margin-top:3px;">compras sin cliente</div>
           </div>
         </div>
 
-        <!-- recent activity -->
+        <!-- ventas por hora -->
+        <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;margin-bottom:18px;">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+            <div>
+              <div style="font-weight:900;font-size:16px;color:#0F2A1B;">Ventas por hora</div>
+              <div style="font-size:12.5px;color:#9aa8bd;margin-top:2px;">Cantidad de ventas por hora, según medio de pago</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#2A3A2E;"><span style="width:11px;height:11px;border-radius:50%;background:#22C463;"></span>Efectivo {{ inicioCashCountStr }}</div>
+              <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#2A3A2E;"><span style="width:11px;height:11px;border-radius:50%;background:#2563EB;"></span>Tarjeta {{ inicioCardCountStr }}</div>
+              <sc-if value="{{ inicioHasSales }}" hint-placeholder-val="{{ true }}">
+              <div style="background:#E6F7EE;color:#0a6e36;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;white-space:nowrap;">Hora más activa {{ inicioPeakLabel }}</div>
+              </sc-if>
+            </div>
+          </div>
+          <sc-if value="{{ inicioHasSales }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:10px;">
+            <div style="position:relative;width:26px;flex:none;height:200px;">
+              <sc-for list="{{ inicioYTicks }}" as="y" hint-placeholder-count="3">
+                <div style="position:absolute;right:5px;bottom:{{ y.bottomPct }}%;transform:translateY(50%);font-size:11px;color:#9aa8bd;font-weight:600;">{{ y.label }}</div>
+              </sc-for>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="position:relative;height:200px;border-left:1px solid #E1E5EE;border-bottom:1px solid #E1E5EE;">
+                <sc-for list="{{ inicioGridLines }}" as="g" hint-placeholder-count="4">
+                  <div style="position:absolute;left:0;right:0;bottom:{{ g.bottomPct }}%;border-top:1px dashed #F0F2F7;"></div>
+                </sc-for>
+                <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;">
+                  <polyline points="{{ inicioCashPolyline }}" fill="none" stroke="#22C463" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                  <polyline points="{{ inicioCardPolyline }}" fill="none" stroke="#2563EB" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                </svg>
+                <sc-for list="{{ inicioCashDots }}" as="d" hint-placeholder-count="6">
+                  <div style="{{ d.style }}" title="{{ d.title }}"></div>
+                </sc-for>
+                <sc-for list="{{ inicioCardDots }}" as="d" hint-placeholder-count="6">
+                  <div style="{{ d.style }}" title="{{ d.title }}"></div>
+                </sc-for>
+              </div>
+              <div style="position:relative;height:20px;margin-top:6px;">
+                <sc-for list="{{ inicioXTicks }}" as="x" hint-placeholder-count="6">
+                  <span style="{{ x.style }}">{{ x.label }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          </sc-if>
+          <sc-if value="{{ inicioNoSales }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;color:#9aa8bd;font-size:13.5px;padding:34px 0;">Todavía no hay ventas hoy.</div>
+          </sc-if>
+        </div>
+
+        <!-- alerta de stock crítico (solo admin) -->
+        <sc-if value="{{ inicioCriticalShow }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ goStock }}" style="width:100%;display:flex;align-items:center;gap:13px;border:1px solid #F5C2C2;background:#FDECEC;border-radius:18px;padding:16px 20px;margin-bottom:18px;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="width:38px;height:38px;border-radius:11px;background:#F8D2D2;color:#B3261E;display:flex;align-items:center;justify-content:center;flex:none;font-size:20px;font-weight:900;">!</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:800;font-size:15px;color:#9a2533;">{{ inicioCriticalText }}</div>
+            <div style="font-size:12.5px;color:#b1607a;margin-top:1px;">Revisa el stock crítico y genera la solicitud de reposición.</div>
+          </div>
+          <span style="color:#9a2533;font-weight:800;font-size:13px;white-space:nowrap;">Ir a Stock →</span>
+        </button>
+        </sc-if>
+
+        <!-- stock bajo (solo admin) -->
+        <sc-if value="{{ inicioShowLowStock }}" hint-placeholder-val="{{ false }}">
         <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-            <div style="font-weight:900;font-size:16px;color:#0F2A1B;">Actividad reciente</div>
-            <button onClick="{{ goHistorialFromInicio }}" style="{{ verHistorialStyle }}">{{ verHistorialLabel }}</button>
+            <div style="font-weight:900;font-size:16px;color:#0F2A1B;">Stock bajo</div>
+            <button onClick="{{ goStock }}" style="display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:#1E9E54;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">Ir a Stock →</button>
           </div>
-          <sc-for list="{{ recentActivity }}" as="r" hint-placeholder-count="5">
-              <div style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid #F0F2F7;">
-                <span style="{{ r.dotStyle }}">{{ r.icon }}</span>
-                <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:14px;color:#0F2A1B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.summary }}</div><div style="font-size:12px;color:#9aa8bd;">{{ r.meta }}</div></div>
-                <span style="{{ r.methodStyle }}">{{ r.method }}</span>
-                <span style="font-weight:900;font-size:15px;color:#0F2A1B;white-space:nowrap;min-width:80px;text-align:right;">{{ r.amount }}</span>
-              </div>
-            </sc-for>
-          </div>
+          <sc-if value="{{ lowStockEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="color:#9aa8bd;font-size:13.5px;padding:18px 0;">Sin productos bajo el mínimo. 👍</div>
+          </sc-if>
+          <sc-for list="{{ lowStockRows }}" as="r" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid #F0F2F7;">
+              <span style="{{ r.tileStyle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ r.iconColor }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
+              <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:14px;color:#0F2A1B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.name }}</div><div style="font-size:12px;color:#9aa8bd;">{{ r.catLabel }}</div></div>
+              <span style="{{ r.dotStyle }}"></span>
+              <span style="font-weight:900;font-size:14px;color:#0F2A1B;white-space:nowrap;min-width:74px;text-align:right;">{{ r.stockStr }}</span>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
       </div>
     </div>
     </sc-if>
@@ -508,6 +572,11 @@ input::placeholder{color:#9aa8bd;}
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7"/><path d="M3 7l2.5-3.5A2 2 0 0 1 7 3h10a2 2 0 0 1 1.5.7L21 7"/><path d="M3 7h18"/></svg>
           Categorías
         </button>
+        <button onClick="{{ pickStockFile }}" title="Sumar stock desde un archivo CSV o JSON" style="display:flex;align-items:center;gap:8px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:12px;padding:12px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+          Cargar stock
+        </button>
+        <input ref="{{ stockFileRef }}" type="file" accept=".csv,.json" onChange="{{ onStockFile }}" style="display:none;" />
         <button onClick="{{ openAddProduct }}" style="display:flex;align-items:center;gap:8px;border:1px solid #A7E3C0;background:#E6F7EE;color:#0a6e36;border-radius:12px;padding:12px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
           Agregar producto
@@ -521,6 +590,37 @@ input::placeholder{color:#9aa8bd;}
         </span>
         </sc-if>
       </div>
+      <sc-if value="{{ stockCriticalShow }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-bottom:18px;">
+        <button onClick="{{ toggleStockCritical }}" style="width:100%;display:flex;align-items:center;gap:13px;border:1px solid #F5C2C2;background:#FDECEC;border-radius:14px;padding:13px 16px;cursor:pointer;font-family:inherit;text-align:left;">
+          <span style="width:34px;height:34px;border-radius:10px;background:#F8D2D2;color:#B3261E;display:flex;align-items:center;justify-content:center;flex:none;font-size:18px;font-weight:900;">!</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:800;font-size:14.5px;color:#9a2533;">{{ stockCriticalTitle }}</div>
+            <div style="font-size:12.5px;color:#b1607a;margin-top:1px;">Toca para ver el detalle y exportar la solicitud de reposición.</div>
+          </div>
+          <span style="{{ stockCriticalChevron }}">⌄</span>
+        </button>
+        <sc-if value="{{ stockCriticalOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid #E1E5EE;border-radius:14px;padding:14px 18px;margin-top:10px;background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;">
+            <div style="font-weight:900;font-size:15px;color:#0F2A1B;">Productos críticos para reponer</div>
+            <button onClick="{{ exportCriticalCsv }}" style="display:inline-flex;align-items:center;gap:7px;border:1px solid #A7E3C0;background:#E6F7EE;color:#0a6e36;border-radius:11px;padding:9px 14px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              Exportar CSV
+            </button>
+          </div>
+          <sc-for list="{{ criticalRows }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:13px;padding:10px 0;border-bottom:1px solid #F0F2F7;">
+              <span style="{{ r.dotStyle }}"></span>
+              <div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:14px;color:#0F2A1B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.name }}</div><div style="font-size:12px;color:#9aa8bd;">{{ r.catLabel }}</div></div>
+              <span style="font-size:12.5px;color:#9a2533;font-weight:700;white-space:nowrap;">Faltan {{ r.faltanteStr }}</span>
+              <span style="font-weight:900;font-size:14px;color:#0F2A1B;white-space:nowrap;min-width:74px;text-align:right;">{{ r.stockStr }}</span>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+      </sc-if>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #E1E5EE;border-radius:12px;padding:10px 15px;flex:1;max-width:440px;">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -555,7 +655,10 @@ input::placeholder{color:#9aa8bd;}
               <div style="{{ r.cardStyle }}">
                 <div style="{{ r.thumbStyle }}">{{ r.icon }}</div>
                 <div style="flex:1;min-width:0;display:flex;flex-direction:column;padding:12px 14px;">
-                  <div style="font-weight:700;font-size:15px;color:#0F2A1B;line-height:1.2;">{{ r.name }}</div>
+                  <div style="display:flex;align-items:center;gap:7px;">
+                    <div style="font-weight:700;font-size:15px;color:#0F2A1B;line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ r.name }}</div>
+                    <span style="{{ r.criticalTagStyle }}">★ Crítico</span>
+                  </div>
                   <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:3px;">
                     <span style="font-weight:700;font-size:13px;color:#7C95A8;">{{ r.priceStr }}</span>
                     <span style="{{ r.stockCaptionStyle }}">{{ r.stockCaption }}</span>
@@ -697,6 +800,35 @@ input::placeholder{color:#9aa8bd;}
             <span style="text-align:right;font-weight:900;font-size:15px;color:#0F2A1B;">{{ h.totalStr }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cdd5e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>
+        </sc-for>
+      </div>
+
+      <!-- cierres de caja -->
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:30px 0 14px;">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Arqueos</div>
+          <h2 style="font-size:22px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">Cierres de caja</h2>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:16px;">
+        <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;">Cierres registrados</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ cierreHistCountStr }}</div></div>
+        <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;">Cuadraron exacto</div><div style="font-size:22px;font-weight:900;color:#0a6e36;">{{ cierreExactStr }}</div></div>
+        <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;">Diferencia neta acumulada</div><div style="{{ cierreNetStyle }}">{{ cierreNetStr }}</div></div>
+      </div>
+      <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;overflow:hidden;">
+        <div style="display:grid;grid-template-columns:120px 1fr 120px 120px 120px 84px 100px;gap:14px;padding:12px 22px;background:#F8FAFC;border-bottom:1px solid #E1E5EE;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#94A3B5;">
+          <span>Fecha</span><span>Cajero</span><span style="text-align:right;">Esperado</span><span style="text-align:right;">Contado</span><span style="text-align:right;">Diferencia</span><span style="text-align:right;">Desvío</span><span style="text-align:right;">Estado</span>
+        </div>
+        <sc-for list="{{ cierreHistoryRows }}" as="c" hint-placeholder-count="6">
+          <div style="display:grid;grid-template-columns:120px 1fr 120px 120px 120px 84px 100px;gap:14px;padding:14px 22px;border-bottom:1px solid #F0F2F7;align-items:center;">
+            <span style="font-size:13px;font-weight:700;color:#0F2A1B;">{{ c.dateLabel }}</span>
+            <span style="font-size:14px;font-weight:600;color:#0F2A1B;">{{ c.cashierName }}</span>
+            <span style="text-align:right;font-size:13.5px;color:#5a6b7e;">{{ c.expectedStr }}</span>
+            <span style="text-align:right;font-size:13.5px;color:#0F2A1B;font-weight:700;">{{ c.countedStr }}</span>
+            <span style="text-align:right;font-size:13.5px;font-weight:700;color:#0F2A1B;">{{ c.diffStr }}</span>
+            <span style="text-align:right;{{ c.pctStyle }}">{{ c.pctStr }}</span>
+            <span style="display:flex;justify-content:flex-end;"><span style="{{ c.chipStyle }}">{{ c.estado }}</span></span>
+          </div>
         </sc-for>
       </div>
     </div>
@@ -1206,10 +1338,58 @@ input::placeholder{color:#9aa8bd;}
             <input value="{{ formStock }}" onInput="{{ onFormStock }}" inputmode="numeric" placeholder="0" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
           </div>
         </div>
+        <div onClick="{{ toggleProdCritical }}" style="display:flex;align-items:center;gap:11px;cursor:pointer;border:1px solid #E1E5EE;border-radius:12px;padding:11px 14px;">
+          <span style="{{ formCriticalBoxStyle }}">{{ formCriticalCheck }}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:13.5px;color:#0F2A1B;">Producto crítico (esencial)</div>
+            <div style="font-size:12px;color:#7C95A8;">Se vigila su disponibilidad y entra en la solicitud de reposición.</div>
+          </div>
+        </div>
       </div>
       <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
         <button onClick="{{ closeForm }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
         <button onClick="{{ saveProduct }}" style="{{ saveProductStyle }}">{{ saveProductLabel }}</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= STOCK IMPORT MODAL ================= -->
+  <sc-if value="{{ stockImportOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;">
+    <div style="width:500px;max-width:100%;max-height:88vh;display:flex;flex-direction:column;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px 16px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#E6F7EE;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1E9E54" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+        </div>
+        <div style="flex:1;min-width:0;"><div style="font-weight:900;font-size:19px;color:#0F2A1B;">Cargar stock</div><div style="font-size:12.5px;color:#7C95A8;">{{ stockImportFileName }}</div></div>
+        <button onClick="{{ cancelStockImport }}" style="width:32px;height:32px;border:0;background:#F6F7FB;border-radius:9px;color:#7C95A8;font-size:18px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex:none;">✕</button>
+      </div>
+      <div style="padding:18px 24px;overflow:auto;">
+        <sc-if value="{{ stockImportHasError }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:10px;background:#FDECEC;color:#9a2533;border-radius:12px;padding:12px 14px;font-size:13.5px;font-weight:600;">{{ stockImportError }}</div>
+        </sc-if>
+        <sc-if value="{{ stockImportHasRows }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:13px;color:#7C95A8;margin-bottom:10px;">Se sumarán al stock actual <b style="color:#0F2A1B;">{{ stockImportRowCountStr }}</b> productos:</div>
+        <sc-for list="{{ stockImportRows }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #F0F2F7;">
+            <div style="flex:1;min-width:0;font-weight:700;font-size:14px;color:#0F2A1B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ r.name }}</div>
+            <span style="font-size:13px;color:#9aa8bd;white-space:nowrap;">{{ r.currentStr }}</span>
+            <span style="font-size:13px;color:#0a6e36;font-weight:700;white-space:nowrap;">+{{ r.addStr }}</span>
+            <span style="font-size:15px;color:#0F2A1B;font-weight:900;white-space:nowrap;min-width:34px;text-align:right;">{{ r.nextStr }}</span>
+          </div>
+        </sc-for>
+        </sc-if>
+        <sc-if value="{{ stockImportNoRows }}" hint-placeholder-val="{{ false }}">
+        <div style="color:#9a2533;font-size:13.5px;font-weight:600;padding:6px 0;">Ningún código del archivo coincide con un producto del catálogo.</div>
+        </sc-if>
+        <sc-if value="{{ stockImportHasUnknown }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:14px;background:#FBF1E0;color:#9a6a1e;border-radius:12px;padding:11px 14px;font-size:12.5px;line-height:1.5;"><b>{{ stockImportUnknownCountStr }}</b> código(s) no reconocido(s) (se ignoran): {{ stockImportUnknownStr }}</div>
+        </sc-if>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ cancelStockImport }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ confirmStockImport }}" style="{{ stockImportConfirmStyle }}">Confirmar carga</button>
       </div>
     </div>
   </div>
@@ -1431,7 +1611,11 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.scanRef = React.createRef();
-    const P = (id, name, cat, price, stock, img) => ({ id, name, cat, price, stock, img: img ? "uploads/" + encodeURI(img).replace(".png", ".jpg") : null }); // fotos redimensionadas a JPEG 720px en uploads/
+    this.stockFileRef = React.createRef();
+    const _now = new Date(); // "hoy" real del sistema, para que registros sembrados y en vivo coincidan
+    const TODAY = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
+    this.TODAY = TODAY;
+    const P = (id, name, cat, price, stock, min, img, critical) => ({ id, name, cat, price, stock, minStock: min, critical: !!critical, img: img ? "uploads/" + encodeURI(img).replace(".png", ".jpg") : null }); // fotos redimensionadas a JPEG 720px en uploads/
     this.PALETTE = [
       { dot: '#22C463', tile: '#E6F7EE', pillBg: '#D3F4E0', pillFg: '#0a6e36' },
       { dot: '#DD5771', tile: '#FCEFF2', pillBg: '#FCE4E9', pillFg: '#A4264A' },
@@ -1486,6 +1670,14 @@ class Component extends DCLogic {
       cfgModules: { stock: true, clientes: true, historial: true, categorias: true },
       cierreCounted: '',
       cierreDone: false,
+      cierres: [
+        { id: 'cl1', dateIso: '2026-06-26', dateLabel: 'Vie 26 jun', cashierId: 'u2', cashierName: 'M. Jara',     openTime: '09:00', closeTime: '20:10', salesCount: 16, cash: 142300, card: 98000,  float: 50000, counted: 192300 },
+        { id: 'cl2', dateIso: '2026-06-26', dateLabel: 'Vie 26 jun', cashierId: 'u3', cashierName: 'Pedro Lillo', openTime: '12:00', closeTime: '20:05', salesCount: 11, cash: 88000,  card: 120000, float: 50000, counted: 135500 },
+        { id: 'cl3', dateIso: '2026-06-25', dateLabel: 'Jue 25 jun', cashierId: 'u2', cashierName: 'M. Jara',     openTime: '09:00', closeTime: '19:50', salesCount: 17, cash: 167000, card: 75000,  float: 50000, counted: 219000 },
+        { id: 'cl4', dateIso: '2026-06-25', dateLabel: 'Jue 25 jun', cashierId: 'u1', cashierName: 'Daniela Soto', openTime: '15:00', closeTime: '20:00', salesCount: 6,  cash: 54000,  card: 30000,  float: 50000, counted: 104000 },
+        { id: 'cl5', dateIso: '2026-06-24', dateLabel: 'Mié 24 jun', cashierId: 'u3', cashierName: 'Pedro Lillo', openTime: '09:00', closeTime: '20:15', salesCount: 13, cash: 99000,  card: 60000,  float: 50000, counted: 143000 },
+        { id: 'cl6', dateIso: '2026-06-24', dateLabel: 'Mié 24 jun', cashierId: 'u2', cashierName: 'M. Jara',     openTime: '12:00', closeTime: '20:00', salesCount: 15, cash: 120000, card: 88000,  float: 50000, counted: 171000 },
+      ],
       backupAuto: true,
       cat: 'todas',
       stockQuery: '',
@@ -1515,6 +1707,8 @@ class Component extends DCLogic {
       custForm: null,
       custConfirmId: null,
       prodForm: null,
+      stockCriticalOpen: false,
+      stockImport: null,
       confirmDeleteId: null,
       bumping: false,
       bumpCount: 0,
@@ -1524,58 +1718,60 @@ class Component extends DCLogic {
       scanMsg: null,
       scanPickerOpen: false,
       products: [
-        P(1,'Monstera Deliciosa','interior',14990,8,'monstera.png'),
-        P(2,'Pothos Dorado','interior',6490,23,'pothos.png'),
-        P(3,'Sansevieria','interior',9990,12,'sansevieria.png'),
-        P(4,'Zamioculca (ZZ)','interior',13990,9,'zamioculca.png'),
-        P(5,'Calathea','interior',11490,5,'calathea.png'),
-        P(6,'Helecho','interior',5990,14,'helecho.png'),
-        P(7,'Lavanda','exterior',7990,18,'lavanda.png'),
-        P(8,'Hortensia','exterior',9490,6,'hortensia.png'),
-        P(9,'Romero','exterior',4490,22,'romero.png'),
-        P(10,'Buganvilia','exterior',12990,4,'bungavilia.png'),
-        P(11,'Echeveria','suculentas',3490,40,'echeveria.png'),
-        P(12,'Cactus Bola','suculentas',4290,27,'cactus bola.png'),
-        P(13,'Aloe Vera','suculentas',5490,15,'aloevera.png'),
-        P(14,'Haworthia','suculentas',3990,19,'haworthia.png'),
-        P(15,'Maceta cerámica 18cm','macetas',8990,31,'maceta18.png'),
-        P(16,'Maceta terracota 14cm','macetas',4990,26,'maceta14.png'),
-        P(17,'Maceta colgante','macetas',6990,11,'macetacolgante.png'),
-        P(18,'Sustrato universal 5L','sustratos',4990,38,'sustrato.png'),
-        P(19,'Tierra de hojas 10L','sustratos',7490,17,'tierrahojas.png'),
-        P(20,'Perlita 2L','sustratos',3290,24,'perlita.png'),
-        P(21,'Tijera de podar','herramientas',9990,13,'tijeras.png'),
-        P(22,'Regadera 2L','herramientas',6490,9,'regadera.png'),
-        P(23,'Guantes de jardín','herramientas',3990,20,'guantes.png'),
+        P(1,'Monstera Deliciosa','interior',14990,8,6,'monstera.png', true),
+        P(2,'Pothos Dorado','interior',6490,23,8,'pothos.png'),
+        P(3,'Sansevieria','interior',9990,12,6,'sansevieria.png'),
+        P(4,'Zamioculca (ZZ)','interior',13990,9,10,'zamioculca.png'),
+        P(5,'Calathea','interior',11490,5,6,'calathea.png', true),
+        P(6,'Helecho','interior',5990,14,8,'helecho.png'),
+        P(7,'Lavanda','exterior',7990,18,8,'lavanda.png'),
+        P(8,'Hortensia','exterior',9490,6,8,'hortensia.png', true),
+        P(9,'Romero','exterior',4490,22,10,'romero.png'),
+        P(10,'Buganvilia','exterior',12990,4,6,'bungavilia.png', true),
+        P(11,'Echeveria','suculentas',3490,40,15,'echeveria.png'),
+        P(12,'Cactus Bola','suculentas',4290,27,12,'cactus bola.png'),
+        P(13,'Aloe Vera','suculentas',5490,15,8,'aloevera.png'),
+        P(14,'Haworthia','suculentas',3990,19,10,'haworthia.png'),
+        P(15,'Maceta cerámica 18cm','macetas',8990,31,12,'maceta18.png'),
+        P(16,'Maceta terracota 14cm','macetas',4990,26,12,'maceta14.png'),
+        P(17,'Maceta colgante','macetas',6990,11,10,'macetacolgante.png'),
+        P(18,'Sustrato universal 5L','sustratos',4990,38,15,'sustrato.png', true),
+        P(19,'Tierra de hojas 10L','sustratos',7490,17,10,'tierrahojas.png'),
+        P(20,'Perlita 2L','sustratos',3290,24,10,'perlita.png'),
+        P(21,'Tijera de podar','herramientas',9990,13,8,'tijeras.png'),
+        P(22,'Regadera 2L','herramientas',6490,9,10,'regadera.png'),
+        P(23,'Guantes de jardín','herramientas',3990,20,10,'guantes.png'),
       ],
       customers: [
-        { id:'c1', name:'Camila Rojas',  email:'camila.rojas@correo.cl', phone:'+56 9 5512 4480', points:320, spent:86990,  visits:7 },
-        { id:'c2', name:'Andrés Fuentes',email:'andres.fuentes@correo.cl', phone:'+56 9 4408 1190', points:150, spent:41200,  visits:4 },
-        { id:'c3', name:'Vivero La Quinta',email:'contacto@viverolaquinta.cl', phone:'+56 2 2987 3300', points:980, spent:312400, visits:22 },
-        { id:'c4', name:'Josefa Méndez', email:'josefa.mendez@correo.cl', phone:'+56 9 7781 2055', points:60,  spent:18900,  visits:2 },
+        { id:'c1', name:'Camila Rojas',  email:'camila.rojas@correo.cl', phone:'+56 9 5512 4480', points:320, spent:86990,  visits:7, createdAt:'2026-03-10', createdBy:'u2' },
+        { id:'c2', name:'Andrés Fuentes',email:'andres.fuentes@correo.cl', phone:'+56 9 4408 1190', points:150, spent:41200,  visits:4, createdAt:'2026-05-02', createdBy:'u3' },
+        { id:'c3', name:'Vivero La Quinta',email:'contacto@viverolaquinta.cl', phone:'+56 2 2987 3300', points:980, spent:312400, visits:22, createdAt:'2025-11-15', createdBy:'u1' },
+        { id:'c4', name:'Josefa Méndez', email:'josefa.mendez@correo.cl', phone:'+56 9 7781 2055', points:60,  spent:18900,  visits:2, createdAt:'2026-04-22', createdBy:'u3' },
+        { id:'c5', name:'Tomás Vera',    email:'tomas.vera@correo.cl', phone:'+56 9 6634 7781', points:18,  spent:6490,   visits:1, createdAt:TODAY, createdBy:'u3' },
+        { id:'c6', name:'Florería Sur',  email:'hola@floreriasur.cl', phone:'+56 9 3320 9912', points:32,  spent:13980,  visits:1, createdAt:TODAY, createdBy:'u2' },
       ],
       sales: ((MK) => [
-        MK(426, '09:18', 'efectivo', 7990, 'c4', [{ name: 'Lavanda', qty: 1, price: 7990, cat: 'exterior' }]),
-        MK(427, '09:46', 'tarjeta', 14990, 'c1', [{ name: 'Monstera Deliciosa', qty: 1, price: 14990, cat: 'interior' }]),
-        MK(428, '10:21', 'efectivo', 6980, null, [{ name: 'Echeveria', qty: 2, price: 3490, cat: 'suculentas' }]),
-        MK(429, '11:34', 'tarjeta', 28480, 'c1', [{ name: 'Monstera Deliciosa', qty: 1, price: 14990, cat: 'interior' }, { name: 'Maceta cerámica 18cm', qty: 1, price: 8990, cat: 'macetas' }, { name: 'Sustrato universal 5L', qty: 1, price: 4990, cat: 'sustratos' }]),
-        MK(430, '12:08', 'efectivo', 13990, null, [{ name: 'Zamioculca (ZZ)', qty: 1, price: 13990, cat: 'interior' }]),
-        MK(431, '12:27', 'tarjeta', 32970, 'c3', [{ name: 'Calathea', qty: 2, price: 11490, cat: 'interior' }, { name: 'Pothos Dorado', qty: 1, price: 6490, cat: 'interior' }, { name: 'Perlita 2L', qty: 1, price: 3290, cat: 'sustratos' }]),
-        MK(432, '12:49', 'efectivo', 8990, null, [{ name: 'Maceta cerámica 18cm', qty: 1, price: 8990, cat: 'macetas' }]),
-        MK(433, '13:12', 'tarjeta', 41960, 'c2', [{ name: 'Monstera Deliciosa', qty: 2, price: 14990, cat: 'interior' }, { name: 'Maceta colgante', qty: 1, price: 6990, cat: 'macetas' }, { name: 'Tijera de podar', qty: 1, price: 9990, cat: 'herramientas' }]),
-        MK(434, '13:31', 'efectivo', 6490, null, [{ name: 'Pothos Dorado', qty: 1, price: 6490, cat: 'interior' }]),
-        MK(435, '14:20', 'tarjeta', 11490, 'c4', [{ name: 'Calathea', qty: 1, price: 11490, cat: 'interior' }]),
-        MK(436, '15:44', 'efectivo', 4290, null, [{ name: 'Cactus Bola', qty: 1, price: 4290, cat: 'suculentas' }]),
-        MK(437, '16:25', 'tarjeta', 18980, 'c1', [{ name: 'Hortensia', qty: 2, price: 9490, cat: 'exterior' }]),
-        MK(438, '17:06', 'efectivo', 27450, 'c2', [{ name: 'Buganvilia', qty: 1, price: 12990, cat: 'exterior' }, { name: 'Sansevieria', qty: 1, price: 9990, cat: 'interior' }, { name: 'Perlita 2L', qty: 1, price: 3290, cat: 'sustratos' }]),
-        MK(439, '17:35', 'tarjeta', 13980, null, [{ name: 'Echeveria', qty: 4, price: 3490, cat: 'suculentas' }]),
-        MK(440, '18:02', 'efectivo', 36960, 'c3', [{ name: 'Monstera Deliciosa', qty: 2, price: 14990, cat: 'interior' }, { name: 'Maceta cerámica 18cm', qty: 1, price: 8990, cat: 'macetas' }]),
-        MK(441, '18:29', 'tarjeta', 9990, null, [{ name: 'Sansevieria', qty: 1, price: 9990, cat: 'interior' }]),
-        MK(442, '18:51', 'efectivo', 21980, 'c1', [{ name: 'Hortensia', qty: 1, price: 9490, cat: 'exterior' }, { name: 'Lavanda', qty: 1, price: 7990, cat: 'exterior' }, { name: 'Romero', qty: 1, price: 4490, cat: 'exterior' }]),
-      ].reverse())((folio, time, method, total, customerId, lines) => {
+        MK(426, '09:18', 'efectivo', 7990, 'c4', 'u2', [{ name: 'Lavanda', qty: 1, price: 7990, cat: 'exterior' }]),
+        MK(427, '09:46', 'tarjeta', 14990, 'c1', 'u3', [{ name: 'Monstera Deliciosa', qty: 1, price: 14990, cat: 'interior' }]),
+        MK(428, '10:21', 'efectivo', 6980, null, 'u2', [{ name: 'Echeveria', qty: 2, price: 3490, cat: 'suculentas' }]),
+        MK(429, '11:34', 'tarjeta', 28480, 'c1', 'u3', [{ name: 'Monstera Deliciosa', qty: 1, price: 14990, cat: 'interior' }, { name: 'Maceta cerámica 18cm', qty: 1, price: 8990, cat: 'macetas' }, { name: 'Sustrato universal 5L', qty: 1, price: 4990, cat: 'sustratos' }]),
+        MK(430, '12:08', 'efectivo', 13990, null, 'u2', [{ name: 'Zamioculca (ZZ)', qty: 1, price: 13990, cat: 'interior' }]),
+        MK(431, '12:27', 'tarjeta', 32970, 'c3', 'u1', [{ name: 'Calathea', qty: 2, price: 11490, cat: 'interior' }, { name: 'Pothos Dorado', qty: 1, price: 6490, cat: 'interior' }, { name: 'Perlita 2L', qty: 1, price: 3290, cat: 'sustratos' }]),
+        MK(432, '12:49', 'efectivo', 8990, null, 'u3', [{ name: 'Maceta cerámica 18cm', qty: 1, price: 8990, cat: 'macetas' }]),
+        MK(433, '13:12', 'tarjeta', 41960, 'c2', 'u2', [{ name: 'Monstera Deliciosa', qty: 2, price: 14990, cat: 'interior' }, { name: 'Maceta colgante', qty: 1, price: 6990, cat: 'macetas' }, { name: 'Tijera de podar', qty: 1, price: 9990, cat: 'herramientas' }]),
+        MK(434, '13:31', 'efectivo', 6490, null, 'u3', [{ name: 'Pothos Dorado', qty: 1, price: 6490, cat: 'interior' }]),
+        MK(435, '14:20', 'tarjeta', 11490, 'c4', 'u2', [{ name: 'Calathea', qty: 1, price: 11490, cat: 'interior' }]),
+        MK(436, '15:44', 'efectivo', 4290, null, 'u3', [{ name: 'Cactus Bola', qty: 1, price: 4290, cat: 'suculentas' }]),
+        MK(437, '16:25', 'tarjeta', 18980, 'c1', 'u2', [{ name: 'Hortensia', qty: 2, price: 9490, cat: 'exterior' }]),
+        MK(438, '17:06', 'efectivo', 27450, 'c2', 'u1', [{ name: 'Buganvilia', qty: 1, price: 12990, cat: 'exterior' }, { name: 'Sansevieria', qty: 1, price: 9990, cat: 'interior' }, { name: 'Perlita 2L', qty: 1, price: 3290, cat: 'sustratos' }]),
+        MK(439, '17:35', 'tarjeta', 13980, null, 'u3', [{ name: 'Echeveria', qty: 4, price: 3490, cat: 'suculentas' }]),
+        MK(440, '18:02', 'efectivo', 36960, 'c3', 'u2', [{ name: 'Monstera Deliciosa', qty: 2, price: 14990, cat: 'interior' }, { name: 'Maceta cerámica 18cm', qty: 1, price: 8990, cat: 'macetas' }]),
+        MK(441, '18:29', 'tarjeta', 9990, null, 'u3', [{ name: 'Sansevieria', qty: 1, price: 9990, cat: 'interior' }]),
+        MK(442, '18:51', 'efectivo', 21980, 'c1', 'u2', [{ name: 'Hortensia', qty: 1, price: 9490, cat: 'exterior' }, { name: 'Lavanda', qty: 1, price: 7990, cat: 'exterior' }, { name: 'Romero', qty: 1, price: 4490, cat: 'exterior' }]),
+      ].reverse())((folio, time, method, total, customerId, cashierId, lines) => {
         const neto = Math.round(total / 1.19);
         const recv = method === 'efectivo' ? Math.ceil(total / 1000) * 1000 : total;
-        return { folio, time, method, total, neto, iva: total - neto, recv, change: recv - total, points: Math.floor(total / 1000), customerId, date: 'lun 23 jun', lines };
+        return { folio, time, method, total, neto, iva: total - neto, recv, change: recv - total, points: Math.floor(total / 1000), customerId, cashierId, date: 'lun 23 jun', lines };
       }),
     };
   }
@@ -1691,7 +1887,27 @@ class Component extends DCLogic {
   setCfgAccent = (c) => this.setState({ cfgAccent: c });
   toggleCfgModule = (k) => this.setState(s => ({ cfgModules: { ...s.cfgModules, [k]: !s.cfgModules[k] } }));
   onCierreCounted = (e) => this.setState({ cierreCounted: (e.target.value || '').replace(/[^\d]/g, '') });
-  doCierre = () => this.setState({ cierreDone: true });
+  doCierre = () => this.setState(s => {
+    if (s.cierreDone) return {};
+    const myId = s.session ? s.session.id : null;
+    const mine = s.sales.filter(x => x.cashierId === myId);
+    const cash = mine.filter(x => x.method === 'efectivo').reduce((a, x) => a + x.total, 0);
+    const card = mine.filter(x => x.method === 'tarjeta').reduce((a, x) => a + x.total, 0);
+    const counted = parseInt(s.cierreCounted || '0', 10) || 0;
+    const now = new Date();
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const rec = {
+      id: 'cl' + now.getTime(),
+      dateIso: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`,
+      dateLabel: `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`,
+      cashierId: myId, cashierName: s.session ? s.session.name : '—',
+      openTime: '09:00', closeTime: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
+      salesCount: mine.length, cash, card, float: 50000, counted,
+    };
+    return { cierres: [rec, ...s.cierres], cierreDone: true };
+  });
   resetCierre = () => this.setState({ cierreDone: false, cierreCounted: '' });
   toggleBackupAuto = () => this.setState(s => ({ backupAuto: !s.backupAuto }));
   noop = () => {};
@@ -1750,7 +1966,10 @@ class Component extends DCLogic {
     if (!name) { this.setState({ phoneGate: { ...g, msg: 'El nombre es obligatorio.' } }); return; }
     const id = 'c' + Date.now();
     const phone = (g.phone || '').trim(), email = (g.email || '').trim() || '—';
-    this.setState(s => ({ customers: [...s.customers, { id, name, phone, email, points: 0, spent: 0, visits: 0 }], phoneGate: null, customerId: id }), this.openPayNow);
+    const now = new Date();
+    const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const createdBy = (this.state.session || {}).id || null;
+    this.setState(s => ({ customers: [...s.customers, { id, name, phone, email, points: 0, spent: 0, visits: 0, createdAt, createdBy }], phoneGate: null, customerId: id }), this.openPayNow);
   };
   phoneSkip = () => this.setState({ phoneGate: null, customerId: null }, this.openPayNow);
   closePay = () => this.setState({ payOpen: false });
@@ -1780,6 +1999,7 @@ class Component extends DCLogic {
     const sale = {
       folio, method: this.state.payMethod, total: t.total, neto: t.neto, iva: t.iva,
       recv, change: efectivo ? recv - t.total : 0, points, customerId: cust,
+      cashierId: (this.state.session || {}).id || null,
       time: now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
       date: now.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' }),
       recFecha, recHora,
@@ -1854,7 +2074,7 @@ class Component extends DCLogic {
     if (s.scanMode && !overlay) this.focusScan();
   }
 
-  openAddProduct = () => this.setState(s => ({ prodForm: { id: null, name: '', cat: (s.categories[0] && s.categories[0].key) || '', price: '', stock: '', img: null } }));
+  openAddProduct = () => this.setState(s => ({ prodForm: { id: null, name: '', cat: (s.categories[0] && s.categories[0].key) || '', price: '', stock: '', img: null, critical: false } }));
 
   slugify = (s) => (s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'cat');
   openAddCategory = () => this.setState(s => ({ catForm: { key: null, label: '', colorIdx: s.categories.length % this.PALETTE.length }, catMsg: null }));
@@ -1887,7 +2107,7 @@ class Component extends DCLogic {
   openEditProduct = (id) => {
     const p = this.find(id);
     if (!p) return;
-    this.setState({ prodForm: { id: p.id, name: p.name, cat: p.cat, price: String(p.price), stock: String(p.stock), img: p.img } });
+    this.setState({ prodForm: { id: p.id, name: p.name, cat: p.cat, price: String(p.price), stock: String(p.stock), img: p.img, critical: !!p.critical } });
   };
   closeForm = () => this.setState({ prodForm: null });
   onFormField = (field, value) => this.setState(s => ({ prodForm: { ...s.prodForm, [field]: value } }));
@@ -1909,11 +2129,80 @@ class Component extends DCLogic {
     this.setState(s => {
       if (f.id == null) {
         const nextId = s.products.reduce((m, p) => Math.max(m, p.id), 0) + 1;
-        return { products: [...s.products, { id: nextId, name, cat: f.cat, price, stock, img: f.img || null }], prodForm: null };
+        return { products: [...s.products, { id: nextId, name, cat: f.cat, price, stock, minStock: 5, critical: !!f.critical, img: f.img || null }], prodForm: null };
       }
-      return { products: s.products.map(p => p.id === f.id ? { ...p, name, cat: f.cat, price, stock, img: f.img || null } : p), prodForm: null };
+      return { products: s.products.map(p => p.id === f.id ? { ...p, name, cat: f.cat, price, stock, critical: !!f.critical, img: f.img || null } : p), prodForm: null };
     });
   };
+  toggleProdCritical = () => this.setState(s => s.prodForm ? ({ prodForm: { ...s.prodForm, critical: !s.prodForm.critical } }) : {});
+
+  // ---- stock crítico + carga masiva ----
+  criticalLowList = () => this.state.products
+    .filter(p => p.critical && (p.stock === 0 || p.stock <= (p.minStock || 0)))
+    .sort((a, b) => ((b.minStock || 0) - b.stock) - ((a.minStock || 0) - a.stock));
+  toggleStockCritical = () => this.setState(s => ({ stockCriticalOpen: !s.stockCriticalOpen }));
+  csvCell = (v) => { const s = String(v == null ? '' : v); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  exportCriticalCsv = () => {
+    const rows = this.criticalLowList();
+    if (!rows.length) return;
+    const header = ['codigo', 'nombre', 'categoria', 'stock_actual', 'minimo', 'faltante'];
+    const body = rows.map(p => [this.barcodeOf(p.id), p.name, this.catMeta(p.cat).label, p.stock, p.minStock || 0, Math.max(0, (p.minStock || 0) - p.stock)].map(this.csvCell).join(','));
+    const now = new Date();
+    const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const blob = new Blob(['﻿' + [header.join(',')].concat(body).join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'stock-critico-' + stamp + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  pickStockFile = () => { const el = this.stockFileRef.current; if (el) { el.value = ''; el.click(); } };
+  onStockFile = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try { this.applyStockParse(this.parseStockFile(file.name, String(reader.result || '')), file.name); }
+      catch (err) { this.setState({ stockImport: { rows: [], unknown: [], fileName: file.name, error: 'No se pudo leer el archivo: ' + (err && err.message ? err.message : 'formato inválido') } }); }
+    };
+    reader.readAsText(file);
+  };
+  parseStockFile = (name, text) => {
+    const isJson = /\.json$/i.test(name) || text.trim().charAt(0) === '[';
+    if (isJson) {
+      const arr = JSON.parse(text);
+      if (!Array.isArray(arr)) throw new Error('el JSON debe ser una lista de objetos');
+      return arr.map(o => ({ codigo: String(o.codigo != null ? o.codigo : (o.barcode != null ? o.barcode : o.code != null ? o.code : '')).trim(), cantidad: parseInt(o.cantidad != null ? o.cantidad : o.qty, 10) }));
+    }
+    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const out = [];
+    lines.forEach((line, i) => {
+      const cells = line.split(/[,;]/).map(c => c.trim().replace(/^"|"$/g, ''));
+      if (i === 0 && isNaN(parseInt(cells[1], 10))) return; // encabezado
+      if (cells.length < 2) return;
+      out.push({ codigo: cells[0], cantidad: parseInt(cells[1], 10) });
+    });
+    return out;
+  };
+  applyStockParse = (entries, fileName) => {
+    const byCode = {};
+    this.state.products.forEach(p => { byCode[this.barcodeOf(p.id)] = p; });
+    const adds = {}; const unknown = [];
+    entries.forEach(en => {
+      if (!en.codigo || !(en.cantidad > 0)) return;
+      const p = byCode[en.codigo];
+      if (!p) { unknown.push(en.codigo); return; }
+      adds[p.id] = (adds[p.id] || 0) + en.cantidad;
+    });
+    const rows = Object.keys(adds).map(id => { const p = this.find(+id); return { id: +id, name: p.name, current: p.stock, add: adds[id], next: p.stock + adds[id] }; });
+    this.setState({ stockImport: { rows, unknown, fileName: fileName || '', error: null } });
+  };
+  cancelStockImport = () => this.setState({ stockImport: null });
+  confirmStockImport = () => this.setState(s => {
+    const imp = s.stockImport; if (!imp || !imp.rows.length) return { stockImport: null };
+    const addMap = {}; imp.rows.forEach(r => { addMap[r.id] = r.add; });
+    return { products: s.products.map(p => addMap[p.id] ? { ...p, stock: p.stock + addMap[p.id] } : p), stockImport: null };
+  });
   deleteProduct = () => {
     const f = this.state.prodForm;
     if (!f || f.id == null) return;
@@ -2078,7 +2367,7 @@ class Component extends DCLogic {
     // stock — agrupado por categoría
     const stockCard = (p) => {
       const out = p.stock === 0;
-      const low = p.stock > 0 && p.stock <= 5;
+      const low = p.stock > 0 && p.stock <= (p.minStock || 0);
       const meta = this.catMeta(p.cat);
       let border = '#E1E5EE', bg = '#fff', accent = '#7C95A8', caption = 'En stock';
       if (out) { border = '#F5C2C2'; bg = '#FDECEC'; accent = '#D02E2E'; caption = 'Sin stock'; }
@@ -2087,6 +2376,7 @@ class Component extends DCLogic {
       return {
         id: p.id, name: p.name, priceStr: fmt(p.price), stockStr: String(p.stock),
         canEdit: isAdmin, readOnly: !isAdmin,
+        criticalTagStyle: { display: p.critical ? 'inline-flex' : 'none', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 800, letterSpacing: '.04em', textTransform: 'uppercase', color: '#9a2533', background: '#FCE4E9', borderRadius: 999, padding: '2px 8px' },
         cardStyle: { display: 'flex', gap: 0, padding: 0, borderRadius: 16, overflow: 'hidden', border: '1px solid ' + border, background: bg },
         thumbStyle: { width: 104, alignSelf: 'stretch', background: meta.tile, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', overflow: 'hidden' },
         stockCaption: caption,
@@ -2107,6 +2397,21 @@ class Component extends DCLogic {
         && (!stockQ || p.name.toLowerCase().includes(stockQ)));
       return { key, label: this.catMeta(key).label, dot: this.catMeta(key).dot, countStr: items.length + (items.length === 1 ? ' producto' : ' productos'), items: items.map(stockCard) };
     }).filter(g => g.items.length > 0);
+    // ---- stock crítico (productos esenciales con poca disponibilidad) ----
+    const criticalLow = S.products
+      .filter(p => p.critical && (p.stock === 0 || p.stock <= (p.minStock || 0)))
+      .sort((a, b) => ((b.minStock || 0) - b.stock) - ((a.minStock || 0) - a.stock));
+    const criticalCount = criticalLow.length;
+    const criticalRows = criticalLow.map(p => ({
+      name: p.name, catLabel: this.catMeta(p.cat).label,
+      stockStr: p.stock + ' / ' + (p.minStock || 0) + ' u.',
+      faltanteStr: Math.max(0, (p.minStock || 0) - p.stock) + ' u.',
+      dotStyle: { width: 10, height: 10, borderRadius: '50%', flex: 'none', background: p.stock === 0 ? '#D02E2E' : '#E0992B' },
+    }));
+    // ---- carga masiva: previsualización ----
+    const imp = S.stockImport;
+    const impRows = imp ? imp.rows : [];
+    const impUnknown = imp ? imp.unknown : [];
     const stockChips = [{ key: 'todas', label: 'Todas' }, ...S.categories.map(c => ({ key: c.key, label: c.label }))].map(c => ({
       label: c.label,
       onClick: () => this.setState({ stockCat: c.key }),
@@ -2163,6 +2468,66 @@ class Component extends DCLogic {
       return x.toFixed(2) + ',' + y.toFixed(2);
     }).join(' ');
 
+    // ---- inicio: resumen de hoy (ámbito por rol) ----
+    const sess = S.session || {};
+    const inicioSales = isAdmin ? S.sales : S.sales.filter(s => s.cashierId === sess.id);
+    const inicioCount = inicioSales.length;
+    const inicioTotal = inicioSales.reduce((a, s) => a + s.total, 0);
+    const inicioWalkins = inicioSales.filter(s => s.customerId === null).length;
+    const inicioNewCustomers = S.customers.filter(c => c.createdAt === this.TODAY && (isAdmin || c.createdBy === sess.id)).length;
+    // gráfico: ventas por hora (puntos unidos) desglosado por medio de pago
+    const inicioHours = []; for (let h = 9; h <= 19; h++) inicioHours.push(h);
+    const hourSpan = inicioHours.length - 1; // 10
+    const cashByHour = {}, cardByHour = {}, allByHour = {};
+    inicioSales.forEach(s => {
+      const h = Math.floor(toMin(s.time) / 60);
+      allByHour[h] = (allByHour[h] || 0) + 1;
+      if (s.method === 'efectivo') cashByHour[h] = (cashByHour[h] || 0) + 1;
+      else cardByHour[h] = (cardByHour[h] || 0) + 1;
+    });
+    const inicioYMax = Math.max(2, inicioHours.reduce((m, h) => Math.max(m, cashByHour[h] || 0, cardByHour[h] || 0), 0));
+    const xOf = (h) => (h - 9) / hourSpan * 100;
+    const bottomOf = (n) => n / inicioYMax * 100;
+    const mkDots = (byHour, color, label) => inicioHours.filter(h => (byHour[h] || 0) > 0).map(h => {
+      const n = byHour[h];
+      return {
+        title: label + ' · ' + String(h).padStart(2, '0') + '–' + String(h + 1).padStart(2, '0') + ' h · ' + n + (n === 1 ? ' venta' : ' ventas'),
+        style: { position: 'absolute', left: xOf(h) + '%', bottom: bottomOf(n) + '%', width: 12, height: 12, borderRadius: '50%', transform: 'translate(-50%,50%)', background: color, border: '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,64,.25)', cursor: 'default' },
+      };
+    });
+    const mkPolyline = (byHour) => inicioHours.map(h => xOf(h).toFixed(2) + ',' + (100 - bottomOf(byHour[h] || 0)).toFixed(2)).join(' ');
+    const inicioCashDots = mkDots(cashByHour, '#22C463', 'Efectivo');
+    const inicioCardDots = mkDots(cardByHour, '#2563EB', 'Tarjeta');
+    const inicioCashPolyline = mkPolyline(cashByHour);
+    const inicioCardPolyline = mkPolyline(cardByHour);
+    const inicioCashCount = inicioSales.filter(s => s.method === 'efectivo').length;
+    const inicioCardCount = inicioCount - inicioCashCount;
+    const inicioXTicks = [9, 11, 13, 15, 17, 19].map(h => ({ label: String(h).padStart(2, '0') + 'h', style: { position: 'absolute', left: xOf(h) + '%', transform: 'translateX(-50%)', fontSize: 11, color: '#9aa8bd', fontWeight: 600 } }));
+    const inicioYTicks = [0, 0.5, 1].map(f => ({ label: String(Math.round(inicioYMax * f)), bottomPct: f * 100 }));
+    const inicioGridLines = [0.25, 0.5, 0.75, 1].map(f => ({ bottomPct: f * 100 }));
+    // hora más activa (por cantidad de ventas)
+    const inicioPeakN = inicioHours.reduce((m, h) => Math.max(m, allByHour[h] || 0), 0);
+    let inicioPeakH = -1;
+    inicioHours.forEach(h => { if (inicioPeakN > 0 && inicioPeakH < 0 && (allByHour[h] || 0) === inicioPeakN) inicioPeakH = h; });
+    const inicioHasSales = inicioCount > 0;
+    const inicioPeakLabel = inicioPeakN > 0 ? (String(inicioPeakH).padStart(2, '0') + '–' + String(inicioPeakH + 1).padStart(2, '0') + ' h') : '—';
+    // stock bajo (solo admin)
+    const catLabelOf = (k) => { const c = S.categories.find(x => x.key === k); return c ? c.label : k; };
+    const lowStockRows = S.products
+      .filter(p => p.stock <= (p.minStock || 0))
+      .sort((a, b) => (a.stock - a.minStock) - (b.stock - b.minStock))
+      .map(p => {
+        const meta = this.catMeta(p.cat);
+        const critical = p.stock <= Math.ceil(p.minStock / 2);
+        return {
+          name: p.name, catLabel: catLabelOf(p.cat),
+          stockStr: p.stock + ' / ' + p.minStock + ' u.',
+          dotStyle: { width: 10, height: 10, borderRadius: '50%', flex: 'none', background: critical ? '#D02E2E' : '#E0992B' },
+          tileStyle: { width: 38, height: 38, borderRadius: 11, background: meta.tile, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' },
+          iconColor: meta.dot,
+        };
+      });
+
     // clientes
     const customerRows = S.customers.map(c => ({
       name: c.name, email: c.email || '—', phone: c.phone, pointsStr: c.points.toLocaleString('es-CL'), spentStr: fmt(c.spent),
@@ -2187,11 +2552,34 @@ class Component extends DCLogic {
     const cfgModuleRows = cfgModDefs.map(([k, title, desc]) => { const on = S.cfgModules[k]; return { title, desc, onToggle: () => this.toggleCfgModule(k), togStyle: { width: 44, height: 25, borderRadius: 999, position: 'relative', flex: 'none', border: 0, cursor: 'pointer', background: on ? '#1E9E54' : '#cdd5e3' }, knobStyle: { position: 'absolute', top: 2.5, left: on ? 21 : 2.5, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .18s' } }; });
 
     // ---- cierre de caja ----
-    const cashSales = S.sales.filter(s => s.method === 'efectivo').reduce((a, s) => a + s.total, 0);
-    const cardSales = S.sales.filter(s => s.method === 'tarjeta').reduce((a, s) => a + s.total, 0);
+    const cierreMyId = S.session ? S.session.id : null;
+    const cierreMine = S.sales.filter(s => s.cashierId === cierreMyId);
+    const cashSales = cierreMine.filter(s => s.method === 'efectivo').reduce((a, s) => a + s.total, 0);
+    const cardSales = cierreMine.filter(s => s.method === 'tarjeta').reduce((a, s) => a + s.total, 0);
     const cierreTotal = cashSales + cardSales, cierreFloat = 50000, cierreExpected = cierreFloat + cashSales;
     const counted = parseInt(S.cierreCounted || '0', 10);
     const cierreDiff = counted - cierreExpected, cierreHasCount = (S.cierreCounted || '').length > 0;
+    const cierreDiffPct = cierreExpected ? (cierreDiff / cierreExpected * 100) : 0;
+    const cierreCount = cierreMine.length;
+    const cierreAvg = cierreCount ? cierreTotal / cierreCount : 0;
+    const pctFmt = (p) => Math.abs(p).toFixed(1).replace('.', ',') + '%';
+    // historial de cierres (admin)
+    const cierreHistoryRows = [...S.cierres].sort((a, b) => a.dateIso < b.dateIso ? 1 : (a.dateIso > b.dateIso ? -1 : 0)).map(c => {
+      const expected = c.float + c.cash, diff = c.counted - expected, pct = expected ? diff / expected * 100 : 0;
+      const color = diff === 0 ? '#0a6e36' : (diff > 0 ? '#0036b3' : '#D02E2E');
+      const chipBg = diff === 0 ? '#E6F7EE' : (diff > 0 ? '#EAF0FF' : '#FDECEC');
+      return {
+        dateLabel: c.dateLabel, cashierName: c.cashierName,
+        expectedStr: fmt(expected), countedStr: fmt(c.counted),
+        diffStr: (diff > 0 ? '+' : '') + fmt(diff),
+        pctStr: diff === 0 ? '0%' : (diff > 0 ? '+' : '-') + pctFmt(pct),
+        pctStyle: { fontWeight: 800, fontSize: 14, color, whiteSpace: 'nowrap' },
+        estado: diff === 0 ? 'Exacto' : (diff > 0 ? 'Sobrante' : 'Faltante'),
+        chipStyle: { fontSize: 11.5, fontWeight: 700, padding: '3px 10px', borderRadius: 999, whiteSpace: 'nowrap', background: chipBg, color },
+      };
+    });
+    const cierreExactCount = S.cierres.filter(c => (c.counted - (c.float + c.cash)) === 0).length;
+    const cierreNetDiff = S.cierres.reduce((a, c) => a + (c.counted - (c.float + c.cash)), 0);
 
     return {
       brandName,
@@ -2262,29 +2650,20 @@ class Component extends DCLogic {
       goVenta: () => this.setScreen('venta'),
       goCategorias: () => this.setScreen('categorias'),
       goStock: () => this.setScreen('stock'),
-      goHistorialFromInicio: () => this.setScreen('historial'),
-      verHistorialStyle: { display: isAdmin ? 'inline-flex' : 'none', alignItems: 'center', gap: 5, border: 0, background: 'transparent', color: '#1E9E54', fontWeight: 700, fontSize: 13, fontFamily: 'inherit', cursor: 'pointer' },
-      verHistorialLabel: 'Ver historial →',
-      shiftOpenStr: '09:00',
-      shiftDurationStr: '1h 32m',
-      myShiftCount: histCount,
-      myShiftTotalStr: fmt(histTotal),
-      myShiftAvgStr: fmt(histAvg),
-      recentActivity: S.sales.slice(0, 6).map(s => {
-        const itemsCount = s.lines.reduce((a, l) => a + l.qty, 0);
-        const first = s.lines[0] || { name: 'Venta', cat: 'interior' };
-        const more = s.lines.length - 1;
-        const meta = this.catMeta(first.cat);
-        return {
-          summary: first.name + (more > 0 ? ' + ' + more + ' más' : ''),
-          meta: s.time + ' · ' + itemsCount + (itemsCount === 1 ? ' artículo' : ' artículos') + ' · #' + s.folio,
-          method: s.method === 'efectivo' ? 'Efectivo' : 'Tarjeta',
-          methodStyle: { fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 999, whiteSpace: 'nowrap', background: s.method === 'efectivo' ? '#E6F7EE' : '#EAF0FF', color: s.method === 'efectivo' ? '#0a6e36' : '#0036b3' },
-          amount: fmt(s.total),
-          dotStyle: { width: 40, height: 40, borderRadius: 11, background: meta.tile, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' },
-          icon: cE('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: meta.dot, strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }, [pth('M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z'), pth('M3 6h18'), pth('M16 10a4 4 0 0 1-8 0')]),
-        };
-      }),
+      inicioEyebrow: 'Lun 23 jun 2026 · Sucursal Centro',
+      inicioTitle: isAdmin ? 'Resumen de hoy · toda la tienda' : 'Tu turno de hoy',
+      inicioCountStr: String(inicioCount),
+      inicioTotalStr: fmt(inicioTotal),
+      inicioNewStr: String(inicioNewCustomers),
+      inicioWalkinsStr: String(inicioWalkins),
+      inicioCashDots, inicioCardDots, inicioCashPolyline, inicioCardPolyline,
+      inicioXTicks, inicioYTicks, inicioGridLines,
+      inicioCashCountStr: String(inicioCashCount), inicioCardCountStr: String(inicioCardCount),
+      inicioHasSales, inicioNoSales: !inicioHasSales, inicioPeakLabel,
+      inicioShowLowStock: isAdmin,
+      lowStockRows, lowStockEmpty: lowStockRows.length === 0,
+      inicioCriticalShow: isAdmin && criticalCount > 0,
+      inicioCriticalText: criticalCount + (criticalCount === 1 ? ' producto crítico requiere' : ' productos críticos requieren') + ' reposición',
       openAddCategory: this.openAddCategory,
       categoryRows: S.categories.map(c => {
         const count = S.products.filter(p => p.cat === c.key).length;
@@ -2341,6 +2720,31 @@ class Component extends DCLogic {
       stockGroups, openAddProduct: this.openAddProduct,
       stockQuery: S.stockQuery || '', onStockQuery: (e) => this.setState({ stockQuery: e.target.value }),
       stockChips, stockEmpty: stockGroups.length === 0,
+      // stock crítico
+      stockCriticalShow: isAdmin && criticalCount > 0,
+      stockCriticalOpen: !!S.stockCriticalOpen,
+      stockCriticalTitle: 'Hay ' + criticalCount + (criticalCount === 1 ? ' producto crítico' : ' productos críticos') + ' con poca disponibilidad',
+      stockCriticalChevron: { fontSize: 18, color: '#9a2533', flex: 'none', transition: 'transform .18s', transform: S.stockCriticalOpen ? 'rotate(180deg)' : 'none' },
+      criticalRows, toggleStockCritical: this.toggleStockCritical, exportCriticalCsv: this.exportCriticalCsv,
+      // carga masiva
+      pickStockFile: this.pickStockFile, onStockFile: this.onStockFile, stockFileRef: this.stockFileRef,
+      stockImportOpen: !!imp,
+      stockImportFileName: imp ? imp.fileName : '',
+      stockImportHasError: !!(imp && imp.error), stockImportError: imp ? imp.error : '',
+      stockImportHasRows: impRows.length > 0,
+      stockImportNoRows: !!(imp && !imp.error && impRows.length === 0),
+      stockImportRows: impRows.map(r => ({ name: r.name, currentStr: 'Actual ' + r.current, addStr: String(r.add), nextStr: String(r.next) })),
+      stockImportRowCountStr: String(impRows.length),
+      stockImportHasUnknown: impUnknown.length > 0,
+      stockImportUnknownCountStr: String(impUnknown.length),
+      stockImportUnknownStr: impUnknown.slice(0, 12).join(', ') + (impUnknown.length > 12 ? '…' : ''),
+      stockImportConfirmStyle: { minWidth: 130, border: 0, borderRadius: 11, padding: '11px 18px', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: impRows.length ? 'pointer' : 'not-allowed', color: impRows.length ? '#fff' : '#9aa8bd', background: impRows.length ? '#1E9E54' : '#EEF1F6' },
+      confirmStockImport: this.confirmStockImport, cancelStockImport: this.cancelStockImport,
+      // formulario producto: crítico
+      formCritical: S.prodForm ? !!S.prodForm.critical : false,
+      formCriticalCheck: (S.prodForm && S.prodForm.critical) ? '✓' : '',
+      formCriticalBoxStyle: { width: 22, height: 22, borderRadius: 7, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, color: '#fff', border: (S.prodForm && S.prodForm.critical) ? '0' : '1.5px solid #cdd5e3', background: (S.prodForm && S.prodForm.critical) ? '#1E9E54' : '#fff' },
+      toggleProdCritical: this.toggleProdCritical,
       formOpen: !!S.prodForm,
       formEditing: !!(S.prodForm && S.prodForm.id != null),
       formTitle: S.prodForm && S.prodForm.id != null ? 'Editar producto' : 'Nuevo producto',
@@ -2473,12 +2877,15 @@ class Component extends DCLogic {
       cfgPreviewBtnStyle: { height: 40, borderRadius: 11, background: cfgAccent, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 },
       // cierre
       cierreOpenTime: '09:00',
-      cierreTotalStr: fmt(cierreTotal), cierreCountStr: S.sales.length + ' ventas en el turno',
+      cierreTotalStr: fmt(cierreTotal), cierreCountStr: cierreCount + (cierreCount === 1 ? ' venta en el turno' : ' ventas en el turno'),
       cierreCashStr: fmt(cashSales), cierreCardStr: fmt(cardSales),
       cierreFloatStr: fmt(cierreFloat), cierreExpectedStr: fmt(cierreExpected),
       cierreCountedDisplay: cierreHasCount ? fmt(counted) : '', onCierreCounted: this.onCierreCounted,
-      cierreCountNum: S.sales.length, cierreAvgStr: fmt(histAvg),
-      cierreDiffLabel: !cierreHasCount ? 'Diferencia' : (cierreDiff === 0 ? 'Caja cuadrada' : (cierreDiff > 0 ? 'Sobrante' : 'Faltante')),
+      cierreCountNum: cierreCount, cierreAvgStr: fmt(cierreAvg),
+      cierreHistoryRows, cierreHistCountStr: String(S.cierres.length), cierreExactStr: String(cierreExactCount),
+      cierreNetStr: (cierreNetDiff > 0 ? '+' : '') + fmt(cierreNetDiff),
+      cierreNetStyle: { fontSize: 22, fontWeight: 900, letterSpacing: '-.02em', color: cierreNetDiff === 0 ? '#0a6e36' : (cierreNetDiff > 0 ? '#0036b3' : '#D02E2E') },
+      cierreDiffLabel: !cierreHasCount ? 'Diferencia' : (cierreDiff === 0 ? 'Caja cuadrada (exacto)' : (cierreDiff > 0 ? 'Sobrante · +' + pctFmt(cierreDiffPct) : 'Faltante · ' + pctFmt(cierreDiffPct))),
       cierreDiffStr: !cierreHasCount ? '—' : (cierreDiff > 0 ? '+' : '') + fmt(cierreDiff),
       cierreDiffBoxStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, borderRadius: 12, padding: '12px 14px', background: !cierreHasCount ? '#F6F7FB' : (cierreDiff === 0 ? '#E6F7EE' : (cierreDiff > 0 ? '#EAF0FF' : '#FDECEC')), color: !cierreHasCount ? '#7C95A8' : (cierreDiff === 0 ? '#0a6e36' : (cierreDiff > 0 ? '#0036b3' : '#D02E2E')) },
       cierreDone: S.cierreDone,
