@@ -854,9 +854,10 @@ input::placeholder{color:#9aa8bd;}
         </div>
         <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E1E5EE;border-radius:11px;padding:8px 13px;">
           <span style="font-size:12px;font-weight:700;color:#7C95A8;">Fecha</span>
-          <select value="{{ cierreFilterDate }}" onChange="{{ setCierreFilterDate }}" style="border:0;outline:none;background:transparent;font-family:inherit;font-size:13.5px;font-weight:700;color:#0F2A1B;cursor:pointer;">
-            <sc-for list="{{ cierreDateOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
-          </select>
+          <input type="date" value="{{ cierreFilterDateVal }}" onChange="{{ setCierreFilterDate }}" style="border:0;outline:none;background:transparent;font-family:inherit;font-size:13.5px;font-weight:700;color:#0F2A1B;cursor:pointer;" />
+          <sc-if value="{{ cierreDateActive }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ clearCierreFilterDate }}" title="Quitar filtro de fecha" style="border:0;background:#F0F2F7;color:#5a6b7e;border-radius:8px;width:24px;height:24px;cursor:pointer;font-family:inherit;font-weight:700;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;flex:none;">×</button>
+          </sc-if>
         </div>
       </div>
       <div style="display:flex;gap:16px;margin-bottom:16px;">
@@ -870,7 +871,7 @@ input::placeholder{color:#9aa8bd;}
         </div>
         <sc-for list="{{ cierreHistoryRows }}" as="c" hint-placeholder-count="6">
           <button onClick="{{ c.onClick }}" style="width:100%;display:grid;grid-template-columns:120px 1fr 120px 120px 120px 84px 100px 24px;gap:14px;padding:14px 22px;border:0;border-bottom:1px solid #F0F2F7;background:#fff;align-items:center;cursor:pointer;text-align:left;font-family:inherit;">
-            <span style="font-size:13px;font-weight:700;color:#0F2A1B;">{{ c.dateLabel }}</span>
+            <span style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:13px;font-weight:700;color:#0F2A1B;">{{ c.dateLabel }}</span><span style="font-size:11.5px;color:#94A3B5;font-weight:600;">{{ c.scheduleStr }}</span></span>
             <span style="font-size:14px;font-weight:600;color:#0F2A1B;">{{ c.cashierName }}</span>
             <span style="text-align:right;font-size:13.5px;color:#5a6b7e;">{{ c.expectedStr }}</span>
             <span style="text-align:right;font-size:13.5px;color:#0F2A1B;font-weight:700;">{{ c.countedStr }}</span>
@@ -887,10 +888,16 @@ input::placeholder{color:#9aa8bd;}
       </sc-if>
 
       <sc-if value="{{ cierreDetailOpen }}" hint-placeholder-val="{{ false }}">
-      <button onClick="{{ closeCierreDetail }}" style="display:inline-flex;align-items:center;gap:8px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:9px 14px;font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer;margin-bottom:16px;">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-        Volver a cierres
-      </button>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;">
+        <button onClick="{{ closeCierreDetail }}" style="display:inline-flex;align-items:center;gap:8px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:9px 14px;font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          Volver a cierres
+        </button>
+        <button onClick="{{ reprintCierreDetail }}" style="display:inline-flex;align-items:center;gap:8px;border:1px solid #1E9E54;background:#fff;color:#0a6e36;border-radius:11px;padding:9px 14px;font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>
+          Reimprimir comprobante
+        </button>
+      </div>
       <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
         <h3 style="font-size:20px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">{{ cierreDetail.cashierName }}</h3>
         <span style="font-size:13.5px;color:#7C95A8;">{{ cierreDetail.dateLabel }} · {{ cierreDetail.openTime }}–{{ cierreDetail.closeTime }} · {{ cierreDetail.countStr }}</span>
@@ -903,7 +910,7 @@ input::placeholder{color:#9aa8bd;}
       <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
         <div style="flex:1;min-width:140px;background:#fff;border:1px solid #E1E5EE;border-radius:14px;padding:14px 18px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:4px;">Esperado en caja</div><div style="font-size:18px;font-weight:800;color:#0F2A1B;">{{ cierreDetail.expectedStr }}</div></div>
         <div style="flex:1;min-width:140px;background:#fff;border:1px solid #E1E5EE;border-radius:14px;padding:14px 18px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:4px;">Efectivo contado</div><div style="font-size:18px;font-weight:800;color:#0F2A1B;">{{ cierreDetail.countedStr }}</div></div>
-        <div style="flex:1;min-width:180px;{{ cierreDetail.diffBoxStyle }}"><span style="font-size:13px;font-weight:700;">{{ cierreDetail.diffLabel }}</span><span style="font-size:18px;font-weight:900;">{{ cierreDetail.diffStr }}</span></div>
+        <div style="{{ cierreDetail.diffBoxStyle }}"><span style="font-size:12.5px;font-weight:600;">{{ cierreDetail.diffLabel }}</span><span style="font-size:18px;font-weight:800;">{{ cierreDetail.diffStr }}</span></div>
       </div>
       <div style="font-size:13px;font-weight:700;color:#5a6b7e;margin:6px 2px 10px;">Ventas de la jornada</div>
       <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;overflow:hidden;">
@@ -1084,7 +1091,6 @@ input::placeholder{color:#9aa8bd;}
       </div>
 
       <div style="flex:1;overflow:auto;padding:26px 30px;background:#F6F7FB;min-width:0;">
-        <div style="display:flex;align-items:center;gap:10px;background:#FEF6DD;border:1px solid #F2E2A8;border-radius:12px;padding:11px 16px;margin-bottom:20px;color:#8A6D12;font-size:13px;font-weight:600;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>El equipo técnico ajusta estos valores una vez. La interfaz, el login y el recibo los toman automáticamente.</div>
         <h2 style="font-size:23px;font-weight:900;color:#0F2A1B;margin:0 0 18px;letter-spacing:-.01em;">{{ cfgTitle }}</h2>
 
         <sc-if value="{{ isCfgMarca }}" hint-placeholder-val="{{ true }}">
@@ -1146,7 +1152,16 @@ input::placeholder{color:#9aa8bd;}
           </div>
           </sc-if>
           <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:6px 22px;">
-            <sc-for list="{{ cfgModuleRows }}" as="m" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 0;border-bottom:1px solid #F0F2F7;">
+              <div style="padding-right:8px;min-width:0;">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-weight:700;font-size:14.5px;color:#0F2A1B;">Punto de venta</span><span style="font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap;background:#EEF1F6;color:#5a6b7e;">Incluido</span></div>
+                <div style="font-size:12.5px;color:#94A3B5;margin-top:3px;">Venta, cierre de caja, historial y personal.</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:16px;flex:none;">
+                <span style="font-size:13px;font-weight:700;color:#94A3B5;white-space:nowrap;">Base</span>
+              </div>
+            </div>
+            <sc-for list="{{ cfgModuleRows }}" as="m" hint-placeholder-count="3">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 0;border-bottom:1px solid #F0F2F7;">
                 <div style="padding-right:8px;min-width:0;">
                   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-weight:700;font-size:14.5px;color:#0F2A1B;">{{ m.title }}</span><span style="{{ m.statusChipStyle }}">{{ m.statusLabel }}</span></div>
@@ -1491,11 +1506,16 @@ input::placeholder{color:#9aa8bd;}
             <input value="{{ formStock }}" onInput="{{ onFormStock }}" inputmode="numeric" placeholder="0" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
           </div>
         </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Stock mínimo (opcional)</label>
+          <input value="{{ formMinStock }}" onInput="{{ onFormMinStock }}" inputmode="numeric" placeholder="Sin alerta" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+          <div style="font-size:11.5px;color:#94A3B5;margin-top:5px;line-height:1.4;">Si el stock baja de este número se marca como <b style="color:#9A6F12;font-weight:700;">stock bajo</b> en el inventario. Déjalo vacío para no monitorear este producto.</div>
+        </div>
         <div onClick="{{ toggleProdCritical }}" style="display:flex;align-items:center;gap:11px;cursor:pointer;border:1px solid #E1E5EE;border-radius:12px;padding:11px 14px;">
           <span style="{{ formCriticalBoxStyle }}">{{ formCriticalCheck }}</span>
           <div style="flex:1;min-width:0;">
             <div style="font-weight:700;font-size:13.5px;color:#0F2A1B;">Producto crítico (esencial)</div>
-            <div style="font-size:12px;color:#7C95A8;">Se vigila su disponibilidad y entra en la solicitud de reposición.</div>
+            <div style="font-size:12px;color:#7C95A8;">Si además está bajo el mínimo, se avisa en Inicio como reposición. Requiere un stock mínimo configurado.</div>
           </div>
         </div>
       </div>
@@ -1831,6 +1851,17 @@ input::placeholder{color:#9aa8bd;}
   </div>
   </sc-if>
 
+  <!-- ================= TOAST DE IMPRESIÓN ================= -->
+  <sc-if value="{{ printToastOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="{{ printToastStyle }}">
+    <span style="flex:1;white-space:nowrap;">{{ printToastLabel }}</span>
+    <sc-if value="{{ printToastError }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ retryPrint }}" style="border:0;background:rgba(255,255,255,.22);color:#fff;border-radius:9px;padding:7px 13px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;">Reintentar</button>
+    </sc-if>
+    <button onClick="{{ dismissPrintToast }}" title="Cerrar" style="border:0;background:transparent;color:#fff;cursor:pointer;font-family:inherit;font-weight:700;font-size:17px;line-height:1;padding:0 2px;">×</button>
+  </div>
+  </sc-if>
+
 </div>
 </div>
 </x-dc>
@@ -1896,7 +1927,7 @@ class Component extends DCLogic {
       adminMenuOpen: false,
       cfgSection: 'marca',
       cfgAccent: '#1E9E54',
-      cfgModules: { stock: true, clientes: true, historial: true, categorias: true },
+      cfgModules: { stock: true, clientes: true, metricas: true },
       modulePending: {},
       adminEmail: 'admin@plantaconmati.cl',
       moduleConfirm: null,
@@ -1909,6 +1940,7 @@ class Component extends DCLogic {
       cajaSessionId: 0,
       cierreConfirm: false,
       lastCierre: null,
+      printToast: null,
       cierreDetailId: null,
       cierreFilterCajero: 'all',
       cierreFilterDate: 'all',
@@ -1998,23 +2030,23 @@ class Component extends DCLogic {
       scanMsg: null,
       scanPickerOpen: false,
       products: [
-        P(1,'Monstera Deliciosa','interior',14990,8,6,'monstera.png', true),
-        P(2,'Pothos Dorado','interior',6490,23,8,'pothos.png'),
-        P(3,'Sansevieria','interior',9990,12,6,'sansevieria.png'),
-        P(4,'Zamioculca (ZZ)','interior',13990,9,10,'zamioculca.png'),
+        P(1,'Monstera Deliciosa','interior',14990,8,0,'monstera.png'),
+        P(2,'Pothos Dorado','interior',6490,23,0,'pothos.png'),
+        P(3,'Sansevieria','interior',9990,12,0,'sansevieria.png'),
+        P(4,'Zamioculca (ZZ)','interior',13990,9,0,'zamioculca.png'),
         P(5,'Calathea','interior',11490,5,6,'calathea.png', true),
-        P(6,'Helecho','interior',5990,14,8,'helecho.png'),
-        P(7,'Lavanda','exterior',7990,18,8,'lavanda.png'),
+        P(6,'Helecho','interior',5990,14,0,'helecho.png'),
+        P(7,'Lavanda','exterior',7990,18,0,'lavanda.png'),
         P(8,'Hortensia','exterior',9490,6,8,'hortensia.png', true),
-        P(9,'Romero','exterior',4490,22,10,'romero.png'),
+        P(9,'Romero','exterior',4490,22,0,'romero.png'),
         P(10,'Buganvilia','exterior',12990,4,6,'bungavilia.png', true),
-        P(11,'Echeveria','suculentas',3490,40,15,'echeveria.png'),
-        P(12,'Cactus Bola','suculentas',4290,27,12,'cactus bola.png'),
-        P(13,'Aloe Vera','suculentas',5490,15,8,'aloevera.png'),
-        P(14,'Haworthia','suculentas',3990,19,10,'haworthia.png'),
-        P(15,'Maceta cerámica 18cm','macetas',8990,31,12,'maceta18.png'),
-        P(16,'Maceta terracota 14cm','macetas',4990,26,12,'maceta14.png'),
-        P(17,'Maceta colgante','macetas',6990,11,10,'macetacolgante.png'),
+        P(11,'Echeveria','suculentas',3490,40,0,'echeveria.png'),
+        P(12,'Cactus Bola','suculentas',4290,27,0,'cactus bola.png'),
+        P(13,'Aloe Vera','suculentas',5490,15,0,'aloevera.png'),
+        P(14,'Haworthia','suculentas',3990,19,0,'haworthia.png'),
+        P(15,'Maceta cerámica 18cm','macetas',8990,31,0,'maceta18.png'),
+        P(16,'Maceta terracota 14cm','macetas',4990,26,0,'maceta14.png'),
+        P(17,'Maceta colgante','macetas',6990,11,12,'macetacolgante.png'),
         P(18,'Sustrato universal 5L','sustratos',4990,38,15,'sustrato.png', true),
         P(19,'Tierra de hojas 10L','sustratos',7490,17,10,'tierrahojas.png'),
         P(20,'Perlita 2L','sustratos',3290,24,10,'perlita.png'),
@@ -2165,7 +2197,8 @@ class Component extends DCLogic {
   goAdmin = (id) => this.setState({ screen: id, adminMenuOpen: false });
   setCfgSection = (k) => this.setState({ cfgSection: k });
   setCfgAccent = (c) => this.setState({ cfgAccent: c });
-  MODULE_PRICES = { stock: 12000, clientes: 15000, historial: 9000, categorias: 6000 };
+  MODULE_PRICES = { stock: 12000, clientes: 15000, metricas: 9000 };
+  MODULE_TITLES = { stock: 'Stock e inventario', clientes: 'Clientes y fidelización', metricas: 'Métricas' };
   moduleEndLabels = () => {
     const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     const now = new Date();
@@ -2184,7 +2217,7 @@ class Component extends DCLogic {
     const mc = s.moduleConfirm;
     if (!mc) return {};
     const k = mc.key;
-    const def = { stock: 'Stock e inventario', clientes: 'Clientes y fidelización', historial: 'Historial y métricas', categorias: 'Categorías' }[k] || k;
+    const def = this.MODULE_TITLES[k] || k;
     const notice = { key: k, action: mc.action, email: s.adminEmail, at: new Date().toISOString() };
     if (mc.action === 'enable') {
       const wasPending = !!s.modulePending[k];
@@ -2232,7 +2265,8 @@ class Component extends DCLogic {
   openCierreDetail = (id) => this.setState({ cierreDetailId: id });
   closeCierreDetail = () => this.setState({ cierreDetailId: null });
   setCierreFilterCajero = (e) => this.setState({ cierreFilterCajero: e.target.value });
-  setCierreFilterDate = (e) => this.setState({ cierreFilterDate: e.target.value });
+  setCierreFilterDate = (e) => this.setState({ cierreFilterDate: e.target.value || 'all' });
+  clearCierreFilterDate = () => this.setState({ cierreFilterDate: 'all' });
   buildCierrePayload = (rec) => {
     const cr = this.state.cfgRecibo;
     const iso = (rec.dateIso || '').split('-');
@@ -2250,17 +2284,27 @@ class Component extends DCLogic {
       fondo: rec.float || 0, contado: rec.counted || 0,
     };
   };
+  flashPrintToast = (toast) => {
+    this.setState({ printToast: toast });
+    clearTimeout(this._printT);
+    if (toast && toast.ok) this._printT = setTimeout(() => this.setState(s => (s.printToast && s.printToast.ok ? { printToast: null } : {})), 3500);
+  };
+  dismissPrintToast = () => this.setState({ printToast: null });
+  retryPrint = () => { const t = this.state.printToast; if (t && t.retry) t.retry(); };
   printCierre = (rec) => {
     if (!rec) return;
     const tauri = window.__TAURI__;
     if (tauri && tauri.core && typeof tauri.core.invoke === 'function') {
+      this.flashPrintToast({ ok: null, label: 'Imprimiendo comprobante de cierre…', retry: null });
       tauri.core.invoke('print_cierre', { payload: this.buildCierrePayload(rec) })
-        .catch(err => console.error('print_cierre:', err));
+        .then(() => this.flashPrintToast({ ok: true, label: 'Comprobante de cierre impreso.', retry: null }))
+        .catch(err => { console.error('print_cierre:', err); this.flashPrintToast({ ok: false, label: 'No se pudo imprimir el comprobante de cierre.', retry: () => this.printCierre(rec) }); });
     } else {
       try { window.print(); } catch (e) {}
     }
   };
   printLastCierre = () => this.printCierre(this.state.lastCierre);
+  reprintCierreDetail = () => { const c = this.state.cierres.find(x => x.id === this.state.cierreDetailId); this.printCierre(c); };
   toggleBackupAuto = () => this.setState(s => ({ backupAuto: !s.backupAuto }));
   noop = () => {};
   setCat = (c) => this.setState({ cat: c });
@@ -2400,8 +2444,10 @@ class Component extends DCLogic {
   printReceipt = (sale) => {
     const tauri = window.__TAURI__;
     if (tauri && tauri.core && typeof tauri.core.invoke === 'function') {
+      this.flashPrintToast({ ok: null, label: 'Imprimiendo boleta…', retry: null });
       tauri.core.invoke('print_receipt', { payload: this.buildReceiptPayload(sale) })
-        .catch(err => console.error('print_receipt:', err));
+        .then(() => this.flashPrintToast({ ok: true, label: 'Boleta impresa.', retry: null }))
+        .catch(err => { console.error('print_receipt:', err); this.flashPrintToast({ ok: false, label: 'No se pudo imprimir la boleta.', retry: () => this.printReceipt(sale) }); });
     } else {
       try { window.print(); } catch (e) {}   // fallback navegador (preview)
     }
@@ -2434,7 +2480,7 @@ class Component extends DCLogic {
     if (s.scanMode && !overlay) this.focusScan();
   }
 
-  openAddProduct = () => this.setState(s => ({ prodForm: { id: null, name: '', cat: (s.categories[0] && s.categories[0].key) || '', price: '', stock: '', img: null, critical: false } }));
+  openAddProduct = () => this.setState(s => ({ prodForm: { id: null, name: '', cat: (s.categories[0] && s.categories[0].key) || '', price: '', stock: '', minStock: '', img: null, critical: false } }));
 
   slugify = (s) => (s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'cat');
   openAddCategory = () => this.setState(s => ({ catForm: { key: null, label: '', colorIdx: s.categories.length % this.PALETTE.length }, catMsg: null }));
@@ -2467,7 +2513,7 @@ class Component extends DCLogic {
   openEditProduct = (id) => {
     const p = this.find(id);
     if (!p) return;
-    this.setState({ prodForm: { id: p.id, name: p.name, cat: p.cat, price: String(p.price), stock: String(p.stock), img: p.img, critical: !!p.critical } });
+    this.setState({ prodForm: { id: p.id, name: p.name, cat: p.cat, price: String(p.price), stock: String(p.stock), minStock: p.minStock ? String(p.minStock) : '', img: p.img, critical: !!p.critical } });
   };
   closeForm = () => this.setState({ prodForm: null });
   onFormField = (field, value) => this.setState(s => ({ prodForm: { ...s.prodForm, [field]: value } }));
@@ -2485,20 +2531,21 @@ class Component extends DCLogic {
     const name = f.name.trim();
     const price = parseInt(f.price || '0', 10) || 0;
     const stock = parseInt(f.stock || '0', 10) || 0;
+    const minStock = parseInt(f.minStock || '0', 10) || 0;
     if (!name) return;
     this.setState(s => {
       if (f.id == null) {
         const nextId = s.products.reduce((m, p) => Math.max(m, p.id), 0) + 1;
-        return { products: [...s.products, { id: nextId, name, cat: f.cat, price, stock, minStock: 5, critical: !!f.critical, img: f.img || null }], prodForm: null };
+        return { products: [...s.products, { id: nextId, name, cat: f.cat, price, stock, minStock, critical: !!f.critical, img: f.img || null }], prodForm: null };
       }
-      return { products: s.products.map(p => p.id === f.id ? { ...p, name, cat: f.cat, price, stock, critical: !!f.critical, img: f.img || null } : p), prodForm: null };
+      return { products: s.products.map(p => p.id === f.id ? { ...p, name, cat: f.cat, price, stock, minStock, critical: !!f.critical, img: f.img || null } : p), prodForm: null };
     });
   };
   toggleProdCritical = () => this.setState(s => s.prodForm ? ({ prodForm: { ...s.prodForm, critical: !s.prodForm.critical } }) : {});
 
   // ---- stock crítico + carga masiva ----
   criticalLowList = () => this.state.products
-    .filter(p => p.critical && (p.stock === 0 || p.stock <= (p.minStock || 0)))
+    .filter(p => p.critical && (p.minStock || 0) > 0 && p.stock < p.minStock)
     .sort((a, b) => ((b.minStock || 0) - b.stock) - ((a.minStock || 0) - a.stock));
   toggleStockCritical = () => this.setState(s => ({ stockCriticalOpen: !s.stockCriticalOpen }));
   csvCell = (v) => { const s = String(v == null ? '' : v); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
@@ -2733,11 +2780,13 @@ class Component extends DCLogic {
     // stock — agrupado por categoría
     const stockCard = (p) => {
       const out = p.stock === 0;
-      const low = p.stock > 0 && p.stock <= (p.minStock || 0);
+      const low = (p.minStock || 0) > 0 && p.stock > 0 && p.stock < p.minStock;
       const meta = this.catMeta(p.cat);
       let border = '#E1E5EE', bg = '#fff', accent = '#7C95A8', caption = 'En stock';
       if (out) { border = '#F5C2C2'; bg = '#FDECEC'; accent = '#D02E2E'; caption = 'Sin stock'; }
       else if (low) { border = '#F2DF9E'; bg = '#FEF6DD'; accent = '#9A6F12'; caption = 'Stock bajo'; }
+      else if ((p.minStock || 0) > 0) { caption = 'En stock'; } else { caption = 'Sin mínimo'; accent = '#9aa8bd'; }
+      if ((p.minStock || 0) > 0) caption += ' · mín. ' + p.minStock;
       const numColor = out ? '#D02E2E' : (low ? '#9A6F12' : '#0F2A1B');
       return {
         id: p.id, name: p.name, priceStr: fmt(p.price), stockStr: String(p.stock),
@@ -2765,7 +2814,7 @@ class Component extends DCLogic {
     }).filter(g => g.items.length > 0);
     // ---- stock crítico (productos esenciales con poca disponibilidad) ----
     const criticalLow = S.products
-      .filter(p => p.critical && (p.stock === 0 || p.stock <= (p.minStock || 0)))
+      .filter(p => p.critical && (p.minStock || 0) > 0 && p.stock < p.minStock)
       .sort((a, b) => ((b.minStock || 0) - b.stock) - ((a.minStock || 0) - a.stock));
     const criticalCount = criticalLow.length;
     const criticalRows = criticalLow.map(p => ({
@@ -2889,7 +2938,7 @@ class Component extends DCLogic {
     // stock bajo (solo admin)
     const catLabelOf = (k) => { const c = S.categories.find(x => x.key === k); return c ? c.label : k; };
     const lowStockRows = S.products
-      .filter(p => p.stock <= (p.minStock || 0))
+      .filter(p => p.critical && (p.minStock || 0) > 0 && p.stock < p.minStock)
       .sort((a, b) => (a.stock - a.minStock) - (b.stock - b.minStock))
       .map(p => {
         const meta = this.catMeta(p.cat);
@@ -2923,7 +2972,7 @@ class Component extends DCLogic {
     const goCfg = { negocio: () => this.setCfgSection('negocio'), marca: () => this.setCfgSection('marca'), login: () => this.setCfgSection('login'), operacion: () => this.setCfgSection('operacion'), modulos: () => this.setCfgSection('modulos'), recibo: () => this.setCfgSection('recibo') };
     const cfgTitleMap = { negocio: 'Negocio', marca: 'Apariencia y marca', login: 'Pantalla de login', operacion: 'Operación e impuestos', modulos: 'Módulos del sistema', recibo: 'Recibo y datos fiscales' };
     const cfgAccents = ['#1E9E54', '#B5651D', '#C2410C', '#004FFF', '#7764E0', '#DD5771'].map(c => ({ onClick: () => this.setCfgAccent(c), style: { width: 38, height: 38, borderRadius: 11, background: c, cursor: 'pointer', border: 0, boxShadow: cfgAccent === c ? '0 0 0 2px #fff, 0 0 0 4px ' + c : 'none' } }));
-    const cfgModDefs = [['stock', 'Stock e inventario', 'Productos, categorías y ajuste de existencias.'], ['historial', 'Historial y métricas', 'Ventas del día, gráfico por hora y arqueo.'], ['clientes', 'Clientes y fidelización', 'Registro de clientes y acumulación de puntos.'], ['categorias', 'Categorías', 'Organización del catálogo por categorías.']];
+    const cfgModDefs = [['stock', 'Stock e inventario', 'Productos, existencias y administración de categorías.'], ['clientes', 'Clientes y fidelización', 'Registro de clientes y acumulación de puntos.'], ['metricas', 'Métricas', 'Ventas por hora, ticket promedio y reportes.']];
     const cfgModuleRows = cfgModDefs.map(([k, title, desc]) => {
       const active = !!S.cfgModules[k];
       const pendingLabel = S.modulePending[k];
@@ -2944,7 +2993,7 @@ class Component extends DCLogic {
     });
     const moduleMonthlyTotal = cfgModDefs.reduce((a, [k]) => a + ((S.cfgModules[k] && !S.modulePending[k]) ? (this.MODULE_PRICES[k] || 0) : 0), 0);
     const mc = S.moduleConfirm;
-    const mcTitle = mc ? ({ stock: 'Stock e inventario', clientes: 'Clientes y fidelización', historial: 'Historial y métricas', categorias: 'Categorías' }[mc.key] || mc.key) : '';
+    const mcTitle = mc ? (this.MODULE_TITLES[mc.key] || mc.key) : '';
     const mcEnds = this.moduleEndLabels();
 
     // ---- cierre de caja ----
@@ -2961,9 +3010,7 @@ class Component extends DCLogic {
     // historial de cierres (admin) — filtros por cajero y fecha
     const cierreMethodChip = (m) => ({ fontSize: 11.5, fontWeight: 700, padding: '3px 10px', borderRadius: 999, whiteSpace: 'nowrap', background: m === 'efectivo' ? '#E6F7EE' : '#EAF0FF', color: m === 'efectivo' ? '#0a6e36' : '#0036b3' });
     const cierreCajerosMap = [...new Map(S.cierres.map(c => [c.cashierId, c.cashierName])).entries()];
-    const cierreDatesMap = [...new Map(S.cierres.map(c => [c.dateIso, c.dateLabel])).entries()];
     const cierreCajeroOpts = [{ value: 'all', label: 'Todos los cajeros' }, ...cierreCajerosMap.map(([id, name]) => ({ value: id, label: name }))];
-    const cierreDateOpts = [{ value: 'all', label: 'Todas las fechas' }, ...cierreDatesMap.map(([iso, label]) => ({ value: iso, label }))];
     const fcCaj = S.cierreFilterCajero, fcDate = S.cierreFilterDate;
     const cierreFiltered = [...S.cierres]
       .filter(c => (fcCaj === 'all' || c.cashierId === fcCaj) && (fcDate === 'all' || c.dateIso === fcDate))
@@ -2974,6 +3021,7 @@ class Component extends DCLogic {
       const chipBg = diff === 0 ? '#E6F7EE' : (diff > 0 ? '#EAF0FF' : '#FDECEC');
       return {
         dateLabel: c.dateLabel, cashierName: c.cashierName,
+        scheduleStr: (c.openTime || '—') + '–' + (c.closeTime || '—'),
         expectedStr: fmt(expected), countedStr: fmt(c.counted),
         diffStr: (diff > 0 ? '+' : '') + fmt(diff),
         pctStr: diff === 0 ? '0%' : (diff > 0 ? '+' : '-') + pctFmt(pct),
@@ -3000,7 +3048,7 @@ class Component extends DCLogic {
         countStr: c.salesCount + (c.salesCount === 1 ? ' venta' : ' ventas'),
         diffStr: (diff > 0 ? '+' : '') + fmt(diff),
         diffLabel: diff === 0 ? 'Caja cuadrada (exacto)' : (diff > 0 ? 'Sobrante · +' + pctFmt(pct) : 'Faltante · ' + pctFmt(pct)),
-        diffBoxStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 12, padding: '12px 14px', background: dbg, color: dcolor },
+        diffBoxStyle: { flex: 1, minWidth: 180, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, borderRadius: 14, padding: '14px 18px', background: dbg, color: dcolor },
         rows: (c.sales || []).map(s => ({
           folioStr: '#' + s.folio, time: s.time,
           methodLabel: s.method === 'efectivo' ? 'Efectivo' : 'Tarjeta', methodChipStyle: cierreMethodChip(s.method),
@@ -3187,6 +3235,8 @@ class Component extends DCLogic {
       formCat: S.prodForm ? S.prodForm.cat : 'interior',
       formPrice: S.prodForm ? S.prodForm.price : '',
       formStock: S.prodForm ? S.prodForm.stock : '',
+      formMinStock: S.prodForm ? (S.prodForm.minStock || '') : '',
+      onFormMinStock: (e) => this.onFormField('minStock', this.onlyDigits(e.target.value)),
       catSelectOptions: S.categories.map(c => ({ value: c.key, label: c.label })),
       onFormName: (e) => this.onFormField('name', e.target.value),
       onFormCat: (e) => this.onFormField('cat', e.target.value),
@@ -3357,17 +3407,25 @@ class Component extends DCLogic {
       cierreCountedStatic: fmt(counted || 0),
       cierreCountNum: cierreCount, cierreAvgStr: fmt(cierreAvg),
       cierreHistoryRows, cierreHistCountStr: String(cierreFiltered.length), cierreExactStr: String(cierreExactCount),
-      cierreCajeroOpts, cierreDateOpts, cierreFilterCajero: S.cierreFilterCajero, cierreFilterDate: S.cierreFilterDate,
-      setCierreFilterCajero: this.setCierreFilterCajero, setCierreFilterDate: this.setCierreFilterDate,
+      cierreCajeroOpts, cierreFilterCajero: S.cierreFilterCajero,
+      cierreFilterDateVal: S.cierreFilterDate === 'all' ? '' : S.cierreFilterDate,
+      cierreDateActive: S.cierreFilterDate !== 'all',
+      setCierreFilterCajero: this.setCierreFilterCajero, setCierreFilterDate: this.setCierreFilterDate, clearCierreFilterDate: this.clearCierreFilterDate,
       cierreNoRows: cierreHistoryRows.length === 0,
       cierreDetailOpen: !!cierreDetailVM, cierreListOpen: !cierreDetailVM,
       cierreDetail: cierreDetailVM || {}, closeCierreDetail: this.closeCierreDetail,
       cierreDetailRows: cierreDetailVM ? cierreDetailVM.rows : [],
+      reprintCierreDetail: this.reprintCierreDetail,
+      printToastOpen: !!S.printToast,
+      printToastLabel: S.printToast ? S.printToast.label : '',
+      printToastError: !!(S.printToast && S.printToast.ok === false),
+      printToastStyle: { position: 'fixed', left: '50%', bottom: 26, transform: 'translateX(-50%)', zIndex: 80, display: 'flex', alignItems: 'center', gap: 12, borderRadius: 13, padding: '12px 16px', boxShadow: '0 16px 50px rgba(0,0,64,.3)', color: '#fff', fontFamily: 'inherit', fontSize: 14, fontWeight: 700, background: (S.printToast && S.printToast.ok === false) ? '#D02E2E' : ((S.printToast && S.printToast.ok === true) ? '#1E9E54' : '#0F2A1B') },
+      retryPrint: this.retryPrint, dismissPrintToast: this.dismissPrintToast,
       cierreNetStr: (cierreNetDiff > 0 ? '+' : '') + fmt(cierreNetDiff),
       cierreNetStyle: { fontSize: 22, fontWeight: 900, letterSpacing: '-.02em', color: cierreNetDiff === 0 ? '#0a6e36' : (cierreNetDiff > 0 ? '#0036b3' : '#D02E2E') },
       cierreDiffLabel: !cierreHasCount ? 'Diferencia' : (cierreDiff === 0 ? 'Caja cuadrada (exacto)' : (cierreDiff > 0 ? 'Sobrante · +' + pctFmt(cierreDiffPct) : 'Faltante · ' + pctFmt(cierreDiffPct))),
       cierreDiffStr: !cierreHasCount ? '—' : (cierreDiff > 0 ? '+' : '') + fmt(cierreDiff),
-      cierreDiffBoxStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, borderRadius: 12, padding: '12px 14px', background: !cierreHasCount ? '#F6F7FB' : (cierreDiff === 0 ? '#E6F7EE' : (cierreDiff > 0 ? '#EAF0FF' : '#FDECEC')), color: !cierreHasCount ? '#7C95A8' : (cierreDiff === 0 ? '#0a6e36' : (cierreDiff > 0 ? '#0036b3' : '#D02E2E')) },
+      cierreDiffBoxStyle: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, marginTop: 14, borderRadius: 12, padding: '12px 14px', background: !cierreHasCount ? '#F6F7FB' : (cierreDiff === 0 ? '#E6F7EE' : (cierreDiff > 0 ? '#EAF0FF' : '#FDECEC')), color: !cierreHasCount ? '#7C95A8' : (cierreDiff === 0 ? '#0a6e36' : (cierreDiff > 0 ? '#0036b3' : '#D02E2E')) },
       cierreDone: S.cierreDone,
       cierreConfirmOpen: !!S.cierreConfirm, closeCierreConfirm: this.closeCierreConfirm, doCierre: this.doCierre,
       cierreNeedCount: S.cajaOpen && !cierreHasCount,
