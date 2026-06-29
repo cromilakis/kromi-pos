@@ -933,6 +933,101 @@ input::placeholder{color:#9aa8bd;}
     </div>
     </sc-if>
 
+    <!-- ---------- MÉTRICAS (admin) ---------- -->
+    <sc-if value="{{ isMetricas }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="Métricas" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2563EB;margin-bottom:5px;">Analítica · últimos 12 meses</div>
+      <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0 0 16px;letter-spacing:-.01em;">Métricas del negocio</h2>
+
+      <!-- KPIs -->
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px;">
+        <div style="flex:1;min-width:170px;background:#0F2A1B;border-radius:18px;padding:18px 20px;color:#fff;position:relative;overflow:hidden;"><div style="position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.45),transparent 70%);"></div><div style="font-size:12.5px;color:#9ec0ff;font-weight:700;margin-bottom:5px;position:relative;">Venta total (12m)</div><div style="font-size:26px;font-weight:900;letter-spacing:-.02em;position:relative;">{{ metTotalStr }}</div></div>
+        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Ticket promedio</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ metAvgStr }}</div></div>
+        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Día más fuerte</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ metStrongDay }}</div></div>
+        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Hora pico</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ metPeakHour }}</div></div>
+        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Mes top</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ metTopMonth }}</div></div>
+      </div>
+
+      <!-- Horarios pico (heatmap) -->
+      <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;margin-bottom:18px;">
+        <div style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">Horarios pico</div>
+        <div style="font-size:13px;color:#7C95A8;margin:2px 0 16px;">Intensidad de venta por hora y día de la semana.</div>
+        <div style="display:grid;grid-template-columns:46px repeat(12,1fr);gap:5px;align-items:center;">
+          <span></span>
+          <sc-for list="{{ metHeatHours }}" as="h" hint-placeholder-count="12"><span style="font-size:10.5px;color:#94A3B5;text-align:center;font-weight:700;">{{ h }}</span></sc-for>
+          <sc-for list="{{ metHeatRows }}" as="r" hint-placeholder-count="7">
+            <span style="font-size:11.5px;color:#5a6b7e;font-weight:700;">{{ r.dayLabel }}</span>
+            <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="12"><div style="{{ c.style }}" title="{{ c.title }}"></div></sc-for>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Día de la semana + tendencia -->
+      <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:18px;">
+        <div style="flex:1;min-width:300px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
+          <div style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">Venta por día de la semana</div>
+          <div style="font-size:13px;color:#7C95A8;margin:2px 0 16px;">Promedio por jornada.</div>
+          <div style="display:flex;align-items:flex-end;gap:10px;height:150px;">
+            <sc-for list="{{ metWeekdayBars }}" as="b" hint-placeholder-count="7">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:7px;">
+                <div style="{{ b.barStyle }}" title="{{ b.valStr }}"></div>
+                <span style="font-size:11px;color:#94A3B5;font-weight:700;">{{ b.label }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex:1;min-width:300px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
+          <div style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">Tendencia (8 semanas)</div>
+          <div style="font-size:13px;color:#7C95A8;margin:2px 0 16px;">Evolución reciente de la venta semanal.</div>
+          <div style="height:150px;position:relative;border-left:1px solid #E1E5EE;border-bottom:1px solid #E1E5EE;">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;">
+              <polyline points="{{ metTrendPts }}" fill="none" stroke="#2563EB" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estacionalidad por mes -->
+      <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;margin-bottom:18px;">
+        <div style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">Estacionalidad por mes</div>
+        <div style="font-size:13px;color:#7C95A8;margin:2px 0 16px;">Venta por mes; el mes pico se resalta.</div>
+        <div style="display:flex;align-items:flex-end;gap:7px;height:160px;">
+          <sc-for list="{{ metMonthBars }}" as="b" hint-placeholder-count="12">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:7px;">
+              <div style="{{ b.barStyle }}" title="{{ b.valStr }}"></div>
+              <span style="font-size:10.5px;color:#94A3B5;font-weight:700;">{{ b.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Productos y categorías -->
+      <div style="display:flex;gap:18px;flex-wrap:wrap;">
+        <div style="flex:2;min-width:320px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
+          <div style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">Categorías por venta</div>
+          <div style="font-size:13px;color:#7C95A8;margin:2px 0 16px;">Ranking de mayor a menor.</div>
+          <sc-for list="{{ metCatBars }}" as="c" hint-placeholder-count="6">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:11px;">
+              <span style="width:104px;flex:none;font-size:13px;font-weight:700;color:#0F2A1B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c.label }}</span>
+              <div style="flex:1;height:14px;background:#F0F2F7;border-radius:7px;overflow:hidden;"><div style="{{ c.fillStyle }}"></div></div>
+              <span style="width:92px;flex:none;text-align:right;font-size:13px;font-weight:800;color:#0F2A1B;">{{ c.valStr }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:1;min-width:240px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;">
+          <div style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">Qué se lleva por franja</div>
+          <div style="font-size:13px;color:#7C95A8;margin:2px 0 16px;">Categoría dominante por momento del día.</div>
+          <sc-for list="{{ metBuckets }}" as="b" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #F0F2F7;">
+              <div><div style="font-size:13.5px;font-weight:700;color:#0F2A1B;">{{ b.label }}</div><div style="font-size:11.5px;color:#94A3B5;">{{ b.range }} h</div></div>
+              <span style="font-size:12.5px;font-weight:700;padding:4px 11px;border-radius:999px;background:#EAF0FF;color:#1d4ed8;white-space:nowrap;">{{ b.topCatLabel }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
     <!-- ---------- CLIENTES ---------- -->
     <sc-if value="{{ isClientes }}" hint-placeholder-val="{{ false }}">
     <div data-screen-label="Clientes" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
@@ -2661,6 +2756,41 @@ class Component extends DCLogic {
   };
   custName = (id) => { const c = this.state.customers.find(x => x.id === id); return c ? c.name : 'Público general'; };
 
+  // Genera 12 meses de métricas sintéticas con patrones realistas (vivero, hemisferio sur).
+  // Determinista (PRNG con semilla fija) → estable entre recargas. Memoizado en this._metrics.
+  buildMetrics = () => {
+    let seed = 987654321;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    const noise = (a, b) => a + (b - a) * rnd();
+    const monthW = [1.25, 1.15, 0.95, 0.8, 0.7, 0.65, 0.7, 0.85, 1.1, 1.3, 1.35, 1.4]; // ene..dic (primavera/verano alto)
+    const wdW = [1.15, 0.8, 0.85, 0.9, 0.95, 1.2, 1.35]; // Dom..Sáb (fin de semana alto)
+    const hours = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+    const hourW = [0.5, 0.7, 0.9, 1.2, 1.3, 1.0, 0.85, 0.95, 1.2, 1.25, 1.0, 0.6]; // peaks mediodía y tarde
+    const hourSum = hourW.reduce((a, b) => a + b, 0);
+    const BASE = 9000;
+    const weekday = wdW.map(w => Math.round(BASE * hourSum * w * noise(0.92, 1.08)));
+    const hourByWeekday = wdW.map((w) => hours.map((h, i) => Math.round(BASE * w * hourW[i] * noise(0.8, 1.2))));
+    const monthly = monthW.map(w => Math.round(BASE * hourSum * 26 * w * noise(0.92, 1.08)));
+    const weekTrendBase = BASE * hourSum * 6;
+    const weeklyTrend = Array.from({ length: 8 }, (_, i) => Math.round(weekTrendBase * (0.82 + i * 0.035) * noise(0.95, 1.05)));
+    const cats = this.state.categories;
+    const catBaseW = { interior: 1.3, exterior: 1.1, suculentas: 0.95, macetas: 0.8, sustratos: 0.7, herramientas: 0.55 };
+    const totalYear = monthly.reduce((a, b) => a + b, 0);
+    const rawCat = cats.map(c => ({ key: c.key, label: c.label, w: (catBaseW[c.key] || 0.7) * noise(0.9, 1.1) }));
+    const wSum = rawCat.reduce((a, c) => a + c.w, 0) || 1;
+    const categories = rawCat.map(c => ({ key: c.key, label: c.label, total: Math.round(totalYear * c.w / wSum) })).sort((a, b) => b.total - a.total);
+    const skew = { interior: [1, 1, 1], exterior: [1.3, 1, 0.7], suculentas: [1.2, 1, 0.8], macetas: [0.8, 1, 1.2], sustratos: [0.9, 1, 1.1], herramientas: [0.7, 1, 1.3] };
+    const bucketDefs = [['Mañana', '09–12'], ['Mediodía', '12–15'], ['Tarde', '15–20']];
+    const buckets = bucketDefs.map((bd, bi) => {
+      let best = null;
+      categories.forEach(c => { const mult = (skew[c.key] || [1, 1, 1])[bi]; const v = c.total * mult; if (!best || v > best.v) best = { label: c.label, key: c.key, v }; });
+      return { label: bd[0], range: bd[1], topCatLabel: best ? best.label : '—', topCatKey: best ? best.key : null };
+    });
+    const orders = Math.round(totalYear / noise(11000, 13000));
+    const avgTicket = Math.round(totalYear / Math.max(1, orders));
+    return { monthly, weekday, hourByWeekday, hours, weeklyTrend, categories, buckets, totalYear, orders, avgTicket };
+  };
+
   renderVals() {
     const S = this.state;
     const accent = this.props.accent ?? '#22C463';
@@ -2684,9 +2814,11 @@ class Component extends DCLogic {
       cierre: mIcon([cE('rect', { x: 2, y: 6, width: 20, height: 12, rx: 2, key: 'r' }), cE('circle', { cx: 12, cy: 12, r: 2.5, key: 'c' }), pth('M6 12h.01M18 12h.01')]),
     };
     const navTabs = tabDefs.map(([id, label]) => ({ id, label, icon: navIcons[id], onClick: () => this.setScreen(id), style: navItemStyle(S.screen === id) }));
-    const adminScreens = ['historial', 'cajeros', 'config', 'respaldo'];
+    const metricasOn = !!(S.cfgModules.metricas && !S.modulePending.metricas);
+    const adminScreens = ['historial', 'metricas', 'cajeros', 'config', 'respaldo'];
     const adminMenuDefs = [
       ['historial', 'Historial', mIcon([pth('M3 3v18h18'), pth('M7 15l3-4 3 2 4-6')])],
+      ...(metricasOn ? [['metricas', 'Métricas', mIcon([pth('M3 3v18h18'), cE('rect', { x: 7, y: 12, width: 3, height: 5, rx: 1, key: 'a' }), cE('rect', { x: 12, y: 8, width: 3, height: 9, rx: 1, key: 'b' }), cE('rect', { x: 17, y: 14, width: 3, height: 3, rx: 1, key: 'c' })])]] : []),
       ['cajeros', 'Personal', mIcon([cE('circle', { cx: 9, cy: 8, r: 3.2, key: 'c' }), pth('M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 8h5M18.5 5.5v5')])],
       ['config', 'Configuración', mIcon([cE('circle', { cx: 12, cy: 12, r: 3, key: 'c' }), pth('M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.2a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.2A1.6 1.6 0 0 0 4.7 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.2a1.6 1.6 0 0 0-1.4 1z')])],
       ['respaldo', 'Respaldo', mIcon([cE('ellipse', { cx: 12, cy: 5, rx: 9, ry: 3, key: 'e' }), pth('M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6')])],
@@ -2697,6 +2829,35 @@ class Component extends DCLogic {
       style: navItemStyle(S.screen === id),
     }));
     const adminActive = adminScreens.includes(S.screen);
+
+    // ---- métricas (analítica) ----
+    const M = this._metrics || (this._metrics = this.buildMetrics());
+    const wdNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const wdOrder = [1, 2, 3, 4, 5, 6, 0];
+    const monNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const argmax = (a) => a.reduce((bi, _, i) => a[i] > a[bi] ? i : bi, 0);
+    const metStrongDayIdx = argmax(M.weekday);
+    const metHourTotals = M.hours.map((h, i) => M.hourByWeekday.reduce((a, row) => a + row[i], 0));
+    const metPeakHourI = argmax(metHourTotals);
+    const metPeakHour = M.hours[metPeakHourI];
+    const metTopMonthIdx = argmax(M.monthly);
+    const heatMax = Math.max(...M.hourByWeekday.map(r => Math.max(...r))) || 1;
+    const metHeatRows = wdOrder.map(d => ({
+      dayLabel: wdNames[d],
+      cells: M.hours.map((h, i) => {
+        const v = M.hourByWeekday[d][i]; const ratio = v / heatMax;
+        return { style: { background: 'rgba(37,99,235,' + (0.08 + 0.84 * ratio).toFixed(3) + ')', borderRadius: 6, height: 24 }, title: wdNames[d] + ' ' + h + 'h · ' + fmt(v) };
+      }),
+    }));
+    const metHeatHours = M.hours.map(h => String(h));
+    const wdMax = Math.max(...M.weekday) || 1;
+    const metWeekdayBars = wdOrder.map(d => ({ label: wdNames[d], valStr: fmt(M.weekday[d]), barStyle: { width: '100%', borderRadius: '7px 7px 0 0', background: d === metStrongDayIdx ? '#1E9E54' : '#A7E3C0', height: Math.round(M.weekday[d] / wdMax * 100) + '%' } }));
+    const wtMax = Math.max(...M.weeklyTrend), wtMin = Math.min(...M.weeklyTrend);
+    const metTrendPts = M.weeklyTrend.map((v, i) => { const x = (i / (M.weeklyTrend.length - 1)) * 100; const y = 100 - (wtMax === wtMin ? 50 : ((v - wtMin) / (wtMax - wtMin)) * 92 + 4); return x.toFixed(1) + ',' + y.toFixed(1); }).join(' ');
+    const monMax = Math.max(...M.monthly) || 1;
+    const metMonthBars = M.monthly.map((v, i) => ({ label: monNames[i], valStr: fmt(v), barStyle: { width: '100%', borderRadius: '6px 6px 0 0', background: i === metTopMonthIdx ? '#2563EB' : '#BBD0FF', height: Math.round(v / monMax * 100) + '%' } }));
+    const catMax = M.categories.length ? M.categories[0].total : 1;
+    const metCatBars = M.categories.map(c => ({ label: c.label, valStr: fmt(c.total), fillStyle: { height: '100%', borderRadius: 7, background: '#2563EB', width: Math.max(4, Math.round(c.total / catMax * 100)) + '%' } }));
 
     const chipBase = { padding: '7px 14px', borderRadius: 999, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' };
     const cats = [['todas', 'Todas'], ...S.categories.map(c => [c.key, c.label])];
@@ -3119,6 +3280,10 @@ class Component extends DCLogic {
       scanItemsCount: T.items,
       scanCobrarStyle: { border: 0, borderRadius: 13, padding: '14px 26px', fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: S.cart.length ? 'pointer' : 'not-allowed', color: S.cart.length ? '#fff' : '#9aa8bd', background: S.cart.length ? '#1E9E54' : '#EEF1F6' },
       isVenta: S.screen === 'venta', isStock: S.screen === 'stock', isHistorial: S.screen === 'historial', isClientes: S.screen === 'clientes', isCategorias: S.screen === 'categorias',
+      isMetricas: S.screen === 'metricas',
+      metTotalStr: fmt(M.totalYear), metAvgStr: fmt(M.avgTicket), metOrdersStr: M.orders.toLocaleString('es-CL'),
+      metStrongDay: wdNames[metStrongDayIdx], metPeakHour: String(metPeakHour).padStart(2, '0') + '–' + String(metPeakHour + 1).padStart(2, '0') + ' h', metTopMonth: monNames[metTopMonthIdx],
+      metHeatRows, metHeatHours, metWeekdayBars, metTrendPts, metMonthBars, metCatBars, metBuckets: M.buckets,
       isInicio: S.screen === 'inicio',
       showSidebar: S.screen !== 'venta',
       branch: S.branch, setBranch: this.setBranch,
