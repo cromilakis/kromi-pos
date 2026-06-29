@@ -798,7 +798,7 @@ input::placeholder{color:#9aa8bd;}
           <div style="display:flex;align-items:center;gap:16px;">
             <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#2A3A2E;"><span style="width:11px;height:11px;border-radius:50%;background:#22C463;"></span>Efectivo</div>
             <div style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:#2A3A2E;"><span style="width:11px;height:11px;border-radius:50%;background:#2563EB;"></span>Tarjeta</div>
-            <div style="background:#E6F7EE;color:#0a6e36;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;">Hora pico {{ peakLabel }}</div>
+            <div style="background:#E6F7EE;color:#0a6e36;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;">Hora más activa {{ peakLabel }}</div>
           </div>
         </div>
         <div style="display:flex;gap:10px;">
@@ -944,14 +944,27 @@ input::placeholder{color:#9aa8bd;}
         <div style="flex:1;min-width:170px;background:#0F2A1B;border-radius:18px;padding:18px 20px;color:#fff;position:relative;overflow:hidden;"><div style="position:absolute;top:-30px;right:-30px;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.45),transparent 70%);"></div><div style="font-size:12.5px;color:#9ec0ff;font-weight:700;margin-bottom:5px;position:relative;">Venta total (12m)</div><div style="font-size:26px;font-weight:900;letter-spacing:-.02em;position:relative;">{{ metTotalStr }}</div></div>
         <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Ticket promedio</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ metAvgStr }}</div></div>
         <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Día más fuerte</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ metStrongDay }}</div></div>
-        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Hora pico</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ metPeakHour }}</div></div>
+        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Hora más fuerte</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ metPeakHour }}</div></div>
         <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Mes top</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ metTopMonth }}</div></div>
       </div>
 
-      <!-- Horarios pico (heatmap) -->
+      <!-- Horarios de mayor venta (heatmap) -->
       <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;margin-bottom:18px;">
-        <div style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">Horarios pico</div>
-        <div style="font-size:13px;color:#7C95A8;margin:2px 0 16px;">Intensidad de venta por hora y día de la semana.</div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+          <div>
+            <div style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">Horarios de mayor venta</div>
+            <div style="font-size:13px;color:#7C95A8;margin-top:2px;">Intensidad de venta por hora y día de la semana.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex:none;">
+            <span style="font-size:11px;color:#94A3B5;font-weight:600;">menos</span>
+            <span style="width:15px;height:15px;border-radius:5px;background:rgba(37,99,235,.10);border:1px solid #EDF1F9;"></span>
+            <span style="width:15px;height:15px;border-radius:5px;background:rgba(37,99,235,.32);border:1px solid #EDF1F9;"></span>
+            <span style="width:15px;height:15px;border-radius:5px;background:rgba(37,99,235,.58);border:1px solid #EDF1F9;"></span>
+            <span style="width:15px;height:15px;border-radius:5px;background:rgba(37,99,235,.80);border:1px solid #EDF1F9;"></span>
+            <span style="width:15px;height:15px;border-radius:5px;background:rgba(37,99,235,1);border:1px solid #EDF1F9;"></span>
+            <span style="font-size:11px;color:#94A3B5;font-weight:600;">más</span>
+          </div>
+        </div>
         <div style="display:grid;grid-template-columns:46px repeat(12,1fr);gap:5px;align-items:center;">
           <span></span>
           <sc-for list="{{ metHeatHours }}" as="h" hint-placeholder-count="12"><span style="font-size:10.5px;color:#94A3B5;text-align:center;font-weight:700;">{{ h }}</span></sc-for>
@@ -990,7 +1003,7 @@ input::placeholder{color:#9aa8bd;}
       <!-- Estacionalidad por mes -->
       <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:20px 22px;margin-bottom:18px;">
         <div style="font-weight:900;font-size:17px;color:#0F2A1B;letter-spacing:-.01em;">Estacionalidad por mes</div>
-        <div style="font-size:13px;color:#7C95A8;margin:2px 0 16px;">Venta por mes; el mes pico se resalta.</div>
+        <div style="font-size:13px;color:#7C95A8;margin:2px 0 16px;">Venta por mes; el mes más alto se resalta.</div>
         <div style="display:flex;align-items:flex-end;gap:7px;height:160px;">
           <sc-for list="{{ metMonthBars }}" as="b" hint-placeholder-count="12">
             <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:7px;">
@@ -1153,7 +1166,7 @@ input::placeholder{color:#9aa8bd;}
             <div style="font-weight:900;font-size:16px;color:#0F2A1B;margin-bottom:14px;">Resumen del turno</div>
             <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:10px;"><span>Ventas</span><span style="font-weight:700;color:#0F2A1B;">{{ cierreCountNum }}</span></div>
             <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:10px;"><span>Ticket promedio</span><span style="font-weight:700;color:#0F2A1B;">{{ cierreAvgStr }}</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:10px;"><span>Hora pico</span><span style="font-weight:700;color:#0F2A1B;">{{ peakLabel }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:10px;"><span>Hora más activa</span><span style="font-weight:700;color:#0F2A1B;">{{ peakLabel }}</span></div>
             <div style="flex:1;"></div>
             <sc-if value="{{ cierreSealed }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;align-items:center;gap:9px;background:#E6F7EE;border:1px solid #A7E3C0;border-radius:12px;padding:12px 14px;margin-bottom:12px;color:#0a6e36;font-size:13px;font-weight:700;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Caja cerrada. Para atender otra venta, abre caja nuevamente.</div>
@@ -2841,12 +2854,16 @@ class Component extends DCLogic {
     const metPeakHourI = argmax(metHourTotals);
     const metPeakHour = M.hours[metPeakHourI];
     const metTopMonthIdx = argmax(M.monthly);
-    const heatMax = Math.max(...M.hourByWeekday.map(r => Math.max(...r))) || 1;
+    const heatFlat = M.hourByWeekday.reduce((a, r) => a.concat(r), []);
+    const heatMin = Math.min(...heatFlat), heatMax = Math.max(...heatFlat);
+    const heatRange = (heatMax - heatMin) || 1;
     const metHeatRows = wdOrder.map(d => ({
       dayLabel: wdNames[d],
       cells: M.hours.map((h, i) => {
-        const v = M.hourByWeekday[d][i]; const ratio = v / heatMax;
-        return { style: { background: 'rgba(37,99,235,' + (0.08 + 0.84 * ratio).toFixed(3) + ')', borderRadius: 6, height: 24 }, title: wdNames[d] + ' ' + h + 'h · ' + fmt(v) };
+        const v = M.hourByWeekday[d][i];
+        const norm = Math.pow((v - heatMin) / heatRange, 0.85); // min-max + leve gamma para abrir contraste
+        const alpha = (0.04 + 0.96 * norm).toFixed(3);
+        return { style: { background: 'rgba(37,99,235,' + alpha + ')', borderRadius: 6, height: 24, border: '1px solid #EDF1F9' }, title: wdNames[d] + ' ' + h + 'h · ' + fmt(v) };
       }),
     }));
     const metHeatHours = M.hours.map(h => String(h));
