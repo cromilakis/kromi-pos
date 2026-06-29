@@ -223,6 +223,105 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     b
 }
 
+#[derive(Deserialize, Clone)]
+pub struct CierrePayload {
+    pub negocio: Negocio,
+    pub fecha: String,
+    pub cajero: String,
+    pub apertura: String,
+    pub cierre: String,
+    pub ventas: u32,
+    pub cash: i64,
+    pub card: i64,
+    pub fondo: i64,
+    pub contado: i64,
+}
+
+pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
+    let total = p.cash + p.card;
+    let esperado = p.fondo + p.cash;
+    let diff = p.contado - esperado;
+    let pct = if esperado != 0 { (diff as f64) / (esperado as f64) * 100.0 } else { 0.0 };
+    let estado = if diff == 0 {
+        "CUADRADO (exacto)".to_string()
+    } else if diff > 0 {
+        format!("SOBRANTE +{:.1}%", pct.abs()).replace('.', ",")
+    } else {
+        format!("FALTANTE -{:.1}%", pct.abs()).replace('.', ",")
+    };
+
+    let mut b: Vec<u8> = Vec::new();
+    b.extend_from_slice(&[0x1B, 0x40]); // init
+
+    // logo (mismo raster pre-generado que la boleta)
+    b.extend_from_slice(include_bytes!("../assets/logo.escpos"));
+    nl(&mut b);
+
+    // tagline + emisor (centrado)
+    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+    push_text(&mut b, &format!("* {} *", p.negocio.tagline)); nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+    nl(&mut b);
+    line_center(&mut b, &p.negocio.razon_social);
+    nl(&mut b);
+
+    // recuadro de titulo
+    box_ascii(&mut b, &[
+        "COMPROBANTE DE CIERRE",
+        "Arqueo de caja",
+    ], 32);
+    nl(&mut b);
+
+    // datos del turno
+    push_text(&mut b, &format!("Fecha:    {}", p.fecha)); nl(&mut b);
+    push_text(&mut b, &format!("Cajero:   {}", p.cajero)); nl(&mut b);
+    line_lr(&mut b, &format!("Apertura: {}", p.apertura), &format!("Cierre: {}", p.cierre), COL);
+    rule(&mut b, b'-');
+
+    // ventas del turno
+    b.extend_from_slice(&[0x1B, 0x45, 0x01]);
+    push_text(&mut b, "VENTAS DEL TURNO"); nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x45, 0x00]);
+    line_lr(&mut b, "Numero de ventas", &p.ventas.to_string(), COL);
+    line_lr(&mut b, "Total vendido", &money(total), COL);
+    line_lr(&mut b, "  Efectivo", &money(p.cash), COL);
+    line_lr(&mut b, "  Tarjeta", &money(p.card), COL);
+    rule(&mut b, b'=');
+
+    // arqueo de efectivo
+    b.extend_from_slice(&[0x1B, 0x45, 0x01]);
+    push_text(&mut b, "ARQUEO DE EFECTIVO"); nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x45, 0x00]);
+    line_lr(&mut b, "Fondo de apertura", &money(p.fondo), COL);
+    line_lr(&mut b, "Ventas en efectivo", &money(p.cash), COL);
+    line_lr(&mut b, "Esperado en caja", &money(esperado), COL);
+    line_lr(&mut b, "Efectivo contado", &money(p.contado), COL);
+    rule(&mut b, b'-');
+
+    // diferencia (resaltada)
+    b.extend_from_slice(&[0x1D, 0x21, 0x01]); // doble alto
+    line_lr(&mut b, "DIFERENCIA", &format!("{}{}", if diff > 0 { "+" } else { "" }, money(diff)), COL);
+    b.extend_from_slice(&[0x1D, 0x21, 0x00]);
+    push_text(&mut b, &format!("Estado: {}", estado)); nl(&mut b);
+    rule(&mut b, b'=');
+    nl(&mut b);
+
+    // firma
+    push_text(&mut b, "Firma cajero:"); nl(&mut b); nl(&mut b);
+    push_text(&mut b, "________________________________"); nl(&mut b);
+    nl(&mut b);
+
+    // pie
+    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+    push_text(&mut b, &p.negocio.footer); nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+
+    // feed + corte (sin gaveta, sin timbre SII: no es documento tributario)
+    b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
+    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x00]);
+    b
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -281,5 +380,55 @@ mod tests {
         p.negocio.social = None;
         let b = build(&p);
         assert!(!contains(&b, &[0x1D, 0x28, 0x6B]));
+    }
+
+    fn sample_cierre(contado: i64) -> CierrePayload {
+        let s = sample("efectivo", true);
+        CierrePayload {
+            negocio: s.negocio,
+            fecha: "28/06/2026".into(),
+            cajero: "M. Jara".into(),
+            apertura: "09:00".into(),
+            cierre: "20:10".into(),
+            ventas: 16,
+            cash: 142300,
+            card: 98000,
+            fondo: 50000,
+            contado,
+        }
+    }
+
+    #[test]
+    fn cierre_init_corte_y_sin_gaveta() {
+        let b = build_cierre(&sample_cierre(192300));
+        assert_eq!(&b[0..2], &[0x1B, 0x40]);              // ESC @
+        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x00])); // corte
+        // un cierre NO debe abrir la gaveta
+        assert!(!contains(&b, &[0x1B, 0x70, 0x00, 0x19, 0xFA]));
+    }
+
+    #[test]
+    fn cierre_incluye_textos_y_arqueo() {
+        let b = build_cierre(&sample_cierre(192300));
+        assert!(contains(&b, b"COMPROBANTE DE CIERRE"));
+        assert!(contains(&b, b"M. Jara"));
+        assert!(contains(&b, b"ARQUEO DE EFECTIVO"));
+        assert!(contains(&b, b"DIFERENCIA"));
+        // esperado = 50000 + 142300 = 192300; contado igual => CUADRADO
+        assert!(contains(&b, b"CUADRADO (exacto)"));
+    }
+
+    #[test]
+    fn cierre_estado_segun_diferencia() {
+        // contado > esperado => SOBRANTE
+        assert!(contains(&build_cierre(&sample_cierre(200000)), b"SOBRANTE"));
+        // contado < esperado => FALTANTE
+        assert!(contains(&build_cierre(&sample_cierre(180000)), b"FALTANTE"));
+    }
+
+    #[test]
+    fn cierre_no_incluye_timbre_ni_qr() {
+        let b = build_cierre(&sample_cierre(192300));
+        assert!(!contains(&b, &[0x1D, 0x28, 0x6B])); // sin QR
     }
 }
