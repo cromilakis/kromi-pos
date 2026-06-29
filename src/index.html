@@ -349,6 +349,7 @@ input::placeholder{color:#9aa8bd;}
     <!-- ---------- VENTA ---------- -->
     <sc-if value="{{ isVenta }}" hint-placeholder-val="{{ true }}">
     <div data-screen-label="Venta" style="position:absolute;inset:0;display:flex;flex-direction:column;">
+      <sc-if value="{{ cajaOpen }}" hint-placeholder-val="{{ true }}">
       <!-- immersive top strip -->
       <div style="height:58px;flex:none;display:flex;align-items:center;gap:14px;padding:0 18px;background:#fff;border-bottom:1px solid #E1E5EE;">
         <button onClick="{{ exitVenta }}" title="Volver al inicio" style="display:flex;align-items:center;gap:8px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:9px 14px;font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer;flex:none;">
@@ -555,6 +556,21 @@ input::placeholder{color:#9aa8bd;}
       </div>
       </sc-if>
     </div>
+      </sc-if>
+      <sc-if value="{{ cajaClosed }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;">
+        <div style="width:84px;height:84px;border-radius:24px;background:#F0F2F7;display:flex;align-items:center;justify-content:center;margin-bottom:22px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h2 style="font-size:24px;font-weight:900;color:#0F2A1B;margin:0 0 8px;letter-spacing:-.01em;">La caja está cerrada</h2>
+        <p style="font-size:15px;color:#7C95A8;margin:0 0 26px;max-width:380px;line-height:1.5;">Abre la caja para comenzar a registrar ventas de este turno.</p>
+        <button onClick="{{ abrirCaja }}" style="display:flex;align-items:center;gap:10px;border:0;border-radius:14px;padding:15px 30px;background:#1E9E54;color:#fff;font-family:inherit;font-weight:700;font-size:16px;cursor:pointer;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+          Abrir caja
+        </button>
+        <button onClick="{{ exitVenta }}" style="margin-top:14px;border:0;background:transparent;color:#7C95A8;font-family:inherit;font-weight:700;font-size:13.5px;cursor:pointer;">Volver al inicio</button>
+      </div>
+      </sc-if>
     </div>
     </sc-if>
 
@@ -740,8 +756,29 @@ input::placeholder{color:#9aa8bd;}
     <!-- ---------- HISTORIAL ---------- -->
     <sc-if value="{{ isHistorial }}" hint-placeholder-val="{{ false }}">
     <div data-screen-label="Historial" style="position:absolute;inset:0;overflow:auto;padding:28px 32px;">
-      <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Historial de ventas</div>
-      <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0 0 14px;letter-spacing:-.01em;">{{ histTitle }}</h2>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">{{ histEyebrow }}</div>
+      <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0 0 14px;letter-spacing:-.01em;">{{ histHeading }}</h2>
+      <div style="display:flex;gap:12px;margin-bottom:22px;flex-wrap:wrap;">
+        <button onClick="{{ goHistVentas }}" style="{{ histTabVentasStyle }}">
+          <span style="{{ histTabVentasIconStyle }}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          </span>
+          <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;">
+            <span style="font-weight:800;font-size:14.5px;">Ventas</span>
+            <span style="{{ histTabVentasSubStyle }}">{{ histVentasCountStr }}</span>
+          </span>
+        </button>
+        <button onClick="{{ goHistCierres }}" style="{{ histTabCierresStyle }}">
+          <span style="{{ histTabCierresIconStyle }}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h4"/></svg>
+          </span>
+          <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;">
+            <span style="font-weight:800;font-size:14.5px;">Cierres de caja</span>
+            <span style="{{ histTabCierresSubStyle }}">{{ histCierresCountStr }}</span>
+          </span>
+        </button>
+      </div>
+      <sc-if value="{{ histTabVentas }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex;gap:8px;margin-bottom:20px;">
         <sc-for list="{{ histPeriodTabs }}" as="t" hint-placeholder-count="4">
           <button onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</button>
@@ -802,12 +839,24 @@ input::placeholder{color:#9aa8bd;}
           </button>
         </sc-for>
       </div>
+      </sc-if>
 
       <!-- cierres de caja -->
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:30px 0 14px;">
-        <div>
-          <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Arqueos</div>
-          <h2 style="font-size:22px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">Cierres de caja</h2>
+      <sc-if value="{{ histTabCierres }}" hint-placeholder-val="{{ false }}">
+
+      <sc-if value="{{ cierreListOpen }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E1E5EE;border-radius:11px;padding:8px 13px;">
+          <span style="font-size:12px;font-weight:700;color:#7C95A8;">Cajero</span>
+          <select value="{{ cierreFilterCajero }}" onChange="{{ setCierreFilterCajero }}" style="border:0;outline:none;background:transparent;font-family:inherit;font-size:13.5px;font-weight:700;color:#0F2A1B;cursor:pointer;">
+            <sc-for list="{{ cierreCajeroOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #E1E5EE;border-radius:11px;padding:8px 13px;">
+          <span style="font-size:12px;font-weight:700;color:#7C95A8;">Fecha</span>
+          <select value="{{ cierreFilterDate }}" onChange="{{ setCierreFilterDate }}" style="border:0;outline:none;background:transparent;font-family:inherit;font-size:13.5px;font-weight:700;color:#0F2A1B;cursor:pointer;">
+            <sc-for list="{{ cierreDateOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+          </select>
         </div>
       </div>
       <div style="display:flex;gap:16px;margin-bottom:16px;">
@@ -816,11 +865,11 @@ input::placeholder{color:#9aa8bd;}
         <div style="flex:1;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:13px;color:#7C95A8;font-weight:600;margin-bottom:6px;">Diferencia neta acumulada</div><div style="{{ cierreNetStyle }}">{{ cierreNetStr }}</div></div>
       </div>
       <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;overflow:hidden;">
-        <div style="display:grid;grid-template-columns:120px 1fr 120px 120px 120px 84px 100px;gap:14px;padding:12px 22px;background:#F8FAFC;border-bottom:1px solid #E1E5EE;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#94A3B5;">
-          <span>Fecha</span><span>Cajero</span><span style="text-align:right;">Esperado</span><span style="text-align:right;">Contado</span><span style="text-align:right;">Diferencia</span><span style="text-align:right;">Desvío</span><span style="text-align:right;">Estado</span>
+        <div style="display:grid;grid-template-columns:120px 1fr 120px 120px 120px 84px 100px 24px;gap:14px;padding:12px 22px;background:#F8FAFC;border-bottom:1px solid #E1E5EE;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#94A3B5;">
+          <span>Fecha</span><span>Cajero</span><span style="text-align:right;">Esperado</span><span style="text-align:right;">Contado</span><span style="text-align:right;">Diferencia</span><span style="text-align:right;">Desvío</span><span style="text-align:right;">Estado</span><span></span>
         </div>
         <sc-for list="{{ cierreHistoryRows }}" as="c" hint-placeholder-count="6">
-          <div style="display:grid;grid-template-columns:120px 1fr 120px 120px 120px 84px 100px;gap:14px;padding:14px 22px;border-bottom:1px solid #F0F2F7;align-items:center;">
+          <button onClick="{{ c.onClick }}" style="width:100%;display:grid;grid-template-columns:120px 1fr 120px 120px 120px 84px 100px 24px;gap:14px;padding:14px 22px;border:0;border-bottom:1px solid #F0F2F7;background:#fff;align-items:center;cursor:pointer;text-align:left;font-family:inherit;">
             <span style="font-size:13px;font-weight:700;color:#0F2A1B;">{{ c.dateLabel }}</span>
             <span style="font-size:14px;font-weight:600;color:#0F2A1B;">{{ c.cashierName }}</span>
             <span style="text-align:right;font-size:13.5px;color:#5a6b7e;">{{ c.expectedStr }}</span>
@@ -828,9 +877,52 @@ input::placeholder{color:#9aa8bd;}
             <span style="text-align:right;font-size:13.5px;font-weight:700;color:#0F2A1B;">{{ c.diffStr }}</span>
             <span style="text-align:right;{{ c.pctStyle }}">{{ c.pctStr }}</span>
             <span style="display:flex;justify-content:flex-end;"><span style="{{ c.chipStyle }}">{{ c.estado }}</span></span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cdd5e3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </sc-for>
+        <sc-if value="{{ cierreNoRows }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:34px 22px;text-align:center;font-size:13.5px;color:#9aa8bd;">No hay cierres para el filtro seleccionado.</div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ cierreDetailOpen }}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{ closeCierreDetail }}" style="display:inline-flex;align-items:center;gap:8px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:9px 14px;font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer;margin-bottom:16px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Volver a cierres
+      </button>
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+        <h3 style="font-size:20px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">{{ cierreDetail.cashierName }}</h3>
+        <span style="font-size:13.5px;color:#7C95A8;">{{ cierreDetail.dateLabel }} · {{ cierreDetail.openTime }}–{{ cierreDetail.closeTime }} · {{ cierreDetail.countStr }}</span>
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:180px;background:#0F2A1B;border-radius:18px;padding:18px 20px;color:#fff;"><div style="font-size:12.5px;color:#97F2CC;font-weight:700;margin-bottom:5px;">Total del turno</div><div style="font-size:26px;font-weight:900;letter-spacing:-.02em;">{{ cierreDetail.totalStr }}</div></div>
+        <div style="flex:1;min-width:140px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Efectivo</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ cierreDetail.cashStr }}</div></div>
+        <div style="flex:1;min-width:140px;background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:18px 20px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:5px;">Tarjeta</div><div style="font-size:22px;font-weight:900;color:#0F2A1B;">{{ cierreDetail.cardStr }}</div></div>
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:140px;background:#fff;border:1px solid #E1E5EE;border-radius:14px;padding:14px 18px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:4px;">Esperado en caja</div><div style="font-size:18px;font-weight:800;color:#0F2A1B;">{{ cierreDetail.expectedStr }}</div></div>
+        <div style="flex:1;min-width:140px;background:#fff;border:1px solid #E1E5EE;border-radius:14px;padding:14px 18px;"><div style="font-size:12.5px;color:#7C95A8;font-weight:600;margin-bottom:4px;">Efectivo contado</div><div style="font-size:18px;font-weight:800;color:#0F2A1B;">{{ cierreDetail.countedStr }}</div></div>
+        <div style="flex:1;min-width:180px;{{ cierreDetail.diffBoxStyle }}"><span style="font-size:13px;font-weight:700;">{{ cierreDetail.diffLabel }}</span><span style="font-size:18px;font-weight:900;">{{ cierreDetail.diffStr }}</span></div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:#5a6b7e;margin:6px 2px 10px;">Ventas de la jornada</div>
+      <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;overflow:hidden;">
+        <div style="display:grid;grid-template-columns:80px 70px 120px 1fr 120px;gap:14px;padding:12px 22px;background:#F8FAFC;border-bottom:1px solid #E1E5EE;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#94A3B5;">
+          <span>Folio</span><span>Hora</span><span>Método</span><span>Ítems</span><span style="text-align:right;">Total</span>
+        </div>
+        <sc-for list="{{ cierreDetailRows }}" as="v" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:80px 70px 120px 1fr 120px;gap:14px;padding:13px 22px;border-bottom:1px solid #F0F2F7;align-items:center;">
+            <span style="font-weight:900;font-size:13.5px;color:#0F2A1B;">{{ v.folioStr }}</span>
+            <span style="font-size:13px;color:#7C95A8;">{{ v.time }}</span>
+            <span><span style="{{ v.methodChipStyle }}">{{ v.methodLabel }}</span></span>
+            <span style="font-size:13.5px;color:#0F2A1B;">{{ v.itemsStr }}</span>
+            <span style="text-align:right;font-weight:900;font-size:14px;color:#0F2A1B;">{{ v.totalStr }}</span>
           </div>
         </sc-for>
       </div>
+      </sc-if>
+
+      </sc-if>
     </div>
     </sc-if>
 
@@ -876,7 +968,7 @@ input::placeholder{color:#9aa8bd;}
       <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;">
         <div>
           <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Administración</div>
-          <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">Usuarios y permisos</h2>
+          <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0;letter-spacing:-.01em;">Personal y permisos</h2>
           <p style="font-size:13px;color:#7C95A8;margin:6px 0 0;">Cajeros con acceso a este equipo. Su RUT es la credencial de ingreso.</p>
         </div>
         <button onClick="{{ openAddCajero }}" style="display:flex;align-items:center;gap:8px;border:1px solid #A7E3C0;background:#E6F7EE;color:#0a6e36;border-radius:12px;padding:12px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">
@@ -914,7 +1006,21 @@ input::placeholder{color:#9aa8bd;}
       <div style="max-width:940px;margin:0 auto;">
         <div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E54;margin-bottom:5px;">Arqueo</div>
         <h2 style="font-size:26px;font-weight:900;color:#0F2A1B;margin:0 0 4px;letter-spacing:-.01em;">Cierre de caja</h2>
-        <p style="font-size:14px;color:#7C95A8;margin:0 0 22px;">Turno de {{ sessionName }} · apertura {{ cierreOpenTime }}</p>
+        <p style="font-size:14px;color:#7C95A8;margin:0 0 22px;">{{ cierreSubtitle }}</p>
+        <sc-if value="{{ cierreNoCaja }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#fff;border:1px solid #E1E5EE;border-radius:18px;padding:48px 40px;display:flex;flex-direction:column;align-items:center;text-align:center;">
+          <div style="width:78px;height:78px;border-radius:22px;background:#F0F2F7;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div style="font-size:19px;font-weight:900;color:#0F2A1B;margin-bottom:6px;">No hay una caja abierta</div>
+          <p style="font-size:14px;color:#7C95A8;margin:0 0 24px;max-width:360px;line-height:1.5;">Abre la caja para iniciar un turno y poder registrar el arqueo al cerrar.</p>
+          <button onClick="{{ abrirCaja }}" style="display:flex;align-items:center;gap:9px;border:0;border-radius:13px;padding:13px 26px;background:#1E9E54;color:#fff;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+            Abrir caja
+          </button>
+        </div>
+        </sc-if>
+        <sc-if value="{{ cierreHasSession }}" hint-placeholder-val="{{ true }}">
         <div style="display:flex;gap:16px;margin-bottom:18px;">
           <div style="flex:1;background:#0F2A1B;border-radius:18px;padding:20px 22px;color:#fff;position:relative;overflow:hidden;">
             <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(34,196,99,.40),transparent 70%);"></div>
@@ -932,8 +1038,13 @@ input::placeholder{color:#9aa8bd;}
             <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:7px;"><span>Fondo de apertura</span><span>{{ cierreFloatStr }}</span></div>
             <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:7px;"><span>Ventas en efectivo</span><span>{{ cierreCashStr }}</span></div>
             <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0F2A1B;border-top:1px solid #F0F2F7;padding-top:9px;margin-top:3px;"><span>Esperado en caja</span><span>{{ cierreExpectedStr }}</span></div>
+            <sc-if value="{{ cajaOpen }}" hint-placeholder-val="{{ true }}">
             <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin:16px 0 6px;">Efectivo contado</label>
             <input value="{{ cierreCountedDisplay }}" onInput="{{ onCierreCounted }}" inputmode="numeric" placeholder="$0" style="width:100%;border:1px solid #E1E5EE;border-radius:12px;padding:13px 15px;font-family:inherit;font-size:18px;font-weight:700;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+            </sc-if>
+            <sc-if value="{{ cierreSealed }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0F2A1B;border-top:1px solid #F0F2F7;padding-top:9px;margin-top:14px;"><span>Efectivo contado</span><span>{{ cierreCountedStatic }}</span></div>
+            </sc-if>
             <div style="{{ cierreDiffBoxStyle }}"><span style="font-size:13px;font-weight:700;">{{ cierreDiffLabel }}</span><span style="font-size:18px;font-weight:900;">{{ cierreDiffStr }}</span></div>
           </div>
           <div style="width:300px;flex:none;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:18px;padding:22px;display:flex;flex-direction:column;">
@@ -942,12 +1053,17 @@ input::placeholder{color:#9aa8bd;}
             <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:10px;"><span>Ticket promedio</span><span style="font-weight:700;color:#0F2A1B;">{{ cierreAvgStr }}</span></div>
             <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:10px;"><span>Hora pico</span><span style="font-weight:700;color:#0F2A1B;">{{ peakLabel }}</span></div>
             <div style="flex:1;"></div>
-            <sc-if value="{{ cierreDone }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;align-items:center;gap:9px;background:#E6F7EE;border:1px solid #A7E3C0;border-radius:12px;padding:12px 14px;margin-bottom:12px;color:#0a6e36;font-size:13px;font-weight:700;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Caja cerrada · turno finalizado</div>
+            <sc-if value="{{ cierreSealed }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:9px;background:#E6F7EE;border:1px solid #A7E3C0;border-radius:12px;padding:12px 14px;margin-bottom:12px;color:#0a6e36;font-size:13px;font-weight:700;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Caja cerrada. Para atender otra venta, abre caja nuevamente.</div>
+              <button onClick="{{ printLastCierre }}" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid #1E9E54;background:#fff;color:#0a6e36;border-radius:13px;padding:13px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;margin-bottom:10px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>Imprimir comprobante de cierre</button>
+            </sc-if>
+            <sc-if value="{{ cierreNeedCount }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:12.5px;color:#94703A;background:#FEF6DD;border:1px solid #F2E2A8;border-radius:11px;padding:10px 13px;margin-bottom:12px;line-height:1.4;">Ingresa el efectivo contado para poder cerrar la caja.</div>
             </sc-if>
             <button onClick="{{ cierreBtnAction }}" style="{{ cierreBtnStyle }}">{{ cierreBtnLabel }}</button>
           </div>
         </div>
+        </sc-if>
       </div>
     </div>
     </sc-if>
@@ -1022,13 +1138,30 @@ input::placeholder{color:#9aa8bd;}
         </sc-if>
 
         <sc-if value="{{ isCfgModulos }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ moduleBannerShow }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:flex-start;gap:11px;background:#E6F7EE;border:1px solid #A7E3C0;border-radius:13px;padding:13px 15px;margin-bottom:16px;color:#0a6e36;font-size:13px;line-height:1.45;font-weight:600;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px;"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6 12 13 2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>
+            <div style="flex:1;">{{ moduleBanner }}</div>
+            <button onClick="{{ dismissModuleBanner }}" style="border:0;background:transparent;color:#0a6e36;cursor:pointer;font-family:inherit;font-weight:700;font-size:18px;line-height:1;flex:none;padding:0 2px;">×</button>
+          </div>
+          </sc-if>
           <div style="background:#fff;border:1px solid #E1E5EE;border-radius:16px;padding:6px 22px;">
             <sc-for list="{{ cfgModuleRows }}" as="m" hint-placeholder-count="4">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 0;border-bottom:1px solid #F0F2F7;">
-                <div style="padding-right:16px;"><div style="font-weight:700;font-size:14.5px;color:#0F2A1B;">{{ m.title }}</div><div style="font-size:12.5px;color:#94A3B5;margin-top:2px;">{{ m.desc }}</div></div>
-                <button onClick="{{ m.onToggle }}" style="{{ m.togStyle }}"><span style="{{ m.knobStyle }}"></span></button>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 0;border-bottom:1px solid #F0F2F7;">
+                <div style="padding-right:8px;min-width:0;">
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="font-weight:700;font-size:14.5px;color:#0F2A1B;">{{ m.title }}</span><span style="{{ m.statusChipStyle }}">{{ m.statusLabel }}</span></div>
+                  <div style="font-size:12.5px;color:#94A3B5;margin-top:3px;">{{ m.desc }}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:16px;flex:none;">
+                  <span style="font-size:13.5px;font-weight:800;color:#0F2A1B;white-space:nowrap;">{{ m.priceStr }}</span>
+                  <button onClick="{{ m.onToggle }}" style="{{ m.togStyle }}"><span style="{{ m.knobStyle }}"></span></button>
+                </div>
               </div>
             </sc-for>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0 14px;">
+              <span style="font-size:13.5px;font-weight:700;color:#5a6b7e;">Total mensual</span>
+              <span style="font-size:18px;font-weight:900;color:#0F2A1B;">{{ moduleTotalStr }}</span>
+            </div>
           </div>
         </sc-if>
 
@@ -1122,11 +1255,31 @@ input::placeholder{color:#9aa8bd;}
       <div style="padding:20px 24px;display:flex;flex-direction:column;gap:14px;">
         <sc-if value="{{ phoneGateAsk }}" hint-placeholder-val="{{ true }}">
           <p style="margin:0;font-size:13.5px;color:#5a6b7e;line-height:1.5;">Ingrese el teléfono del cliente para asociar la compra y acumular puntos.</p>
-          <div><label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Teléfono</label><input value="{{ phoneVal }}" onInput="{{ onPhoneInput }}" type="tel" placeholder="Ej. +56 9 1234 5678" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+          <div><label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Teléfono</label>
+            <div style="display:flex;gap:8px;">
+              <select value="{{ phonePrefixSel }}" onChange="{{ onPhonePrefix }}" style="border:1px solid #E1E5EE;border-radius:11px;padding:11px 10px;font-family:inherit;font-size:14px;font-weight:700;color:#0F2A1B;outline:none;background:#F8FAFC;cursor:pointer;flex:none;">
+                <sc-for list="{{ phonePrefixOpts }}" as="o" hint-placeholder-count="2"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+              </select>
+              <sc-if value="{{ phonePrefixIsCustom }}" hint-placeholder-val="{{ false }}">
+              <input value="{{ phonePrefixCustomVal }}" onInput="{{ onPhonePrefixCustom }}" type="tel" inputmode="numeric" placeholder="Prefijo" style="width:88px;flex:none;border:1px solid #E1E5EE;border-radius:11px;padding:11px 12px;font-family:inherit;font-size:14px;font-weight:700;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+              </sc-if>
+              <input value="{{ phoneVal }}" onInput="{{ onPhoneInput }}" type="tel" inputmode="numeric" placeholder="1234 5678" style="flex:1;min-width:0;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+            </div>
+          </div>
         </sc-if>
         <sc-if value="{{ phoneGateRegister }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex;align-items:center;gap:9px;background:#FBF1E0;color:#9a6a1e;border-radius:11px;padding:11px 14px;font-size:13px;font-weight:700;line-height:1.45;">Este número no está registrado. Complete los datos para registrarlo, o continúe sin registrar.</div>
-          <div><label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Teléfono</label><input value="{{ phoneVal }}" onInput="{{ onPhoneInput }}" type="tel" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+          <div><label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Teléfono</label>
+            <div style="display:flex;gap:8px;">
+              <select value="{{ phonePrefixSel }}" onChange="{{ onPhonePrefix }}" style="border:1px solid #E1E5EE;border-radius:11px;padding:11px 10px;font-family:inherit;font-size:14px;font-weight:700;color:#0F2A1B;outline:none;background:#F8FAFC;cursor:pointer;flex:none;">
+                <sc-for list="{{ phonePrefixOpts }}" as="o" hint-placeholder-count="2"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+              </select>
+              <sc-if value="{{ phonePrefixIsCustom }}" hint-placeholder-val="{{ false }}">
+              <input value="{{ phonePrefixCustomVal }}" onInput="{{ onPhonePrefixCustom }}" type="tel" inputmode="numeric" placeholder="Prefijo" style="width:88px;flex:none;border:1px solid #E1E5EE;border-radius:11px;padding:11px 12px;font-family:inherit;font-size:14px;font-weight:700;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+              </sc-if>
+              <input value="{{ phoneVal }}" onInput="{{ onPhoneInput }}" type="tel" inputmode="numeric" placeholder="1234 5678" style="flex:1;min-width:0;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+            </div>
+          </div>
           <div><label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Nombre <span style="color:#D02E2E;">*</span></label><input value="{{ phoneNameVal }}" onInput="{{ onPhoneName }}" placeholder="Nombre y apellido" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
           <div><label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Correo (opcional)</label><input value="{{ phoneEmailVal }}" onInput="{{ onPhoneEmail }}" type="email" placeholder="cliente@correo.cl" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
         </sc-if>
@@ -1248,7 +1401,7 @@ input::placeholder{color:#9aa8bd;}
       </div>
       <div style="padding:16px 24px;border-top:1px solid #E1E5EE;display:flex;gap:10px;">
         <button onClick="{{ printTicket }}" style="width:120px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:13px;padding:13px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Imprimir</button>
-        <button onClick="{{ closeTicket }}" style="flex:1;border:0;background:#1E9E54;color:#fff;border-radius:13px;padding:13px;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;">Nueva venta</button>
+        <button onClick="{{ closeTicket }}" style="flex:1;border:0;background:#1E9E54;color:#fff;border-radius:13px;padding:13px;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;">{{ ticketCloseLabel }}</button>
       </div>
     </div>
   </div>
@@ -1417,7 +1570,15 @@ input::placeholder{color:#9aa8bd;}
         </div>
         <div>
           <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin-bottom:6px;">Teléfono</label>
-          <input value="{{ custFormPhone }}" onInput="{{ onCustPhone }}" placeholder="Ej. +56 9 1234 5678" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+          <div style="display:flex;gap:8px;">
+            <select value="{{ custFormPrefixSel }}" onChange="{{ onCustPrefix }}" style="border:1px solid #E1E5EE;border-radius:11px;padding:11px 10px;font-family:inherit;font-size:14px;font-weight:700;color:#0F2A1B;outline:none;background:#F8FAFC;cursor:pointer;flex:none;">
+              <sc-for list="{{ phonePrefixOpts }}" as="o" hint-placeholder-count="2"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+            </select>
+            <sc-if value="{{ custFormPrefixIsCustom }}" hint-placeholder-val="{{ false }}">
+            <input value="{{ custFormPrefixCustomVal }}" onInput="{{ onCustPrefixCustom }}" type="tel" inputmode="numeric" placeholder="Prefijo" style="width:88px;flex:none;border:1px solid #E1E5EE;border-radius:11px;padding:11px 12px;font-family:inherit;font-size:14px;font-weight:700;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+            </sc-if>
+            <input value="{{ custFormPhone }}" onInput="{{ onCustPhone }}" type="tel" inputmode="numeric" placeholder="1234 5678" style="flex:1;min-width:0;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+          </div>
         </div>
       </div>
       <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
@@ -1603,6 +1764,73 @@ input::placeholder{color:#9aa8bd;}
   </div>
   </sc-if>
 
+  <!-- ================= CONFIRMAR CIERRE DE CAJA ================= -->
+  <sc-if value="{{ cierreConfirmOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;">
+    <div style="width:440px;max-width:100%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <div style="padding:20px 24px 18px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#E6F7EE;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#0a6e36" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <div style="font-weight:900;font-size:19px;color:#0F2A1B;line-height:1.2;">Confirmar cierre de caja</div>
+          <div style="font-size:12.5px;color:#7C95A8;margin-top:2px;">Turno de {{ sessionName }} · apertura {{ cierreOpenTime }}</div>
+        </div>
+      </div>
+      <div style="padding:18px 24px;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:8px;"><span>Ventas del turno</span><span style="font-weight:700;color:#0F2A1B;">{{ cierreCountNum }}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:8px;"><span>Total vendido</span><span style="font-weight:700;color:#0F2A1B;">{{ cierreTotalStr }}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:#5a6b7e;margin-bottom:8px;"><span>Efectivo · Tarjeta</span><span style="font-weight:700;color:#0F2A1B;">{{ cierreCashStr }} · {{ cierreCardStr }}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#0F2A1B;font-weight:700;border-top:1px solid #F0F2F7;padding-top:10px;margin-top:4px;"><span>Esperado en caja</span><span>{{ cierreExpectedStr }}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#0F2A1B;font-weight:700;margin-top:7px;"><span>Efectivo contado</span><span>{{ cierreCountedDisplay }}</span></div>
+        <div style="{{ cierreDiffBoxStyle }}"><span style="font-size:13px;font-weight:700;">{{ cierreDiffLabel }}</span><span style="font-size:18px;font-weight:900;">{{ cierreDiffStr }}</span></div>
+        <div style="display:flex;align-items:flex-start;gap:9px;background:#FEF6DD;border:1px solid #F2E2A8;border-radius:11px;padding:11px 13px;margin-top:14px;color:#8A6D12;font-size:12.5px;line-height:1.45;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>Al confirmar se cerrará el turno y se registrará el arqueo. Esta acción no se puede deshacer; para atender otra venta tendrás que abrir caja nuevamente.</div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ closeCierreConfirm }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ doCierre }}" style="min-width:130px;border:0;background:#1E9E54;color:#fff;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Confirmar cierre</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= CONFIRMAR ALTA/BAJA DE MODULO ================= -->
+  <sc-if value="{{ moduleConfirmOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;">
+    <div style="width:440px;max-width:100%;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,64,.35);">
+      <sc-if value="{{ moduleConfirmIsEnable }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:20px 24px 18px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#E6F7EE;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#0a6e36" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;line-height:1.2;">Contratar {{ moduleConfirmTitle }}</div>
+      </div>
+      <div style="padding:18px 24px;">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:13px;padding:14px 16px;margin-bottom:14px;"><span style="font-size:13.5px;font-weight:700;color:#5a6b7e;">Precio del módulo</span><span style="font-size:20px;font-weight:900;color:#0F2A1B;">{{ moduleConfirmPriceStr }}</span></div>
+        <div style="font-size:13.5px;color:#5a6b7e;line-height:1.55;">Al confirmar se activará el módulo y se enviará un correo de confirmación a <b style="color:#0F2A1B;font-weight:700;">{{ moduleConfirmEmail }}</b>.</div>
+      </div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ closeModuleConfirm }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ confirmModule }}" style="min-width:150px;border:0;background:#1E9E54;color:#fff;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Confirmar contratación</button>
+      </div>
+      </sc-if>
+      <sc-if value="{{ moduleConfirmIsDisable }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:20px 24px 18px;border-bottom:1px solid #E1E5EE;display:flex;align-items:center;gap:15px;">
+        <div style="width:46px;height:46px;border-radius:13px;background:#FEF6DD;display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#9A6F12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        </div>
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;line-height:1.2;">Dar de baja {{ moduleConfirmTitle }}</div>
+      </div>
+      <div style="padding:18px 24px;font-size:13.5px;color:#5a6b7e;line-height:1.6;">El módulo seguirá activo hasta el <b style="color:#0F2A1B;font-weight:700;">{{ moduleConfirmEndLabel }}</b>. Desde el <b style="color:#0F2A1B;font-weight:700;">{{ moduleConfirmNextLabel }}</b> se desactiva y se deja de cobrar. Te enviaremos un correo a <b style="color:#0F2A1B;font-weight:700;">{{ moduleConfirmEmail }}</b>.</div>
+      <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
+        <button onClick="{{ closeModuleConfirm }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ confirmModule }}" style="min-width:130px;border:0;background:#D08A12;color:#fff;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Dar de baja</button>
+      </div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
 </div>
 </div>
 </x-dc>
@@ -1657,6 +1885,7 @@ class Component extends DCLogic {
       branch: 'centro',
       viewingBiz: null,
       histPeriod: 'dia',
+      histTab: 'ventas',
       businesses: [
         { id: 'b1', name: 'Brota', rubro: 'Vivero · plantas', accent: '#22C463', plan: 'Pro', salesToday: 307960, ops: 17, status: 'active' },
         { id: 'b2', name: 'Aroma Café', rubro: 'Cafetería de especialidad', accent: '#B5651D', plan: 'Básico', salesToday: 184500, ops: 92, status: 'active' },
@@ -1668,16 +1897,67 @@ class Component extends DCLogic {
       cfgSection: 'marca',
       cfgAccent: '#1E9E54',
       cfgModules: { stock: true, clientes: true, historial: true, categorias: true },
+      modulePending: {},
+      adminEmail: 'admin@plantaconmati.cl',
+      moduleConfirm: null,
+      moduleBanner: null,
+      moduleNotices: [],
       cierreCounted: '',
       cierreDone: false,
-      cierres: [
-        { id: 'cl1', dateIso: '2026-06-26', dateLabel: 'Vie 26 jun', cashierId: 'u2', cashierName: 'M. Jara',     openTime: '09:00', closeTime: '20:10', salesCount: 16, cash: 142300, card: 98000,  float: 50000, counted: 192300 },
-        { id: 'cl2', dateIso: '2026-06-26', dateLabel: 'Vie 26 jun', cashierId: 'u3', cashierName: 'Pedro Lillo', openTime: '12:00', closeTime: '20:05', salesCount: 11, cash: 88000,  card: 120000, float: 50000, counted: 135500 },
-        { id: 'cl3', dateIso: '2026-06-25', dateLabel: 'Jue 25 jun', cashierId: 'u2', cashierName: 'M. Jara',     openTime: '09:00', closeTime: '19:50', salesCount: 17, cash: 167000, card: 75000,  float: 50000, counted: 219000 },
-        { id: 'cl4', dateIso: '2026-06-25', dateLabel: 'Jue 25 jun', cashierId: 'u1', cashierName: 'Daniela Soto', openTime: '15:00', closeTime: '20:00', salesCount: 6,  cash: 54000,  card: 30000,  float: 50000, counted: 104000 },
-        { id: 'cl5', dateIso: '2026-06-24', dateLabel: 'Mié 24 jun', cashierId: 'u3', cashierName: 'Pedro Lillo', openTime: '09:00', closeTime: '20:15', salesCount: 13, cash: 99000,  card: 60000,  float: 50000, counted: 143000 },
-        { id: 'cl6', dateIso: '2026-06-24', dateLabel: 'Mié 24 jun', cashierId: 'u2', cashierName: 'M. Jara',     openTime: '12:00', closeTime: '20:00', salesCount: 15, cash: 120000, card: 88000,  float: 50000, counted: 171000 },
-      ],
+      cajaOpen: false,
+      cajaOpenAt: null,
+      cajaSessionId: 0,
+      cierreConfirm: false,
+      lastCierre: null,
+      cierreDetailId: null,
+      cierreFilterCajero: 'all',
+      cierreFilterDate: 'all',
+      ticketFromHistory: false,
+      cierres: ((MKC) => [
+        MKC({ id: 'cl1', dateIso: '2026-06-26', dateLabel: 'Vie 26 jun', cashierId: 'u2', cashierName: 'M. Jara', openTime: '09:00', closeTime: '20:10' }, 0, [
+          { folio: 391, time: '09:32', method: 'efectivo', total: 7990,  lines: [{ name: 'Lavanda', qty: 1, price: 7990 }] },
+          { folio: 393, time: '11:05', method: 'tarjeta',  total: 14990, lines: [{ name: 'Monstera Deliciosa', qty: 1, price: 14990 }] },
+          { folio: 397, time: '13:20', method: 'efectivo', total: 6980,  lines: [{ name: 'Echeveria', qty: 2, price: 3490 }] },
+          { folio: 402, time: '16:11', method: 'tarjeta',  total: 11490, lines: [{ name: 'Calathea', qty: 1, price: 11490 }] },
+          { folio: 408, time: '18:44', method: 'efectivo', total: 8990,  lines: [{ name: 'Maceta cerámica 18cm', qty: 1, price: 8990 }] },
+        ]),
+        MKC({ id: 'cl2', dateIso: '2026-06-26', dateLabel: 'Vie 26 jun', cashierId: 'u3', cashierName: 'Pedro Lillo', openTime: '12:00', closeTime: '20:05' }, -2000, [
+          { folio: 395, time: '12:40', method: 'tarjeta',  total: 14990, lines: [{ name: 'Monstera Deliciosa', qty: 1, price: 14990 }] },
+          { folio: 399, time: '14:18', method: 'efectivo', total: 6490,  lines: [{ name: 'Pothos Dorado', qty: 1, price: 6490 }] },
+          { folio: 404, time: '17:02', method: 'tarjeta',  total: 6990,  lines: [{ name: 'Maceta colgante', qty: 1, price: 6990 }] },
+          { folio: 407, time: '18:30', method: 'efectivo', total: 9990,  lines: [{ name: 'Sansevieria', qty: 1, price: 9990 }] },
+        ]),
+        MKC({ id: 'cl3', dateIso: '2026-06-25', dateLabel: 'Jue 25 jun', cashierId: 'u2', cashierName: 'M. Jara', openTime: '09:00', closeTime: '19:50' }, 1500, [
+          { folio: 372, time: '09:50', method: 'efectivo', total: 13990, lines: [{ name: 'Zamioculca (ZZ)', qty: 1, price: 13990 }] },
+          { folio: 376, time: '11:33', method: 'tarjeta',  total: 22980, lines: [{ name: 'Calathea', qty: 2, price: 11490 }] },
+          { folio: 381, time: '13:47', method: 'efectivo', total: 8580,  lines: [{ name: 'Cactus Bola', qty: 2, price: 4290 }] },
+          { folio: 386, time: '16:20', method: 'tarjeta',  total: 9490,  lines: [{ name: 'Hortensia', qty: 1, price: 9490 }] },
+          { folio: 390, time: '18:05', method: 'efectivo', total: 4490,  lines: [{ name: 'Romero', qty: 1, price: 4490 }] },
+        ]),
+        MKC({ id: 'cl4', dateIso: '2026-06-25', dateLabel: 'Jue 25 jun', cashierId: 'u1', cashierName: 'Daniela Soto', openTime: '15:00', closeTime: '20:00' }, 0, [
+          { folio: 383, time: '15:22', method: 'tarjeta',  total: 12990, lines: [{ name: 'Buganvilia', qty: 1, price: 12990 }] },
+          { folio: 387, time: '17:10', method: 'efectivo', total: 7990,  lines: [{ name: 'Lavanda', qty: 1, price: 7990 }] },
+          { folio: 389, time: '18:55', method: 'efectivo', total: 3290,  lines: [{ name: 'Perlita 2L', qty: 1, price: 3290 }] },
+        ]),
+        MKC({ id: 'cl5', dateIso: '2026-06-24', dateLabel: 'Mié 24 jun', cashierId: 'u3', cashierName: 'Pedro Lillo', openTime: '09:00', closeTime: '20:15' }, -3000, [
+          { folio: 351, time: '09:40', method: 'efectivo', total: 9990,  lines: [{ name: 'Sansevieria', qty: 1, price: 9990 }] },
+          { folio: 356, time: '12:15', method: 'tarjeta',  total: 14990, lines: [{ name: 'Monstera Deliciosa', qty: 1, price: 14990 }] },
+          { folio: 362, time: '15:48', method: 'efectivo', total: 9990,  lines: [{ name: 'Tijera de podar', qty: 1, price: 9990 }] },
+          { folio: 368, time: '18:22', method: 'tarjeta',  total: 6490,  lines: [{ name: 'Pothos Dorado', qty: 1, price: 6490 }] },
+        ]),
+        MKC({ id: 'cl6', dateIso: '2026-06-24', dateLabel: 'Mié 24 jun', cashierId: 'u2', cashierName: 'M. Jara', openTime: '12:00', closeTime: '20:00' }, 2000, [
+          { folio: 354, time: '12:30', method: 'efectivo', total: 18980, lines: [{ name: 'Hortensia', qty: 2, price: 9490 }] },
+          { folio: 359, time: '14:05', method: 'tarjeta',  total: 11490, lines: [{ name: 'Calathea', qty: 1, price: 11490 }] },
+          { folio: 364, time: '16:33', method: 'efectivo', total: 8990,  lines: [{ name: 'Maceta cerámica 18cm', qty: 1, price: 8990 }] },
+          { folio: 369, time: '18:10', method: 'tarjeta',  total: 4990,  lines: [{ name: 'Sustrato universal 5L', qty: 1, price: 4990 }] },
+          { folio: 373, time: '19:25', method: 'efectivo', total: 3490,  lines: [{ name: 'Echeveria', qty: 1, price: 3490 }] },
+        ]),
+      ])((meta, diff, sales) => {
+        const cash = sales.filter(s => s.method === 'efectivo').reduce((a, s) => a + s.total, 0);
+        const card = sales.filter(s => s.method === 'tarjeta').reduce((a, s) => a + s.total, 0);
+        const float = 50000;
+        return { ...meta, salesCount: sales.length, cash, card, float, counted: float + cash + diff, sales };
+      }),
       backupAuto: true,
       cat: 'todas',
       stockQuery: '',
@@ -1885,12 +2165,52 @@ class Component extends DCLogic {
   goAdmin = (id) => this.setState({ screen: id, adminMenuOpen: false });
   setCfgSection = (k) => this.setState({ cfgSection: k });
   setCfgAccent = (c) => this.setState({ cfgAccent: c });
-  toggleCfgModule = (k) => this.setState(s => ({ cfgModules: { ...s.cfgModules, [k]: !s.cfgModules[k] } }));
+  MODULE_PRICES = { stock: 12000, clientes: 15000, historial: 9000, categorias: 6000 };
+  moduleEndLabels = () => {
+    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    const now = new Date();
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const next1 = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return { endLabel: `${end.getDate()} ${months[end.getMonth()]}`, next1Label: `1 ${months[next1.getMonth()]}` };
+  };
+  openModuleConfirm = (k) => this.setState(s => {
+    const active = !!s.cfgModules[k];
+    const pending = !!s.modulePending[k];
+    const action = (!active || pending) ? 'enable' : 'disable';
+    return { moduleConfirm: { key: k, action } };
+  });
+  closeModuleConfirm = () => this.setState({ moduleConfirm: null });
+  confirmModule = () => this.setState(s => {
+    const mc = s.moduleConfirm;
+    if (!mc) return {};
+    const k = mc.key;
+    const def = { stock: 'Stock e inventario', clientes: 'Clientes y fidelización', historial: 'Historial y métricas', categorias: 'Categorías' }[k] || k;
+    const notice = { key: k, action: mc.action, email: s.adminEmail, at: new Date().toISOString() };
+    if (mc.action === 'enable') {
+      const wasPending = !!s.modulePending[k];
+      const pending = { ...s.modulePending }; delete pending[k];
+      const banner = wasPending
+        ? `Baja anulada · «${def}» sigue activo.`
+        : `Módulo «${def}» contratado. Enviamos un correo de confirmación a ${s.adminEmail}.`;
+      return { cfgModules: { ...s.cfgModules, [k]: true }, modulePending: pending, moduleConfirm: null, moduleBanner: banner, moduleNotices: [notice, ...s.moduleNotices] };
+    }
+    const { endLabel, next1Label } = this.moduleEndLabels();
+    const banner = `«${def}» seguirá activo hasta el ${endLabel}; desde el ${next1Label} se desactiva y se deja de cobrar. Te enviamos un correo a ${s.adminEmail}.`;
+    return { modulePending: { ...s.modulePending, [k]: endLabel }, moduleConfirm: null, moduleBanner: banner, moduleNotices: [notice, ...s.moduleNotices] };
+  });
+  dismissModuleBanner = () => this.setState({ moduleBanner: null });
   onCierreCounted = (e) => this.setState({ cierreCounted: (e.target.value || '').replace(/[^\d]/g, '') });
+  abrirCaja = () => this.setState(s => {
+    const now = new Date();
+    const pad2 = (n) => String(n).padStart(2, '0');
+    return { cajaOpen: true, cajaOpenAt: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`, cajaSessionId: s.cajaSessionId + 1, cierreDone: false, cierreCounted: '' };
+  });
+  openCierreConfirm = () => this.setState({ cierreConfirm: true });
+  closeCierreConfirm = () => this.setState({ cierreConfirm: false });
   doCierre = () => this.setState(s => {
-    if (s.cierreDone) return {};
+    if (!s.cajaOpen) return { cierreConfirm: false };
     const myId = s.session ? s.session.id : null;
-    const mine = s.sales.filter(x => x.cashierId === myId);
+    const mine = s.sales.filter(x => x.cajaSessionId === s.cajaSessionId);
     const cash = mine.filter(x => x.method === 'efectivo').reduce((a, x) => a + x.total, 0);
     const card = mine.filter(x => x.method === 'tarjeta').reduce((a, x) => a + x.total, 0);
     const counted = parseInt(s.cierreCounted || '0', 10) || 0;
@@ -1903,12 +2223,44 @@ class Component extends DCLogic {
       dateIso: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`,
       dateLabel: `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`,
       cashierId: myId, cashierName: s.session ? s.session.name : '—',
-      openTime: '09:00', closeTime: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
+      openTime: s.cajaOpenAt || '—', closeTime: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
       salesCount: mine.length, cash, card, float: 50000, counted,
     };
-    return { cierres: [rec, ...s.cierres], cierreDone: true };
+    rec.sales = mine.map(x => ({ folio: x.folio, time: x.time, method: x.method, total: x.total, lines: x.lines }));
+    return { cierres: [rec, ...s.cierres], cierreDone: true, cajaOpen: false, cart: [], cierreConfirm: false, lastCierre: rec };
   });
-  resetCierre = () => this.setState({ cierreDone: false, cierreCounted: '' });
+  openCierreDetail = (id) => this.setState({ cierreDetailId: id });
+  closeCierreDetail = () => this.setState({ cierreDetailId: null });
+  setCierreFilterCajero = (e) => this.setState({ cierreFilterCajero: e.target.value });
+  setCierreFilterDate = (e) => this.setState({ cierreFilterDate: e.target.value });
+  buildCierrePayload = (rec) => {
+    const cr = this.state.cfgRecibo;
+    const iso = (rec.dateIso || '').split('-');
+    const fecha = iso.length === 3 ? `${iso[2]}/${iso[1]}/${iso[0]}` : (rec.dateLabel || '');
+    return {
+      negocio: {
+        tagline: cr.tagline, razon_social: cr.razonSocial, rut: cr.rut,
+        giro: cr.giro, direccion: cr.direccion, footer: cr.footer,
+        printer_name: cr.printerName, social: null,
+      },
+      fecha, cajero: rec.cashierName || '—',
+      apertura: rec.openTime || '—', cierre: rec.closeTime || '—',
+      ventas: rec.salesCount || 0,
+      cash: rec.cash || 0, card: rec.card || 0,
+      fondo: rec.float || 0, contado: rec.counted || 0,
+    };
+  };
+  printCierre = (rec) => {
+    if (!rec) return;
+    const tauri = window.__TAURI__;
+    if (tauri && tauri.core && typeof tauri.core.invoke === 'function') {
+      tauri.core.invoke('print_cierre', { payload: this.buildCierrePayload(rec) })
+        .catch(err => console.error('print_cierre:', err));
+    } else {
+      try { window.print(); } catch (e) {}
+    }
+  };
+  printLastCierre = () => this.printCierre(this.state.lastCierre);
   toggleBackupAuto = () => this.setState(s => ({ backupAuto: !s.backupAuto }));
   noop = () => {};
   setCat = (c) => this.setState({ cat: c });
@@ -1946,16 +2298,23 @@ class Component extends DCLogic {
   openPayNow = () => this.setState({ payOpen: true, payMethod: 'efectivo', cashStr: '' });
   openPay = () => {
     if (this.state.cart.length === 0) return;
-    if (!this.state.customerId) { this.setState({ phoneGate: { phone: '', name: '', email: '', step: 'ask', msg: '' } }); return; }
+    if (!this.state.customerId) { this.setState({ phoneGate: { prefix: '569', phone: '', name: '', email: '', step: 'ask', msg: '' } }); return; }
     this.openPayNow();
   };
   closePhoneGate = () => this.setState({ phoneGate: null });
   onPhoneField = (field, value) => this.setState(s => ({ phoneGate: { ...s.phoneGate, [field]: value, msg: '' } }));
   phoneDigits = (p) => (p || '').replace(/[^0-9]/g, '');
+  phoneFull = (g) => {
+    const pfx = this.phoneDigits(g.prefix);
+    const lbl = pfx === '569' ? '+56 9' : ('+' + pfx);
+    const local = this.phoneDigits(g.phone).replace(/(\d{4})(?=\d)/g, '$1 ');
+    return (lbl + ' ' + local).trim();
+  };
   phoneContinue = () => {
     const g = this.state.phoneGate; if (!g) return;
-    const digits = this.phoneDigits(g.phone);
-    if (digits.length < 8) { this.setState({ phoneGate: { ...g, msg: 'Ingrese un teléfono válido.' } }); return; }
+    const local = this.phoneDigits(g.phone);
+    if (local.length < 7) { this.setState({ phoneGate: { ...g, msg: 'Ingrese los dígitos del número (sin el prefijo).' } }); return; }
+    const digits = this.phoneDigits(g.prefix) + local;
     const found = this.state.customers.find(c => this.phoneDigits(c.phone) === digits);
     if (found) { this.setState({ phoneGate: null, customerId: found.id }, this.openPayNow); return; }
     this.setState({ phoneGate: { ...g, step: 'register', msg: '' } });
@@ -1965,7 +2324,7 @@ class Component extends DCLogic {
     const name = (g.name || '').trim();
     if (!name) { this.setState({ phoneGate: { ...g, msg: 'El nombre es obligatorio.' } }); return; }
     const id = 'c' + Date.now();
-    const phone = (g.phone || '').trim(), email = (g.email || '').trim() || '—';
+    const phone = this.phoneFull(g), email = (g.email || '').trim() || '—';
     const now = new Date();
     const createdAt = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const createdBy = (this.state.session || {}).id || null;
@@ -2000,6 +2359,7 @@ class Component extends DCLogic {
       folio, method: this.state.payMethod, total: t.total, neto: t.neto, iva: t.iva,
       recv, change: efectivo ? recv - t.total : 0, points, customerId: cust,
       cashierId: (this.state.session || {}).id || null,
+      cajaSessionId: this.state.cajaSessionId,
       time: now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
       date: now.toLocaleDateString('es-CL', { weekday: 'short', day: '2-digit', month: 'short' }),
       recFecha, recHora,
@@ -2008,11 +2368,11 @@ class Component extends DCLogic {
     const products = this.state.products.map(p => { const c = this.state.cart.find(x => x.id === p.id); return c ? { ...p, stock: p.stock - c.qty } : p; });
     let customers = this.state.customers;
     if (cust) customers = customers.map(cu => cu.id === cust ? { ...cu, points: cu.points + points, spent: cu.spent + t.total, visits: cu.visits + 1 } : cu);
-    this.setState({ products, customers, sales: [sale, ...this.state.sales], folioSeq: folio + 1, cart: [], payOpen: false, ticket: sale, customerId: null },
+    this.setState({ products, customers, sales: [sale, ...this.state.sales], folioSeq: folio + 1, cart: [], payOpen: false, ticket: sale, ticketFromHistory: false, customerId: null },
       () => this.printReceipt(sale));
   };
 
-  openTicket = (sale) => this.setState({ ticket: sale });
+  openTicket = (sale) => this.setState({ ticket: sale, ticketFromHistory: true });
   closeTicket = () => this.setState({ ticket: null });
   setCfgRecibo = (field, value) => this.setState(s => ({ cfgRecibo: { ...s.cfgRecibo, [field]: value } }));
   printTicket = () => { if (this.state.ticket) this.printReceipt(this.state.ticket); };
@@ -2221,8 +2581,14 @@ class Component extends DCLogic {
     }));
   };
 
-  openAddCustomer = () => this.setState({ custForm: { id: null, name: '', phone: '', email: '' } });
-  openEditCustomer = (id) => { const c = this.state.customers.find(x => x.id === id); if (!c) return; this.setState({ custForm: { id: c.id, name: c.name, phone: c.phone || '', email: c.email || '' } }); };
+  splitPhone = (phone) => {
+    const d = this.phoneDigits(phone);
+    if (d.startsWith('569')) return { prefix: '569', local: d.slice(3) };
+    if (d.length > 8) return { prefix: d.slice(0, d.length - 8), local: d.slice(-8) };
+    return { prefix: '569', local: d };
+  };
+  openAddCustomer = () => this.setState({ custForm: { id: null, name: '', prefix: '569', phone: '', email: '' } });
+  openEditCustomer = (id) => { const c = this.state.customers.find(x => x.id === id); if (!c) return; const sp = this.splitPhone(c.phone); this.setState({ custForm: { id: c.id, name: c.name, prefix: sp.prefix, phone: sp.local, email: c.email || '' } }); };
   closeCustForm = () => this.setState({ custForm: null });
   onCustField = (field, value) => this.setState(s => ({ custForm: { ...s.custForm, [field]: value } }));
   saveCustomer = () => {
@@ -2230,7 +2596,7 @@ class Component extends DCLogic {
     if (!f) return;
     const name = f.name.trim();
     if (!name) return;
-    const phone = f.phone.trim() || '—', email = (f.email || '').trim() || '—';
+    const phone = this.phoneDigits(f.phone) ? this.phoneFull(f) : '—', email = (f.email || '').trim() || '—';
     this.setState(s => {
       if (f.id == null) {
         const id = 'c' + Date.now();
@@ -2274,7 +2640,7 @@ class Component extends DCLogic {
     const adminScreens = ['historial', 'cajeros', 'config', 'respaldo'];
     const adminMenuDefs = [
       ['historial', 'Historial', mIcon([pth('M3 3v18h18'), pth('M7 15l3-4 3 2 4-6')])],
-      ['cajeros', 'Usuarios', mIcon([cE('circle', { cx: 9, cy: 8, r: 3.2, key: 'c' }), pth('M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 8h5M18.5 5.5v5')])],
+      ['cajeros', 'Personal', mIcon([cE('circle', { cx: 9, cy: 8, r: 3.2, key: 'c' }), pth('M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 8h5M18.5 5.5v5')])],
       ['config', 'Configuración', mIcon([cE('circle', { cx: 12, cy: 12, r: 3, key: 'c' }), pth('M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 0 1-4 0v-.2a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.2A1.6 1.6 0 0 0 4.7 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.2a1.6 1.6 0 0 0-1.4 1z')])],
       ['respaldo', 'Respaldo', mIcon([cE('ellipse', { cx: 12, cy: 5, rx: 9, ry: 3, key: 'e' }), pth('M3 5v6c0 1.7 4 3 9 3s9-1.3 9-3V5M3 11v6c0 1.7 4 3 9 3s9-1.3 9-3v-6')])],
     ];
@@ -2438,6 +2804,15 @@ class Component extends DCLogic {
     const histPeriodDefs = [['dia', 'Día'], ['semana', 'Semana'], ['mes', 'Mes'], ['anio', 'Año']];
     const histPeriodTabs = histPeriodDefs.map(([k, label]) => ({ label, onClick: () => this.setState({ histPeriod: k }), style: { border: '1px solid ' + (S.histPeriod === k ? '#1E9E54' : '#E1E5EE'), background: S.histPeriod === k ? '#E6F7EE' : '#fff', color: S.histPeriod === k ? '#0a6e36' : '#5a6b7e', borderRadius: 10, padding: '8px 16px', fontWeight: 700, fontSize: 13.5, fontFamily: 'inherit', cursor: 'pointer' } }));
     const histTitle = ({ dia: 'Ventas del día', semana: 'Ventas de la semana', mes: 'Ventas del mes', anio: 'Ventas del año' })[S.histPeriod || 'dia'];
+    const histTabCur = S.histTab || 'ventas';
+    const histTabAccents = {
+      ventas: { main: '#1E9E54', bg: '#E6F7EE', border: '#A7E3C0', text: '#0a6e36', sub: '#3f8f63' },
+      cierres: { main: '#2563EB', bg: '#EAF0FF', border: '#BBD0FF', text: '#1d4ed8', sub: '#5b7fd6' },
+    };
+    const histTabBtnStyle = (active, ac) => ({ display: 'flex', alignItems: 'center', gap: 11, border: '1.5px solid ' + (active ? ac.border : '#E1E5EE'), background: active ? ac.bg : '#fff', color: active ? ac.text : '#5a6b7e', borderRadius: 14, padding: '10px 16px', fontFamily: 'inherit', cursor: 'pointer', transition: 'all .15s' });
+    const histTabIconStyle = (active, ac) => ({ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', background: active ? ac.main : '#F0F2F7', color: active ? '#fff' : '#94A3B5' });
+    const histTabSubStyle = (active, ac) => ({ fontSize: 12, fontWeight: 600, color: active ? ac.sub : '#9aa8bd' });
+    const histVtaCount = S.sales.length, histCieCount = S.cierres.length;
 
     // scatter chart — ventas por hora del día
     const dayStart = 9 * 60, dayEnd = 20 * 60, span = dayEnd - dayStart;
@@ -2549,11 +2924,31 @@ class Component extends DCLogic {
     const cfgTitleMap = { negocio: 'Negocio', marca: 'Apariencia y marca', login: 'Pantalla de login', operacion: 'Operación e impuestos', modulos: 'Módulos del sistema', recibo: 'Recibo y datos fiscales' };
     const cfgAccents = ['#1E9E54', '#B5651D', '#C2410C', '#004FFF', '#7764E0', '#DD5771'].map(c => ({ onClick: () => this.setCfgAccent(c), style: { width: 38, height: 38, borderRadius: 11, background: c, cursor: 'pointer', border: 0, boxShadow: cfgAccent === c ? '0 0 0 2px #fff, 0 0 0 4px ' + c : 'none' } }));
     const cfgModDefs = [['stock', 'Stock e inventario', 'Productos, categorías y ajuste de existencias.'], ['historial', 'Historial y métricas', 'Ventas del día, gráfico por hora y arqueo.'], ['clientes', 'Clientes y fidelización', 'Registro de clientes y acumulación de puntos.'], ['categorias', 'Categorías', 'Organización del catálogo por categorías.']];
-    const cfgModuleRows = cfgModDefs.map(([k, title, desc]) => { const on = S.cfgModules[k]; return { title, desc, onToggle: () => this.toggleCfgModule(k), togStyle: { width: 44, height: 25, borderRadius: 999, position: 'relative', flex: 'none', border: 0, cursor: 'pointer', background: on ? '#1E9E54' : '#cdd5e3' }, knobStyle: { position: 'absolute', top: 2.5, left: on ? 21 : 2.5, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .18s' } }; });
+    const cfgModuleRows = cfgModDefs.map(([k, title, desc]) => {
+      const active = !!S.cfgModules[k];
+      const pendingLabel = S.modulePending[k];
+      const pending = !!pendingLabel;
+      const price = this.MODULE_PRICES[k] || 0;
+      const togBg = pending ? '#E0A93B' : (active ? '#1E9E54' : '#cdd5e3');
+      const on = active; // el knob queda a la derecha si está activo (incluye baja programada)
+      const statusLabel = pending ? ('Baja programada · activo hasta ' + pendingLabel) : (active ? 'Activo' : 'Inactivo');
+      const statusColor = pending ? '#94703A' : (active ? '#0a6e36' : '#94A3B5');
+      const statusBg = pending ? '#FEF6DD' : (active ? '#E6F7EE' : '#F0F2F7');
+      return {
+        title, desc, priceStr: fmt(price) + '/mes',
+        statusLabel, statusChipStyle: { fontSize: 11.5, fontWeight: 700, padding: '3px 10px', borderRadius: 999, whiteSpace: 'nowrap', background: statusBg, color: statusColor },
+        onToggle: () => this.openModuleConfirm(k),
+        togStyle: { width: 44, height: 25, borderRadius: 999, position: 'relative', flex: 'none', border: 0, cursor: 'pointer', background: togBg },
+        knobStyle: { position: 'absolute', top: 2.5, left: on ? 21 : 2.5, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .18s' },
+      };
+    });
+    const moduleMonthlyTotal = cfgModDefs.reduce((a, [k]) => a + ((S.cfgModules[k] && !S.modulePending[k]) ? (this.MODULE_PRICES[k] || 0) : 0), 0);
+    const mc = S.moduleConfirm;
+    const mcTitle = mc ? ({ stock: 'Stock e inventario', clientes: 'Clientes y fidelización', historial: 'Historial y métricas', categorias: 'Categorías' }[mc.key] || mc.key) : '';
+    const mcEnds = this.moduleEndLabels();
 
     // ---- cierre de caja ----
-    const cierreMyId = S.session ? S.session.id : null;
-    const cierreMine = S.sales.filter(s => s.cashierId === cierreMyId);
+    const cierreMine = S.sales.filter(s => s.cajaSessionId === S.cajaSessionId);
     const cashSales = cierreMine.filter(s => s.method === 'efectivo').reduce((a, s) => a + s.total, 0);
     const cardSales = cierreMine.filter(s => s.method === 'tarjeta').reduce((a, s) => a + s.total, 0);
     const cierreTotal = cashSales + cardSales, cierreFloat = 50000, cierreExpected = cierreFloat + cashSales;
@@ -2563,8 +2958,17 @@ class Component extends DCLogic {
     const cierreCount = cierreMine.length;
     const cierreAvg = cierreCount ? cierreTotal / cierreCount : 0;
     const pctFmt = (p) => Math.abs(p).toFixed(1).replace('.', ',') + '%';
-    // historial de cierres (admin)
-    const cierreHistoryRows = [...S.cierres].sort((a, b) => a.dateIso < b.dateIso ? 1 : (a.dateIso > b.dateIso ? -1 : 0)).map(c => {
+    // historial de cierres (admin) — filtros por cajero y fecha
+    const cierreMethodChip = (m) => ({ fontSize: 11.5, fontWeight: 700, padding: '3px 10px', borderRadius: 999, whiteSpace: 'nowrap', background: m === 'efectivo' ? '#E6F7EE' : '#EAF0FF', color: m === 'efectivo' ? '#0a6e36' : '#0036b3' });
+    const cierreCajerosMap = [...new Map(S.cierres.map(c => [c.cashierId, c.cashierName])).entries()];
+    const cierreDatesMap = [...new Map(S.cierres.map(c => [c.dateIso, c.dateLabel])).entries()];
+    const cierreCajeroOpts = [{ value: 'all', label: 'Todos los cajeros' }, ...cierreCajerosMap.map(([id, name]) => ({ value: id, label: name }))];
+    const cierreDateOpts = [{ value: 'all', label: 'Todas las fechas' }, ...cierreDatesMap.map(([iso, label]) => ({ value: iso, label }))];
+    const fcCaj = S.cierreFilterCajero, fcDate = S.cierreFilterDate;
+    const cierreFiltered = [...S.cierres]
+      .filter(c => (fcCaj === 'all' || c.cashierId === fcCaj) && (fcDate === 'all' || c.dateIso === fcDate))
+      .sort((a, b) => a.dateIso < b.dateIso ? 1 : (a.dateIso > b.dateIso ? -1 : 0));
+    const cierreHistoryRows = cierreFiltered.map(c => {
       const expected = c.float + c.cash, diff = c.counted - expected, pct = expected ? diff / expected * 100 : 0;
       const color = diff === 0 ? '#0a6e36' : (diff > 0 ? '#0036b3' : '#D02E2E');
       const chipBg = diff === 0 ? '#E6F7EE' : (diff > 0 ? '#EAF0FF' : '#FDECEC');
@@ -2576,10 +2980,35 @@ class Component extends DCLogic {
         pctStyle: { fontWeight: 800, fontSize: 14, color, whiteSpace: 'nowrap' },
         estado: diff === 0 ? 'Exacto' : (diff > 0 ? 'Sobrante' : 'Faltante'),
         chipStyle: { fontSize: 11.5, fontWeight: 700, padding: '3px 10px', borderRadius: 999, whiteSpace: 'nowrap', background: chipBg, color },
+        onClick: () => this.openCierreDetail(c.id),
       };
     });
-    const cierreExactCount = S.cierres.filter(c => (c.counted - (c.float + c.cash)) === 0).length;
-    const cierreNetDiff = S.cierres.reduce((a, c) => a + (c.counted - (c.float + c.cash)), 0);
+    const cierreExactCount = cierreFiltered.filter(c => (c.counted - (c.float + c.cash)) === 0).length;
+    const cierreNetDiff = cierreFiltered.reduce((a, c) => a + (c.counted - (c.float + c.cash)), 0);
+    // detalle de un cierre
+    const cierreDetail = S.cierreDetailId ? S.cierres.find(c => c.id === S.cierreDetailId) : null;
+    let cierreDetailVM = null;
+    if (cierreDetail) {
+      const c = cierreDetail;
+      const expected = c.float + c.cash, diff = c.counted - expected, pct = expected ? diff / expected * 100 : 0;
+      const dcolor = diff === 0 ? '#0a6e36' : (diff > 0 ? '#0036b3' : '#D02E2E');
+      const dbg = diff === 0 ? '#E6F7EE' : (diff > 0 ? '#EAF0FF' : '#FDECEC');
+      cierreDetailVM = {
+        cashierName: c.cashierName, dateLabel: c.dateLabel, openTime: c.openTime, closeTime: c.closeTime,
+        totalStr: fmt(c.cash + c.card), cashStr: fmt(c.cash), cardStr: fmt(c.card),
+        expectedStr: fmt(expected), countedStr: fmt(c.counted),
+        countStr: c.salesCount + (c.salesCount === 1 ? ' venta' : ' ventas'),
+        diffStr: (diff > 0 ? '+' : '') + fmt(diff),
+        diffLabel: diff === 0 ? 'Caja cuadrada (exacto)' : (diff > 0 ? 'Sobrante · +' + pctFmt(pct) : 'Faltante · ' + pctFmt(pct)),
+        diffBoxStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: 12, padding: '12px 14px', background: dbg, color: dcolor },
+        rows: (c.sales || []).map(s => ({
+          folioStr: '#' + s.folio, time: s.time,
+          methodLabel: s.method === 'efectivo' ? 'Efectivo' : 'Tarjeta', methodChipStyle: cierreMethodChip(s.method),
+          itemsStr: (s.lines || []).map(l => l.qty + '× ' + l.name).join(', '),
+          totalStr: fmt(s.total),
+        })),
+      };
+    }
 
     return {
       brandName,
@@ -2707,11 +3136,17 @@ class Component extends DCLogic {
       phoneGateAsk: !!S.phoneGate && S.phoneGate.step === 'ask',
       phoneGateRegister: !!S.phoneGate && S.phoneGate.step === 'register',
       phoneVal: S.phoneGate ? S.phoneGate.phone : '',
+      phonePrefixOpts: [{ value: '569', label: '569' }, { value: 'custom', label: 'Otro' }],
+      phonePrefixSel: (S.phoneGate && S.phoneGate.prefix !== '569') ? 'custom' : '569',
+      phonePrefixIsCustom: !!(S.phoneGate && S.phoneGate.prefix !== '569'),
+      phonePrefixCustomVal: (S.phoneGate && S.phoneGate.prefix !== '569') ? (S.phoneGate.prefix || '') : '',
+      onPhonePrefix: (e) => this.onPhoneField('prefix', e.target.value === '569' ? '569' : ''),
+      onPhonePrefixCustom: (e) => this.onPhoneField('prefix', (e.target.value || '').replace(/[^0-9]/g, '').slice(0, 4)),
       phoneNameVal: S.phoneGate ? (S.phoneGate.name || '') : '',
       phoneEmailVal: S.phoneGate ? (S.phoneGate.email || '') : '',
       phoneMsg: S.phoneGate ? (S.phoneGate.msg || '') : '',
       phoneHasMsg: !!(S.phoneGate && S.phoneGate.msg),
-      onPhoneInput: (e) => this.onPhoneField('phone', e.target.value),
+      onPhoneInput: (e) => this.onPhoneField('phone', (e.target.value || '').replace(/[^0-9]/g, '').slice(0, 9)),
       onPhoneName: (e) => this.onPhoneField('name', e.target.value),
       onPhoneEmail: (e) => this.onPhoneField('email', e.target.value),
       phoneContinue: this.phoneContinue, phoneRegister: this.phoneRegister, phoneSkip: this.phoneSkip, closePhoneGate: this.closePhoneGate,
@@ -2774,6 +3209,19 @@ class Component extends DCLogic {
       saveProductStyle: { minWidth: 110, border: 0, borderRadius: 11, padding: '11px 18px', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', color: (S.prodForm && S.prodForm.name.trim()) ? '#fff' : '#9aa8bd', background: (S.prodForm && S.prodForm.name.trim()) ? '#1E9E54' : '#EEF1F6' },
       // history
       historyRows, histTotalStr: fmt(histTotal * histFactor), histCount: histCount * histFactor, histAvgStr: fmt(histAvg), histPeriodTabs, histTitle,
+      histTabVentas: histTabCur === 'ventas', histTabCierres: histTabCur === 'cierres',
+      goHistVentas: () => this.setState({ histTab: 'ventas', cierreDetailId: null }),
+      goHistCierres: () => this.setState({ histTab: 'cierres', cierreDetailId: null }),
+      histVentasCountStr: histVtaCount + (histVtaCount === 1 ? ' venta' : ' ventas'),
+      histCierresCountStr: histCieCount + (histCieCount === 1 ? ' cierre' : ' cierres'),
+      histTabVentasStyle: histTabBtnStyle(histTabCur === 'ventas', histTabAccents.ventas),
+      histTabVentasIconStyle: histTabIconStyle(histTabCur === 'ventas', histTabAccents.ventas),
+      histTabVentasSubStyle: histTabSubStyle(histTabCur === 'ventas', histTabAccents.ventas),
+      histTabCierresStyle: histTabBtnStyle(histTabCur === 'cierres', histTabAccents.cierres),
+      histTabCierresIconStyle: histTabIconStyle(histTabCur === 'cierres', histTabAccents.cierres),
+      histTabCierresSubStyle: histTabSubStyle(histTabCur === 'cierres', histTabAccents.cierres),
+      histEyebrow: histTabCur === 'cierres' ? 'Arqueos' : 'Historial de ventas',
+      histHeading: histTabCur === 'cierres' ? 'Cierres de caja' : histTitle,
       scatterDots, xTicks, yTicks, gridLines, peakLabel, peakCount: peakN, scatterPolyline,
       // clientes
       // cajeros (admin)
@@ -2823,9 +3271,14 @@ class Component extends DCLogic {
       custFormName: S.custForm ? S.custForm.name : '',
       custFormEmail: S.custForm ? S.custForm.email : '',
       custFormPhone: S.custForm ? S.custForm.phone : '',
+      custFormPrefixSel: (S.custForm && S.custForm.prefix !== '569') ? 'custom' : '569',
+      custFormPrefixIsCustom: !!(S.custForm && S.custForm.prefix !== '569'),
+      custFormPrefixCustomVal: (S.custForm && S.custForm.prefix !== '569') ? (S.custForm.prefix || '') : '',
+      onCustPrefix: (e) => this.onCustField('prefix', e.target.value === '569' ? '569' : ''),
+      onCustPrefixCustom: (e) => this.onCustField('prefix', (e.target.value || '').replace(/[^0-9]/g, '').slice(0, 4)),
       onCustName: (e) => this.onCustField('name', e.target.value),
       onCustEmail: (e) => this.onCustField('email', e.target.value),
-      onCustPhone: (e) => this.onCustField('phone', e.target.value),
+      onCustPhone: (e) => this.onCustField('phone', (e.target.value || '').replace(/[^0-9]/g, '').slice(0, 9)),
       closeCustForm: this.closeCustForm, saveCustomer: this.saveCustomer,
       saveCustLabel: (S.custForm && S.custForm.id != null) ? 'Guardar cambios' : 'Agregar cliente',
       saveCustStyle: { minWidth: 110, border: 0, borderRadius: 11, padding: '11px 18px', fontWeight: 700, fontSize: 14, fontFamily: 'inherit', cursor: 'pointer', color: (S.custForm && S.custForm.name.trim()) ? '#fff' : '#9aa8bd', background: (S.custForm && S.custForm.name.trim()) ? '#1E9E54' : '#EEF1F6' },
@@ -2848,6 +3301,7 @@ class Component extends DCLogic {
       tkRecvStr: tk ? fmt(tk.recv) : '', tkChangeStr: tk ? fmt(tk.change) : '', tkPointsStr: tk ? String(tk.points) : '',
       tkRegistered: tk ? tk.customerId != null : false, tkGeneral: tk ? tk.customerId == null : false,
       closeTicket: this.closeTicket, printTicket: this.printTicket,
+      ticketCloseLabel: S.ticketFromHistory ? 'Cerrar' : 'Nueva venta',
       // admin menu
       showAdminMenu: isAdmin, adminMenuOpen: S.adminMenuOpen, adminMenuItems,
       toggleAdminMenu: this.toggleAdminMenu, closeAdminMenu: this.closeAdminMenu,
@@ -2860,6 +3314,16 @@ class Component extends DCLogic {
       stockTitle: isAdmin ? 'Gestión de stock' : 'Consulta de stock',
       // configuración
       cfgNav, goCfg, noop: this.noop, cfgAccents, cfgModuleRows,
+      moduleTotalStr: fmt(moduleMonthlyTotal) + '/mes',
+      moduleBanner: S.moduleBanner, moduleBannerShow: !!S.moduleBanner, dismissModuleBanner: this.dismissModuleBanner,
+      moduleConfirmOpen: !!mc, moduleConfirmTitle: mcTitle,
+      moduleConfirmIsEnable: !!mc && mc.action === 'enable',
+      moduleConfirmIsDisable: !!mc && mc.action === 'disable',
+      moduleConfirmIsReactivate: !!mc && mc.action === 'enable' && !!S.modulePending[mc.key],
+      moduleConfirmPriceStr: mc ? (fmt(this.MODULE_PRICES[mc.key] || 0) + '/mes') : '',
+      moduleConfirmEmail: S.adminEmail,
+      moduleConfirmEndLabel: mcEnds.endLabel, moduleConfirmNextLabel: mcEnds.next1Label,
+      confirmModule: this.confirmModule, closeModuleConfirm: this.closeModuleConfirm,
       crTagline: S.cfgRecibo.tagline, onCrTagline: (e) => this.setCfgRecibo('tagline', e.target.value),
       crRazon: S.cfgRecibo.razonSocial, onCrRazon: (e) => this.setCfgRecibo('razonSocial', e.target.value),
       crRut: S.cfgRecibo.rut, onCrRut: (e) => this.setCfgRecibo('rut', e.target.value),
@@ -2876,22 +3340,41 @@ class Component extends DCLogic {
       cfgPreviewLogoStyle: { width: 30, height: 30, borderRadius: 9, background: cfgAccent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 14, color: '#fff' },
       cfgPreviewBtnStyle: { height: 40, borderRadius: 11, background: cfgAccent, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 },
       // cierre
-      cierreOpenTime: '09:00',
+      cierreOpenTime: S.cajaOpenAt || '—',
+      cajaOpen: !!S.cajaOpen, cajaClosed: !S.cajaOpen, abrirCaja: this.abrirCaja,
+      cierreNoCaja: !S.cajaOpen && !S.cierreDone,
+      cierreHasSession: S.cajaOpen || S.cierreDone,
+      cierreSealed: !S.cajaOpen && S.cierreDone,
+      cierreSubtitle: S.cajaOpen
+        ? ('Turno de ' + (S.session ? S.session.name : '—') + ' · apertura ' + (S.cajaOpenAt || '—'))
+        : (S.cierreDone
+          ? ('Turno de ' + (S.session ? S.session.name : '—') + ' · cerrado · apertura ' + (S.cajaOpenAt || '—'))
+          : 'No hay una caja abierta en este momento.'),
       cierreTotalStr: fmt(cierreTotal), cierreCountStr: cierreCount + (cierreCount === 1 ? ' venta en el turno' : ' ventas en el turno'),
       cierreCashStr: fmt(cashSales), cierreCardStr: fmt(cardSales),
       cierreFloatStr: fmt(cierreFloat), cierreExpectedStr: fmt(cierreExpected),
       cierreCountedDisplay: cierreHasCount ? fmt(counted) : '', onCierreCounted: this.onCierreCounted,
+      cierreCountedStatic: fmt(counted || 0),
       cierreCountNum: cierreCount, cierreAvgStr: fmt(cierreAvg),
-      cierreHistoryRows, cierreHistCountStr: String(S.cierres.length), cierreExactStr: String(cierreExactCount),
+      cierreHistoryRows, cierreHistCountStr: String(cierreFiltered.length), cierreExactStr: String(cierreExactCount),
+      cierreCajeroOpts, cierreDateOpts, cierreFilterCajero: S.cierreFilterCajero, cierreFilterDate: S.cierreFilterDate,
+      setCierreFilterCajero: this.setCierreFilterCajero, setCierreFilterDate: this.setCierreFilterDate,
+      cierreNoRows: cierreHistoryRows.length === 0,
+      cierreDetailOpen: !!cierreDetailVM, cierreListOpen: !cierreDetailVM,
+      cierreDetail: cierreDetailVM || {}, closeCierreDetail: this.closeCierreDetail,
+      cierreDetailRows: cierreDetailVM ? cierreDetailVM.rows : [],
       cierreNetStr: (cierreNetDiff > 0 ? '+' : '') + fmt(cierreNetDiff),
       cierreNetStyle: { fontSize: 22, fontWeight: 900, letterSpacing: '-.02em', color: cierreNetDiff === 0 ? '#0a6e36' : (cierreNetDiff > 0 ? '#0036b3' : '#D02E2E') },
       cierreDiffLabel: !cierreHasCount ? 'Diferencia' : (cierreDiff === 0 ? 'Caja cuadrada (exacto)' : (cierreDiff > 0 ? 'Sobrante · +' + pctFmt(cierreDiffPct) : 'Faltante · ' + pctFmt(cierreDiffPct))),
       cierreDiffStr: !cierreHasCount ? '—' : (cierreDiff > 0 ? '+' : '') + fmt(cierreDiff),
       cierreDiffBoxStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, borderRadius: 12, padding: '12px 14px', background: !cierreHasCount ? '#F6F7FB' : (cierreDiff === 0 ? '#E6F7EE' : (cierreDiff > 0 ? '#EAF0FF' : '#FDECEC')), color: !cierreHasCount ? '#7C95A8' : (cierreDiff === 0 ? '#0a6e36' : (cierreDiff > 0 ? '#0036b3' : '#D02E2E')) },
       cierreDone: S.cierreDone,
-      cierreBtnLabel: S.cierreDone ? 'Iniciar nuevo turno' : 'Cerrar caja',
-      cierreBtnAction: S.cierreDone ? this.resetCierre : this.doCierre,
-      cierreBtnStyle: { width: '100%', border: 0, borderRadius: 13, padding: 14, fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: 'pointer', color: '#fff', background: S.cierreDone ? '#0F2A1B' : '#1E9E54' },
+      cierreConfirmOpen: !!S.cierreConfirm, closeCierreConfirm: this.closeCierreConfirm, doCierre: this.doCierre,
+      cierreNeedCount: S.cajaOpen && !cierreHasCount,
+      printLastCierre: this.printLastCierre,
+      cierreBtnLabel: S.cajaOpen ? 'Cerrar caja' : 'Abrir caja',
+      cierreBtnAction: S.cajaOpen ? (cierreHasCount ? this.openCierreConfirm : this.noop) : this.abrirCaja,
+      cierreBtnStyle: { width: '100%', border: 0, borderRadius: 13, padding: 14, fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: (S.cajaOpen && !cierreHasCount) ? 'not-allowed' : 'pointer', color: '#fff', opacity: (S.cajaOpen && !cierreHasCount) ? 0.55 : 1, background: S.cajaOpen ? '#1E9E54' : '#0F2A1B' },
       // respaldo
       backupProducts: S.products.length, backupCustomers: S.customers.length, backupSales: S.sales.length,
       backupAutoDesc: S.backupAuto ? 'Activado · último respaldo hoy 03:00' : 'Desactivado · respalde manualmente',

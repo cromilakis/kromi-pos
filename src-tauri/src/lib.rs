@@ -1,7 +1,7 @@
 mod escpos;
 mod printing;
 
-use escpos::ReceiptPayload;
+use escpos::{CierrePayload, ReceiptPayload};
 
 #[tauri::command]
 fn greet(name: &str) -> String {
@@ -19,11 +19,22 @@ fn print_receipt(payload: ReceiptPayload) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+fn print_cierre(payload: CierrePayload) -> Result<(), String> {
+    let bytes = escpos::build_cierre(&payload);
+    let printer = payload.negocio.printer_name.clone();
+    // reintento simple ante fallo de envío
+    match printing::send_raw(&printer, &bytes) {
+        Ok(()) => Ok(()),
+        Err(_) => printing::send_raw(&printer, &bytes),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, print_receipt])
+        .invoke_handler(tauri::generate_handler![greet, print_receipt, print_cierre])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
