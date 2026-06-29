@@ -1281,9 +1281,20 @@ input::placeholder{color:#9aa8bd;}
                 </div>
               </div>
             </sc-for>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0 14px;">
+            <div onClick="{{ toggleActivarTodo }}" style="display:flex;align-items:center;gap:11px;cursor:pointer;border-top:1px solid #F0F2F7;padding:14px 0;">
+              <span style="{{ moduleActivarBoxStyle }}">{{ moduleActivarCheck }}</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:13.5px;color:#0F2A1B;">Activar todo</div>
+                <div style="font-size:12px;color:#7C95A8;">Contrata todos los módulos y paga el combo a {{ moduleBundleStr }}.</div>
+              </div>
+              <span style="font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;background:#EAF0FF;color:#1d4ed8;white-space:nowrap;flex:none;">Ahorra {{ moduleSavingStr }}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 0 14px;border-top:1px solid #F0F2F7;">
               <span style="font-size:13.5px;font-weight:700;color:#5a6b7e;">Total mensual</span>
-              <span style="font-size:18px;font-weight:900;color:#0F2A1B;">{{ moduleTotalStr }}</span>
+              <span style="display:flex;align-items:baseline;gap:9px;">
+                <sc-if value="{{ moduleBundleShow }}" hint-placeholder-val="{{ false }}"><span style="font-size:14px;font-weight:700;color:#9aa8bd;text-decoration:line-through;">{{ moduleFullStr }}</span></sc-if>
+                <span style="font-size:18px;font-weight:900;color:#0F2A1B;">{{ moduleTotalStr }}</span>
+              </span>
             </div>
           </div>
         </sc-if>
@@ -2307,6 +2318,12 @@ class Component extends DCLogic {
   setCfgAccent = (c) => this.setState({ cfgAccent: c });
   MODULE_PRICES = { stock: 12000, clientes: 15000, metricas: 9000 };
   MODULE_TITLES = { stock: 'Stock e inventario', clientes: 'Clientes y fidelización', metricas: 'Métricas' };
+  MODULE_BUNDLE = 29990;
+  toggleActivarTodo = () => this.setState(s => {
+    const keys = Object.keys(this.MODULE_PRICES);
+    const all = keys.every(k => s.cfgModules[k] && !s.modulePending[k]);
+    return { moduleConfirm: { key: '__all__', action: all ? 'disableAll' : 'enableAll' } };
+  });
   moduleEndLabels = () => {
     const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     const now = new Date();
@@ -2325,6 +2342,19 @@ class Component extends DCLogic {
     const mc = s.moduleConfirm;
     if (!mc) return {};
     const k = mc.key;
+    if (k === '__all__') {
+      const keys = Object.keys(this.MODULE_PRICES);
+      const notice = { key: '__all__', action: mc.action, email: s.adminEmail, at: new Date().toISOString() };
+      if (mc.action === 'enableAll') {
+        const cfg = { ...s.cfgModules }, pend = { ...s.modulePending };
+        keys.forEach(key => { cfg[key] = true; delete pend[key]; });
+        return { cfgModules: cfg, modulePending: pend, moduleConfirm: null, moduleBanner: `Activaste todos los módulos con la oferta combo (${this.fmt(this.MODULE_BUNDLE)}/mes). Enviamos un correo de confirmación a ${s.adminEmail}.`, moduleNotices: [notice, ...s.moduleNotices] };
+      }
+      const { endLabel, next1Label } = this.moduleEndLabels();
+      const pend = { ...s.modulePending };
+      keys.forEach(key => { if (s.cfgModules[key]) pend[key] = endLabel; });
+      return { modulePending: pend, moduleConfirm: null, moduleBanner: `Programaste la baja de todos los módulos; siguen activos hasta el ${endLabel} y desde el ${next1Label} se deja de cobrar. Te enviamos un correo a ${s.adminEmail}.`, moduleNotices: [notice, ...s.moduleNotices] };
+    }
     const def = this.MODULE_TITLES[k] || k;
     const notice = { key: k, action: mc.action, email: s.adminEmail, at: new Date().toISOString() };
     if (mc.action === 'enable') {
@@ -3170,8 +3200,13 @@ class Component extends DCLogic {
       };
     });
     const moduleMonthlyTotal = cfgModDefs.reduce((a, [k]) => a + ((S.cfgModules[k] && !S.modulePending[k]) ? (this.MODULE_PRICES[k] || 0) : 0), 0);
+    const moduleAllActive = cfgModDefs.every(([k]) => S.cfgModules[k] && !S.modulePending[k]);
+    const moduleFullTotal = cfgModDefs.reduce((a, [k]) => a + (this.MODULE_PRICES[k] || 0), 0);
+    const moduleEffective = moduleAllActive ? this.MODULE_BUNDLE : moduleMonthlyTotal;
+    const moduleSaving = moduleFullTotal - this.MODULE_BUNDLE;
     const mc = S.moduleConfirm;
-    const mcTitle = mc ? (this.MODULE_TITLES[mc.key] || mc.key) : '';
+    const mcAll = mc && mc.key === '__all__';
+    const mcTitle = mc ? (mcAll ? 'todos los módulos' : (this.MODULE_TITLES[mc.key] || mc.key)) : '';
     const mcEnds = this.moduleEndLabels();
 
     // ---- cierre de caja ----
@@ -3546,13 +3581,20 @@ class Component extends DCLogic {
       stockTitle: isAdmin ? 'Gestión de stock' : 'Consulta de stock',
       // configuración
       cfgNav, goCfg, noop: this.noop, cfgAccents, cfgModuleRows,
-      moduleTotalStr: fmt(moduleMonthlyTotal) + '/mes',
+      moduleTotalStr: fmt(moduleEffective) + '/mes',
+      moduleFullStr: fmt(moduleFullTotal) + '/mes',
+      moduleBundleStr: fmt(this.MODULE_BUNDLE) + '/mes',
+      moduleSavingStr: fmt(moduleSaving),
+      moduleAllActive, moduleBundleShow: moduleAllActive,
+      toggleActivarTodo: this.toggleActivarTodo,
+      moduleActivarCheck: moduleAllActive ? '✓' : '',
+      moduleActivarBoxStyle: { width: 22, height: 22, borderRadius: 7, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, color: '#fff', border: moduleAllActive ? '0' : '1.5px solid #cdd5e3', background: moduleAllActive ? '#1E9E54' : '#fff' },
       moduleBanner: S.moduleBanner, moduleBannerShow: !!S.moduleBanner, dismissModuleBanner: this.dismissModuleBanner,
       moduleConfirmOpen: !!mc, moduleConfirmTitle: mcTitle,
-      moduleConfirmIsEnable: !!mc && mc.action === 'enable',
-      moduleConfirmIsDisable: !!mc && mc.action === 'disable',
+      moduleConfirmIsEnable: !!mc && (mc.action === 'enable' || mc.action === 'enableAll'),
+      moduleConfirmIsDisable: !!mc && (mc.action === 'disable' || mc.action === 'disableAll'),
       moduleConfirmIsReactivate: !!mc && mc.action === 'enable' && !!S.modulePending[mc.key],
-      moduleConfirmPriceStr: mc ? (fmt(this.MODULE_PRICES[mc.key] || 0) + '/mes') : '',
+      moduleConfirmPriceStr: mc ? (mcAll ? (fmt(this.MODULE_BUNDLE) + '/mes (combo)') : (fmt(this.MODULE_PRICES[mc.key] || 0) + '/mes')) : '',
       moduleConfirmEmail: S.adminEmail,
       moduleConfirmEndLabel: mcEnds.endLabel, moduleConfirmNextLabel: mcEnds.next1Label,
       confirmModule: this.confirmModule, closeModuleConfirm: this.closeModuleConfirm,
