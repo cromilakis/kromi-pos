@@ -1817,6 +1817,45 @@ input::placeholder{color:#9aa8bd;}
   </div>
   </sc-if>
 
+  <!-- ================= SUPPLIER FORM MODAL ================= -->
+  <sc-if value="{{ supFormOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;background:rgba(15,42,27,.35);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;">
+    <div style="width:520px;max-width:100%;max-height:90%;overflow:auto;background:#fff;border-radius:20px;padding:26px 28px;box-shadow:0 24px 60px rgba(0,0,0,.25);">
+      <div style="display:flex;align-items:center;margin-bottom:18px;">
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;flex:1;">{{ supFormTitle }}</div>
+        <button onClick="{{ closeSupForm }}" style="border:0;background:#F0F2F7;color:#5a6b7e;border-radius:9px;width:32px;height:32px;cursor:pointer;font-family:inherit;font-weight:700;font-size:16px;">×</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Razón social *</label><input value="{{ supFRazon }}" onInput="{{ onSupRazon }}" placeholder="Ej. Viveros del Sur SpA" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">RUT</label><input value="{{ supFRut }}" onInput="{{ onSupRut }}" placeholder="76.543.210-K" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+          <div style="flex:1;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Categoría</label><input value="{{ supFCategory }}" onInput="{{ onSupCategory }}" placeholder="Plantas, Insumos…" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+        </div>
+        <div><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Giro</label><input value="{{ supFGiro }}" onInput="{{ onSupGiro }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Contacto</label><input value="{{ supFContact }}" onInput="{{ onSupContact }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+          <div style="flex:1;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Teléfono</label><input value="{{ supFPhone }}" onInput="{{ onSupPhone }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Email</label><input value="{{ supFEmail }}" onInput="{{ onSupEmail }}" type="email" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+          <div style="flex:1;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Sitio web</label><input value="{{ supFWebsite }}" onInput="{{ onSupWebsite }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+        </div>
+        <div><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Dirección</label><input value="{{ supFAddress }}" onInput="{{ onSupAddress }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Condiciones de pago</label><select value="{{ supFPayTerms }}" onChange="{{ onSupPayTerms }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 12px;font-family:inherit;font-size:14px;font-weight:700;color:#0F2A1B;outline:none;background:#F8FAFC;cursor:pointer;box-sizing:border-box;"><option value="contado">Contado</option><option value="30">30 días</option><option value="60">60 días</option><option value="90">90 días</option></select></div>
+          <div style="flex:1;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Banco</label><input value="{{ supFBank }}" onInput="{{ onSupBank }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+        </div>
+        <div><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Cuenta</label><input value="{{ supFAccount }}" onInput="{{ onSupAccount }}" placeholder="Cta Cte 12345678" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+        <div><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Notas</label><textarea value="{{ supFNotes }}" onInput="{{ onSupNotes }}" rows="2" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;resize:vertical;"></textarea></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button onClick="{{ closeSupForm }}" style="flex:none;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:12px;padding:13px 20px;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ saveSupplier }}" style="{{ saveSupStyle }}">Guardar proveedor</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
   <!-- ================= CONFIRM DELETE CUSTOMER MODAL ================= -->
   <sc-if value="{{ custConfirmOpen }}" hint-placeholder-val="{{ false }}">
   <div style="position:fixed;inset:0;background:rgba(0,0,64,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px;">
@@ -2741,7 +2780,7 @@ class Component extends DCLogic {
 
   componentDidUpdate(prevProps, prevState) {
     const s = this.state;
-    const overlay = s.payOpen || s.phoneGate || s.ticket || s.scanPickerOpen || s.prodForm || s.catForm || s.confirmDeleteId != null || s.catConfirmKey != null;
+    const overlay = s.payOpen || s.phoneGate || s.ticket || s.scanPickerOpen || s.prodForm || s.catForm || s.confirmDeleteId != null || s.catConfirmKey != null || s.supForm;
     if (s.scanMode && !overlay) this.focusScan();
   }
 
@@ -3788,6 +3827,38 @@ class Component extends DCLogic {
           onEdit: () => this.openEditSupplier(x.id),
           onToggle: () => this.toggleSupplierActive(x.id),
         })),
+      supFormOpen: !!S.supForm,
+      supFormTitle: (S.supForm && S.supForm.id) ? 'Editar proveedor' : 'Nuevo proveedor',
+      closeSupForm: this.closeSupForm,
+      saveSupplier: this.saveSupplier,
+      supFRazon: S.supForm ? S.supForm.razonSocial : '',
+      supFRut: S.supForm ? S.supForm.rut : '',
+      supFGiro: S.supForm ? S.supForm.giro : '',
+      supFContact: S.supForm ? S.supForm.contactName : '',
+      supFPhone: S.supForm ? S.supForm.phone : '',
+      supFEmail: S.supForm ? S.supForm.email : '',
+      supFAddress: S.supForm ? S.supForm.address : '',
+      supFWebsite: S.supForm ? S.supForm.website : '',
+      supFPayTerms: S.supForm ? S.supForm.payTerms : 'contado',
+      supFCategory: S.supForm ? S.supForm.category : '',
+      supFBank: S.supForm ? S.supForm.bank : '',
+      supFAccount: S.supForm ? S.supForm.account : '',
+      supFNotes: S.supForm ? S.supForm.notes : '',
+      onSupRazon: (e) => this.onSupField('razonSocial', e.target.value),
+      onSupRut: (e) => this.onSupField('rut', e.target.value),
+      onSupGiro: (e) => this.onSupField('giro', e.target.value),
+      onSupContact: (e) => this.onSupField('contactName', e.target.value),
+      onSupPhone: (e) => this.onSupField('phone', e.target.value),
+      onSupEmail: (e) => this.onSupField('email', e.target.value),
+      onSupAddress: (e) => this.onSupField('address', e.target.value),
+      onSupWebsite: (e) => this.onSupField('website', e.target.value),
+      onSupPayTerms: (e) => this.onSupField('payTerms', e.target.value),
+      onSupCategory: (e) => this.onSupField('category', e.target.value),
+      onSupBank: (e) => this.onSupField('bank', e.target.value),
+      onSupAccount: (e) => this.onSupField('account', e.target.value),
+      onSupNotes: (e) => this.onSupField('notes', e.target.value),
+      saveSupDisabled: !(S.supForm && (S.supForm.razonSocial || '').trim()),
+      saveSupStyle: { flex: 1, border: 0, borderRadius: 12, padding: '13px 18px', fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: (S.supForm && (S.supForm.razonSocial || '').trim()) ? 'pointer' : 'not-allowed', color: '#fff', background: (S.supForm && (S.supForm.razonSocial || '').trim()) ? 'var(--accent)' : '#c9d3df' },
       // stock role
       canManageStock: isAdmin, stockReadOnly: !isAdmin,
       stockEyebrow: isAdmin ? 'Inventario' : 'Consulta',
