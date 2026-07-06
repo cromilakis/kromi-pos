@@ -32,6 +32,34 @@ pub struct ReceiptPayload {
     pub open_drawer: bool,
 }
 
+#[derive(Deserialize, Clone)]
+pub struct QuotePayload {
+    pub negocio: Negocio,
+    pub folio: u32,
+    pub fecha: String,
+    pub valido_hasta: String,
+    pub cliente: String,
+    pub items: Vec<Item>,
+    pub neto: i64,
+    pub iva: i64,
+    pub total: i64,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct CreditNotePayload {
+    pub negocio: Negocio,
+    pub folio: u32,
+    pub fecha: String,
+    pub hora: String,
+    pub sale_folio: Option<u32>,
+    pub metodo: String,
+    pub motivo: String,
+    pub items: Vec<Item>,
+    pub neto: i64,
+    pub iva: i64,
+    pub total: i64,
+}
+
 const COL: usize = 48;
 
 fn money(n: i64) -> String {
@@ -107,10 +135,9 @@ fn timbre_dummy(buf: &mut Vec<u8>) {
     let mut seed: u32 = 0x1234_5;
     let mut next = || { seed = seed.wrapping_mul(1_103_515_245).wrapping_add(12_345); (seed >> 16) & 0x7FFF };
     for r in 0..rows {
-        let mut x = 0usize;
         // patron de inicio
         for px in 0..3 { set_bit(&mut bits, bpr, px, r*row_h, row_h, width); let _ = px; }
-        x = 6;
+        let mut x = 6usize;
         while x < width - 8 {
             let wd = (next() % 5 + 2) as usize;
             if next() % 2 == 1 { for k in 0..wd { if x+k < width { set_bit(&mut bits, bpr, x+k, r*row_h, row_h, width); } } }
@@ -185,6 +212,7 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     line_lr(&mut b, "TOTAL", &money(p.total), 24);
     b.extend_from_slice(&[0x1D, 0x21, 0x00]);
     nl(&mut b);
+    line_lr(&mut b, "Forma de pago", &p.metodo, COL);
     rule(&mut b, b'-');
 
     // red social (QR) — solo si esta configurada
@@ -235,11 +263,13 @@ pub struct CierrePayload {
     pub card: i64,
     pub fondo: i64,
     pub contado: i64,
+    pub nc_cash: i64,
+    pub nc_card: i64,
 }
 
 pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
     let total = p.cash + p.card;
-    let esperado = p.fondo + p.cash;
+    let esperado = p.fondo + p.cash - p.nc_cash;
     let diff = p.contado - esperado;
     let pct = if esperado != 0 { (diff as f64) / (esperado as f64) * 100.0 } else { 0.0 };
     let estado = if diff == 0 {
@@ -294,6 +324,8 @@ pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1B, 0x45, 0x00]);
     line_lr(&mut b, "Fondo de apertura", &money(p.fondo), COL);
     line_lr(&mut b, "Ventas en efectivo", &money(p.cash), COL);
+    if p.nc_cash != 0 { line_lr(&mut b, "Notas de credito (efectivo)", &format!("-{}", money(p.nc_cash)), COL); }
+    if p.nc_card != 0 { line_lr(&mut b, "Reversos tarjeta", &format!("-{}", money(p.nc_card)), COL); }
     line_lr(&mut b, "Esperado en caja", &money(esperado), COL);
     line_lr(&mut b, "Efectivo contado", &money(p.contado), COL);
     rule(&mut b, b'-');
@@ -317,6 +349,116 @@ pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
     // feed + corte (sin gaveta, sin timbre SII: no es documento tributario)
+    b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
+    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x00]);
+    b
+}
+
+pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
+    let mut b: Vec<u8> = Vec::new();
+    b.extend_from_slice(&[0x1B, 0x40]); // init
+    b.extend_from_slice(include_bytes!("../assets/logo.escpos"));
+    nl(&mut b);
+
+    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+    push_text(&mut b, &format!("* {} *", p.negocio.tagline)); nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+    nl(&mut b);
+    line_center(&mut b, &p.negocio.razon_social);
+    line_center(&mut b, &p.negocio.giro);
+    nl(&mut b);
+
+    box_ascii(&mut b, &[
+        &format!("R.U.T.: {}", p.negocio.rut),
+        "COTIZACION",
+        &format!("No {}", p.folio),
+    ], 32);
+    nl(&mut b);
+
+    push_text(&mut b, &format!("Fecha: {}", p.fecha)); nl(&mut b);
+    push_text(&mut b, &format!("Valido hasta: {}", p.valido_hasta)); nl(&mut b);
+    push_text(&mut b, &format!("Cliente: {}", p.cliente)); nl(&mut b);
+    rule(&mut b, b'-');
+
+    b.extend_from_slice(&[0x1B, 0x45, 0x01]);
+    line_lr(&mut b, "Item", "Subtotal", COL);
+    b.extend_from_slice(&[0x1B, 0x45, 0x00]);
+    rule(&mut b, b'=');
+    for it in &p.items {
+        line_lr(&mut b, &it.nombre, &money(it.precio * it.qty as i64), COL);
+        push_text(&mut b, &format!("   {} x {}", it.qty, money(it.precio))); nl(&mut b);
+    }
+    rule(&mut b, b'=');
+
+    line_lr(&mut b, "Neto", &money(p.neto), COL);
+    line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
+    nl(&mut b);
+    b.extend_from_slice(&[0x1D, 0x21, 0x11]);
+    line_lr(&mut b, "TOTAL", &money(p.total), 24);
+    b.extend_from_slice(&[0x1D, 0x21, 0x00]);
+    nl(&mut b);
+    rule(&mut b, b'-');
+    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+    push_text(&mut b, "Documento no tributario"); nl(&mut b);
+    push_text(&mut b, &p.negocio.footer); nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+
+    b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
+    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x00]); // corte, sin gaveta
+    b
+}
+
+pub fn build_credit_note(p: &CreditNotePayload) -> Vec<u8> {
+    let mut b: Vec<u8> = Vec::new();
+    b.extend_from_slice(&[0x1B, 0x40]);
+    b.extend_from_slice(include_bytes!("../assets/logo.escpos"));
+    nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+    push_text(&mut b, &format!("* {} *", p.negocio.tagline)); nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+    nl(&mut b);
+    line_center(&mut b, &p.negocio.razon_social);
+    nl(&mut b);
+
+    box_ascii(&mut b, &[
+        &format!("R.U.T.: {}", p.negocio.rut),
+        "NOTA DE CREDITO",
+        &format!("No {}", p.folio),
+    ], 32);
+    nl(&mut b);
+
+    push_text(&mut b, &format!("Fecha: {} {}", p.fecha, p.hora)); nl(&mut b);
+    if let Some(sf) = p.sale_folio {
+        push_text(&mut b, &format!("Ref. boleta: {}", sf)); nl(&mut b);
+    }
+    push_text(&mut b, &format!("Motivo: {}", p.motivo)); nl(&mut b);
+    rule(&mut b, b'-');
+
+    b.extend_from_slice(&[0x1B, 0x45, 0x01]);
+    line_lr(&mut b, "Item", "Subtotal", COL);
+    b.extend_from_slice(&[0x1B, 0x45, 0x00]);
+    rule(&mut b, b'=');
+    for it in &p.items {
+        line_lr(&mut b, &it.nombre, &money(it.precio * it.qty as i64), COL);
+        push_text(&mut b, &format!("   {} x {}", it.qty, money(it.precio))); nl(&mut b);
+    }
+    rule(&mut b, b'=');
+
+    line_lr(&mut b, "Neto", &money(p.neto), COL);
+    line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
+    nl(&mut b);
+    b.extend_from_slice(&[0x1D, 0x21, 0x11]);
+    line_lr(&mut b, "DEVOLUCION", &money(p.total), 24);
+    b.extend_from_slice(&[0x1D, 0x21, 0x00]);
+    nl(&mut b);
+    line_lr(&mut b, "Medio de devolucion", &p.metodo, COL);
+    rule(&mut b, b'-');
+
+    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+    push_text(&mut b, "Documento no tributario"); nl(&mut b);
+    push_text(&mut b, &p.negocio.footer); nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+
     b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
     b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x00]);
     b
@@ -395,6 +537,8 @@ mod tests {
             card: 98000,
             fondo: 50000,
             contado,
+            nc_cash: 0,
+            nc_card: 0,
         }
     }
 
@@ -430,5 +574,81 @@ mod tests {
     fn cierre_no_incluye_timbre_ni_qr() {
         let b = build_cierre(&sample_cierre(192300));
         assert!(!contains(&b, &[0x1D, 0x28, 0x6B])); // sin QR
+    }
+
+    #[test]
+    fn cierre_incluye_notas_credito_y_ajusta_esperado() {
+        let mut p = sample_cierre(0);
+        p.nc_cash = 10000;
+        p.nc_card = 0;
+        // esperado = fondo(50000) + cash(142300) - nc_cash(10000) = 182300
+        p.contado = 182300;
+        let b = build_cierre(&p);
+        assert!(contains(&b, b"Notas de credito"));
+        assert!(contains(&b, b"CUADRADO (exacto)"));
+    }
+
+    fn sample_quote() -> QuotePayload {
+        let s = sample("efectivo", true);
+        QuotePayload {
+            negocio: s.negocio,
+            folio: 1001,
+            fecha: "06/07/2026".into(),
+            valido_hasta: "13/07/2026".into(),
+            cliente: "Juan Pérez".into(),
+            items: vec![Item { nombre: "Monstera".into(), qty: 2, precio: 14990 }],
+            neto: 25193, iva: 4787, total: 29980,
+        }
+    }
+
+    #[test]
+    fn quote_init_corte_sin_gaveta_sin_timbre() {
+        let b = build_quote(&sample_quote());
+        assert_eq!(&b[0..2], &[0x1B, 0x40]);
+        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x00]));                 // corte
+        assert!(!contains(&b, &[0x1B, 0x70, 0x00, 0x19, 0xFA]));         // sin gaveta
+        assert!(!contains(&b, &[0x1D, 0x28, 0x6B]));                     // sin QR/timbre
+    }
+
+    #[test]
+    fn quote_incluye_textos() {
+        let b = build_quote(&sample_quote());
+        assert!(contains(&b, b"COTIZACION"));
+        assert!(contains(&b, b"No 1001"));
+        assert!(contains(&b, b"Valido hasta: 13/07/2026"));
+        assert!(contains(&b, b"Monstera"));
+        assert!(contains(&b, b"TOTAL"));
+    }
+
+    fn sample_nc() -> CreditNotePayload {
+        let s = sample("efectivo", true);
+        CreditNotePayload {
+            negocio: s.negocio,
+            folio: 501,
+            fecha: "06/07/2026".into(), hora: "16:20".into(),
+            sale_folio: Some(438),
+            metodo: "efectivo".into(),
+            motivo: "Producto defectuoso".into(),
+            items: vec![Item { nombre: "Sansevieria".into(), qty: 1, precio: 9990 }],
+            neto: 8395, iva: 1595, total: 9990,
+        }
+    }
+
+    #[test]
+    fn nc_init_corte_sin_gaveta() {
+        let b = build_credit_note(&sample_nc());
+        assert_eq!(&b[0..2], &[0x1B, 0x40]);
+        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x00]));
+        assert!(!contains(&b, &[0x1B, 0x70, 0x00, 0x19, 0xFA])); // sin gaveta
+    }
+
+    #[test]
+    fn nc_incluye_textos() {
+        let b = build_credit_note(&sample_nc());
+        assert!(contains(&b, b"NOTA DE CREDITO"));
+        assert!(contains(&b, b"No 501"));
+        assert!(contains(&b, b"Ref. boleta: 438"));
+        assert!(contains(&b, b"Sansevieria"));
+        assert!(contains(&b, b"Producto defectuoso"));
     }
 }
