@@ -512,13 +512,34 @@ input::placeholder{color:#9aa8bd;}
             <div style="font-weight:900;font-size:18px;color:#0F2A1B;">Venta actual</div>
             {{ itemCountBadge }}
           </div>
-          <div style="display:flex;align-items:center;gap:8px;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:11px;padding:8px 12px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <select value="{{ selectedCustomerId }}" onChange="{{ onCustomer }}" style="border:0;outline:none;background:transparent;flex:1;font-family:inherit;font-size:14px;font-weight:600;color:#0F2A1B;cursor:pointer;">
-              <sc-for list="{{ customerOptions }}" as="o" hint-placeholder-count="4">
-                <option value="{{ o.value }}">{{ o.label }}</option>
+          <div style="position:relative;">
+            <sc-if value="{{ custPickerOpen }}" hint-placeholder-val="{{ false }}">
+              <div onClick="{{ closeCustPicker }}" style="position:fixed;inset:0;z-index:30;"></div>
+            </sc-if>
+            <div style="position:relative;z-index:31;display:flex;align-items:center;gap:8px;background:#F6F7FB;border:1px solid #E1E5EE;border-radius:11px;padding:8px 12px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <input value="{{ custInputValue }}" onInput="{{ onCustQuery }}" onFocus="{{ openCustPicker }}" placeholder="{{ custPlaceholder }}" style="border:0;outline:none;background:transparent;flex:1;min-width:0;font-family:inherit;font-size:14px;font-weight:600;color:#0F2A1B;" />
+            </div>
+            <sc-if value="{{ custPickerOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;z-index:32;top:calc(100% + 6px);left:0;right:0;max-height:288px;overflow:auto;background:#fff;border:1px solid #E1E5EE;border-radius:12px;box-shadow:0 12px 32px rgba(15,42,27,.13);padding:5px;">
+              <div onMouseDown="{{ pickGeneral }}" style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;cursor:pointer;">
+                <div style="width:30px;height:30px;border-radius:50%;background:#EEF1F6;display:flex;align-items:center;justify-content:center;color:#7C95A8;flex:none;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                <span style="font-weight:700;font-size:14px;color:#0F2A1B;">Público general</span>
+              </div>
+              <sc-for list="{{ customerPickerRows }}" as="cp" hint-placeholder-count="4">
+                <div onMouseDown="{{ cp.onPick }}" style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;cursor:pointer;">
+                  <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(160deg,var(--accent),#22C463);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex:none;">{{ cp.initials }}</div>
+                  <div style="min-width:0;flex:1;">
+                    <div style="font-weight:700;font-size:14px;color:#0F2A1B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ cp.name }}</div>
+                    <div style="font-size:12px;color:#7C95A8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ cp.subtitle }}</div>
+                  </div>
+                </div>
               </sc-for>
-            </select>
+              <sc-if value="{{ custNoResults }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:14px 12px;text-align:center;font-size:13px;color:#9aa8bd;">Sin coincidencias</div>
+              </sc-if>
+            </div>
+            </sc-if>
           </div>
         </div>
         <div style="flex:1;overflow:auto;padding:6px 20px;">
@@ -1084,7 +1105,6 @@ input::placeholder{color:#9aa8bd;}
             <span style="font-size:13.5px;color:#5a6b7e;">{{ c.phone }}</span>
             <span style="font-size:13.5px;color:#5a6b7e;">{{ c.email }}</span>
             <div style="display:flex;align-items:center;justify-content:flex-end;gap:7px;">
-              <button onClick="{{ c.onUse }}" style="border:1px solid var(--accent);background:#fff;color:var(--accent);border-radius:9px;padding:7px 12px;font-weight:700;font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap;">Usar</button>
               <button onClick="{{ c.onEdit }}" title="Editar cliente" style="width:30px;height:30px;border:1px solid #E1E5EE;background:#fff;color:#7C95A8;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
               <button onClick="{{ c.onDelete }}" title="Eliminar cliente" style="width:30px;height:30px;border:1px solid #F5C2C2;background:#fff;color:#D02E2E;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
             </div>
@@ -1265,10 +1285,7 @@ input::placeholder{color:#9aa8bd;}
             <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Direccion</label><input value="{{ crDireccion }}" onInput="{{ onCrDireccion }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
             <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Bajada (bajo el logo)</label><input value="{{ crTagline }}" onInput="{{ onCrTagline }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
             <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Pie de pagina</label><input value="{{ crFooter }}" onInput="{{ onCrFooter }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
-            <div style="display:flex;gap:14px;">
-              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Red social</label><input value="{{ crSocialRed }}" onInput="{{ onCrSocialRed }}" placeholder="Instagram" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
-              <div style="flex:1;"><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Nombre de impresora</label><input value="{{ crPrinter }}" onInput="{{ onCrPrinter }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
-            </div>
+            <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">Red social</label><input value="{{ crSocialRed }}" onInput="{{ onCrSocialRed }}" placeholder="Instagram" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
             <div><label style="display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;">URL de la red social (para el QR)</label><input value="{{ crSocialUrl }}" onInput="{{ onCrSocialUrl }}" placeholder="https://..." style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
           </div>
         </sc-if>
@@ -2162,6 +2179,8 @@ class Component extends DCLogic {
       query: '',
       cart: [],
       customerId: null,
+      custQuery: '',
+      custPickerOpen: false,
       payOpen: false,
       phoneGate: null,
       payMethod: 'efectivo',
@@ -2175,11 +2194,18 @@ class Component extends DCLogic {
         giro: 'Venta de plantas y jardineria',
         direccion: 'Av. Las Camelias 1234, Nunoa',
         footer: 'Gracias por tu compra!',
-        printerName: 'TermalTest',
+        printerName: '',
         socialRed: 'Instagram',
         socialUrl: 'https://www.instagram.com/plantaconmati',
       },
       custForm: null,
+      supForm: null,
+      supQuery: '',
+      suppliers: [
+        { id: 'sup1', razonSocial: 'Viveros del Sur SpA', rut: '76.543.210-K', giro: 'Producción de plantas', contactName: 'Carla Muñoz', phone: '+56 9 8123 4567', email: 'ventas@viverosdelsur.cl', address: 'Camino El Alba 4210, Puente Alto', website: 'viverosdelsur.cl', payTerms: '30', category: 'Plantas', bank: 'Banco Estado', account: 'Cta Cte 12345678', notes: 'Despacha martes y viernes.', active: true },
+        { id: 'sup2', razonSocial: 'Insumos Verdes Ltda.', rut: '77.888.999-1', giro: 'Sustratos y macetas', contactName: 'Diego Rivas', phone: '+56 2 2765 4321', email: 'contacto@insumosverdes.cl', address: 'Av. Industrial 980, Maipú', website: 'insumosverdes.cl', payTerms: 'contado', category: 'Insumos', bank: 'Banco de Chile', account: 'Cta Vista 98765432', notes: '', active: true },
+        { id: 'sup3', razonSocial: 'Herramientas Andes', rut: '78.111.222-3', giro: 'Herramientas de jardín', contactName: 'Paula Soto', phone: '+56 9 7654 3210', email: 'psoto@handes.cl', address: 'Ruta 5 Sur Km 12, San Bernardo', website: '', payTerms: '60', category: 'Herramientas', bank: '', account: '', notes: 'Pedido mínimo $50.000.', active: false },
+      ],
       custConfirmId: null,
       prodForm: null,
       stockCriticalOpen: false,
@@ -2329,7 +2355,18 @@ class Component extends DCLogic {
     };
     window.addEventListener('keydown', this._onKey);
     document.documentElement.style.setProperty('--accent', this.state.cfgAccent);
+    this.syncWindowTitle();
   }
+  syncWindowTitle = () => {
+    const title = 'Kromi POS - ' + (this.props.brandName ?? 'Brota');
+    document.title = title;
+    try {
+      const t = window.__TAURI__;
+      const win = t && t.window && (t.window.getCurrentWindow ? t.window.getCurrentWindow()
+        : (t.window.getCurrent ? t.window.getCurrent() : null));
+      if (win && typeof win.setTitle === 'function') win.setTitle(title);
+    } catch (e) { /* sin entorno Tauri (preview web): solo document.title */ }
+  };
   componentWillUnmount() { if (this._onKey) window.removeEventListener('keydown', this._onKey); }
 
   openAddCajero = () => this.setState({ cajeroForm: { id: null, name: '', rut: '', password: '', role: 'cajero', active: true } });
@@ -2502,7 +2539,10 @@ class Component extends DCLogic {
   setCat = (c) => this.setState({ cat: c });
   setView = (v) => this.setState({ ventaView: v });
   onQuery = (e) => this.setState({ query: e.target.value });
-  onCustomer = (e) => this.setState({ customerId: e.target.value || null });
+  onCustQuery = (e) => this.setState({ custQuery: e.target.value, custPickerOpen: true });
+  openCustPicker = () => this.setState({ custPickerOpen: true, custQuery: '' });
+  closeCustPicker = () => this.setState({ custPickerOpen: false, custQuery: '' });
+  pickCustomer = (id) => this.setState({ customerId: id, custPickerOpen: false, custQuery: '' });
 
   addToCart = (id) => {
     if (this.avail(id) <= 0) return;
@@ -3024,7 +3064,26 @@ class Component extends DCLogic {
       };
     });
 
-    const customerOptions = [{ value: '', label: 'Público general' }, ...S.customers.map(c => ({ value: c.id, label: c.name }))];
+    const custQ = S.custQuery.trim().toLowerCase();
+    const custQDigits = custQ.replace(/\D/g, '');
+    const custMatch = (c) => {
+      if (!custQ) return true;
+      const name = (c.name || '').toLowerCase();
+      const email = (c.email || '').toLowerCase();
+      if (name.includes(custQ) || email.includes(custQ)) return true;
+      if (custQDigits && this.phoneDigits(c.phone || '').includes(custQDigits)) return true;
+      return false;
+    };
+    const customerPickerRows = S.customers.filter(custMatch).map(c => ({
+      id: c.id,
+      name: c.name,
+      initials: c.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase(),
+      subtitle: [c.phone, c.email].filter(Boolean).join('   ·   '),
+      onPick: () => this.pickCustomer(c.id),
+    }));
+    const selectedCustName = S.customerId ? this.custName(S.customerId) : '';
+    const custInputValue = S.custPickerOpen ? S.custQuery : selectedCustName;
+    const custNoResults = S.custPickerOpen && custQ && customerPickerRows.length === 0;
 
     // payment
     const efectivo = S.payMethod === 'efectivo';
@@ -3238,7 +3297,6 @@ class Component extends DCLogic {
     const customerRows = S.customers.map(c => ({
       name: c.name, email: c.email || '—', phone: c.phone, pointsStr: c.points.toLocaleString('es-CL'), spentStr: fmt(c.spent),
       initials: c.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase(),
-      onUse: () => this.setState({ customerId: c.id, screen: 'venta' }),
       onEdit: () => this.openEditCustomer(c.id),
       onDelete: () => this.deleteCustomer(c.id),
     }));
@@ -3348,7 +3406,7 @@ class Component extends DCLogic {
 
     return {
       brandName,
-      windowTitle: 'Mostrador POS — ' + brandName,
+      windowTitle: 'Kromi POS - ' + brandName,
       todayStr: 'Lun 23 jun 2026',
       loggedIn: !!S.session, loggedOut: !S.session,
       isKromiConsole: !!S.session && S.session.role === 'kromi' && !S.viewingBiz,
@@ -3469,7 +3527,10 @@ class Component extends DCLogic {
         key: 'bump' + S.bumpCount,
         style: { display: 'inline-block', background: '#E7EFE8', color: '#0F2A1B', borderRadius: 999, padding: '3px 11px', fontSize: 12, fontWeight: 700, animation: S.bumpCount > 0 ? 'brotaPop .42s cubic-bezier(0.22,1,0.36,1)' : 'none' },
       }, T.items + (T.items === 1 ? ' ítem' : ' ítems')),
-      customerOptions, selectedCustomerId: S.customerId || '', onCustomer: this.onCustomer,
+      customerPickerRows, custInputValue, custPickerOpen: S.custPickerOpen, custNoResults,
+      custPlaceholder: S.custPickerOpen ? 'Buscar por nombre, teléfono o correo…' : 'Público general',
+      onCustQuery: this.onCustQuery, openCustPicker: this.openCustPicker, closeCustPicker: this.closeCustPicker,
+      pickGeneral: () => this.pickCustomer(null),
       netoStr: fmt(T.neto), ivaStr: fmt(T.iva), totalStr: fmt(T.total),
       openPay: this.openPay, clearCart: this.clearCart,
       phoneGateOpen: !!S.phoneGate,
@@ -3683,7 +3744,6 @@ class Component extends DCLogic {
       crGiro: S.cfgRecibo.giro, onCrGiro: (e) => this.setCfgRecibo('giro', e.target.value),
       crDireccion: S.cfgRecibo.direccion, onCrDireccion: (e) => this.setCfgRecibo('direccion', e.target.value),
       crFooter: S.cfgRecibo.footer, onCrFooter: (e) => this.setCfgRecibo('footer', e.target.value),
-      crPrinter: S.cfgRecibo.printerName, onCrPrinter: (e) => this.setCfgRecibo('printerName', e.target.value),
       crSocialRed: S.cfgRecibo.socialRed, onCrSocialRed: (e) => this.setCfgRecibo('socialRed', e.target.value),
       crSocialUrl: S.cfgRecibo.socialUrl, onCrSocialUrl: (e) => this.setCfgRecibo('socialUrl', e.target.value),
       cfgTitle: cfgTitleMap[cfgSec],
