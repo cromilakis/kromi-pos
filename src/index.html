@@ -45,8 +45,9 @@ input::placeholder{color:#9aa8bd;}
 }
 @page a4quote{size:A4;margin:12mm;}
 @media print{
+  html.printing-a4{page:a4quote;}
   html.printing-a4 #thermal-receipt{display:none !important;}
-  html.printing-a4 #quote-print-area{page:a4quote;width:100% !important;max-width:100% !important;}
+  html.printing-a4 #quote-print-area{width:100% !important;max-width:100% !important;}
 }
 </style>
 </helmet>
