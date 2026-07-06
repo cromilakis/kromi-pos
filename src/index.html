@@ -389,6 +389,31 @@ input::placeholder{color:#9aa8bd;}
           <div style="line-height:1.1;"><div style="font-size:12.5px;font-weight:700;color:#0F2A1B;">{{ sessionName }}</div><div style="font-size:11px;color:#7C95A8;">{{ sessionRoleLabel }}</div></div>
         </div>
       </div>
+      <div style="padding:18px 22px 0;">
+        <div style="display:inline-flex;gap:4px;background:#F0F2F7;border-radius:999px;padding:4px;margin-bottom:16px;">
+          <button onClick="{{ setQuoteViewVenta }}" style="{{ quoteTabVentaStyle }}">Venta</button>
+          <button onClick="{{ setQuoteViewCotiz }}" style="{{ quoteTabCotizStyle }}">Cotizaciones</button>
+        </div>
+        <sc-if value="{{ isQuoteView }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <sc-for list="{{ quoteRows }}" as="q" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:16px;background:#fff;border:1px solid #E1E5EE;border-radius:14px;padding:16px 18px;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:14.5px;font-weight:800;color:#0F2A1B;">{{ q.folioStr }} · {{ q.custStr }}</div>
+                <div style="font-size:12.5px;color:#7C95A8;margin-top:2px;">{{ q.dateStr }} · {{ q.validStr }} · {{ q.itemsStr }}</div>
+              </div>
+              <span style="{{ q.badgeStyle }}">{{ q.badgeLabel }}</span>
+              <div style="font-size:16px;font-weight:900;color:#0F2A1B;">{{ q.totalStr }}</div>
+              <button onClick="{{ q.onPrint }}" style="border:1px solid #E1E5EE;background:#fff;color:#5a6b7e;border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">Imprimir</button>
+              <button onClick="{{ q.onPdf }}" style="border:1px solid #E1E5EE;background:#fff;color:#5a6b7e;border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">PDF</button>
+              <button onClick="{{ q.onConvert }}" style="border:1px solid var(--accent);background:#fff;color:#0a6e36;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">Convertir</button>
+            </div>
+          </sc-for>
+          <sc-if value="{{ quotesEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:34px 22px;text-align:center;font-size:13.5px;color:#9aa8bd;">Aún no hay cotizaciones.</div></sc-if>
+        </div>
+        </sc-if>
+      </div>
+      <sc-if value="{{ isVentaGrid }}" hint-placeholder-val="{{ true }}">
       <div style="flex:1;display:flex;min-height:0;">
       <!-- catalog -->
       <div style="flex:1;display:flex;flex-direction:column;min-width:0;padding:18px 22px 0;">
@@ -579,6 +604,7 @@ input::placeholder{color:#9aa8bd;}
       </div>
       </sc-if>
     </div>
+      </sc-if>
       </sc-if>
       <sc-if value="{{ cajaClosed }}" hint-placeholder-val="{{ false }}">
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;">
@@ -2726,6 +2752,11 @@ class Component extends DCLogic {
     };
     this.setState({ quotes: [quote, ...s.quotes], quoteSeq: s.quoteSeq + 1, cart: [], quoteView: 'cotizaciones' });
   };
+  setQuoteView = (v) => this.setState({ quoteView: v });
+  // TEMP stubs: implemented in B4/B5/B6, which will replace these.
+  printQuote = (q) => {};
+  openQuotePdf = (q) => {};
+  convertQuote = (id) => {};
 
   confirmPay = () => {
     const t = this.totals();
@@ -3686,6 +3717,32 @@ class Component extends DCLogic {
       cobrarStyle: { flex: 1, height: 54, border: 0, borderRadius: 14, background: S.cart.length ? 'var(--accent)' : '#EEF1F6', color: S.cart.length ? '#fff' : '#9aa8bd', fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: S.cart.length ? 'pointer' : 'not-allowed' },
       createQuote: this.createQuote,
       cotizarStyle: { border: '1px solid var(--accent)', borderRadius: 13, padding: '14px 22px', fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: S.cart.length ? 'pointer' : 'not-allowed', color: S.cart.length ? '#0a6e36' : '#9aa8bd', background: '#fff' },
+      isQuoteView: S.quoteView === 'cotizaciones',
+      isVentaGrid: S.quoteView !== 'cotizaciones',
+      setQuoteViewVenta: () => this.setQuoteView('venta'),
+      setQuoteViewCotiz: () => this.setQuoteView('cotizaciones'),
+      quoteTabVentaStyle: { border: 0, background: S.quoteView === 'venta' ? 'var(--accent)' : 'transparent', color: S.quoteView === 'venta' ? '#fff' : '#5a6b7e', borderRadius: 999, padding: '7px 16px', fontWeight: 700, fontSize: 13.5, fontFamily: 'inherit', cursor: 'pointer' },
+      quoteTabCotizStyle: { border: 0, background: S.quoteView === 'cotizaciones' ? 'var(--accent)' : 'transparent', color: S.quoteView === 'cotizaciones' ? '#fff' : '#5a6b7e', borderRadius: 999, padding: '7px 16px', fontWeight: 700, fontSize: 13.5, fontFamily: 'inherit', cursor: 'pointer' },
+      quotesEmpty: S.quotes.length === 0,
+      quoteRows: S.quotes.map(q => {
+        const cust = S.customers.find(c => c.id === q.customerId);
+        const vigente = this.isQuoteVigente(q.validUntilIso);
+        return {
+          id: q.id,
+          folioStr: 'COT-' + q.folio,
+          dateStr: this.fmtIsoDate(q.dateIso),
+          validStr: 'Vence ' + this.fmtIsoDate(q.validUntilIso),
+          custStr: cust ? cust.name : 'Sin cliente',
+          totalStr: this.fmt(q.total),
+          itemsStr: q.lines.reduce((a, l) => a + l.qty, 0) + ' ítems',
+          badgeLabel: q.converted ? 'Convertida' : (vigente ? 'Vigente' : 'Vencida'),
+          badgeStyle: { fontSize: '11.5px', fontWeight: 700, padding: '3px 10px', borderRadius: '999px', whiteSpace: 'nowrap', background: q.converted ? '#EAF0FF' : (vigente ? '#E6F7EE' : '#FCECEC'), color: q.converted ? '#1d4ed8' : (vigente ? '#0a6e36' : '#c0392b') },
+          converted: q.converted,
+          onPrint: () => this.printQuote(q),
+          onPdf: () => this.openQuotePdf(q),
+          onConvert: () => this.convertQuote(q.id),
+        };
+      }),
       // stock
       stockGroups, openAddProduct: this.openAddProduct,
       stockQuery: S.stockQuery || '', onStockQuery: (e) => this.setState({ stockQuery: e.target.value }),
