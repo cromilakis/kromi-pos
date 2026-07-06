@@ -45,6 +45,21 @@ pub struct QuotePayload {
     pub total: i64,
 }
 
+#[derive(Deserialize, Clone)]
+pub struct CreditNotePayload {
+    pub negocio: Negocio,
+    pub folio: u32,
+    pub fecha: String,
+    pub hora: String,
+    pub sale_folio: Option<u32>,
+    pub metodo: String,
+    pub motivo: String,
+    pub items: Vec<Item>,
+    pub neto: i64,
+    pub iva: i64,
+    pub total: i64,
+}
+
 const COL: usize = 48;
 
 fn money(n: i64) -> String {
@@ -389,6 +404,62 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
     b
 }
 
+pub fn build_credit_note(p: &CreditNotePayload) -> Vec<u8> {
+    let mut b: Vec<u8> = Vec::new();
+    b.extend_from_slice(&[0x1B, 0x40]);
+    b.extend_from_slice(include_bytes!("../assets/logo.escpos"));
+    nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+    push_text(&mut b, &format!("* {} *", p.negocio.tagline)); nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+    nl(&mut b);
+    line_center(&mut b, &p.negocio.razon_social);
+    nl(&mut b);
+
+    box_ascii(&mut b, &[
+        &format!("R.U.T.: {}", p.negocio.rut),
+        "NOTA DE CREDITO",
+        &format!("No {}", p.folio),
+    ], 32);
+    nl(&mut b);
+
+    push_text(&mut b, &format!("Fecha: {} {}", p.fecha, p.hora)); nl(&mut b);
+    if let Some(sf) = p.sale_folio {
+        push_text(&mut b, &format!("Ref. boleta: {}", sf)); nl(&mut b);
+    }
+    push_text(&mut b, &format!("Motivo: {}", p.motivo)); nl(&mut b);
+    rule(&mut b, b'-');
+
+    b.extend_from_slice(&[0x1B, 0x45, 0x01]);
+    line_lr(&mut b, "Item", "Subtotal", COL);
+    b.extend_from_slice(&[0x1B, 0x45, 0x00]);
+    rule(&mut b, b'=');
+    for it in &p.items {
+        line_lr(&mut b, &it.nombre, &money(it.precio * it.qty as i64), COL);
+        push_text(&mut b, &format!("   {} x {}", it.qty, money(it.precio))); nl(&mut b);
+    }
+    rule(&mut b, b'=');
+
+    line_lr(&mut b, "Neto", &money(p.neto), COL);
+    line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
+    nl(&mut b);
+    b.extend_from_slice(&[0x1D, 0x21, 0x11]);
+    line_lr(&mut b, "DEVOLUCION", &money(p.total), 24);
+    b.extend_from_slice(&[0x1D, 0x21, 0x00]);
+    nl(&mut b);
+    line_lr(&mut b, "Medio de devolucion", &p.metodo, COL);
+    rule(&mut b, b'-');
+
+    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+    push_text(&mut b, "Documento no tributario"); nl(&mut b);
+    push_text(&mut b, &p.negocio.footer); nl(&mut b);
+    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+
+    b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
+    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x00]);
+    b
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -529,5 +600,37 @@ mod tests {
         assert!(contains(&b, b"Valido hasta: 13/07/2026"));
         assert!(contains(&b, b"Monstera"));
         assert!(contains(&b, b"TOTAL"));
+    }
+
+    fn sample_nc() -> CreditNotePayload {
+        let s = sample("efectivo", true);
+        CreditNotePayload {
+            negocio: s.negocio,
+            folio: 501,
+            fecha: "06/07/2026".into(), hora: "16:20".into(),
+            sale_folio: Some(438),
+            metodo: "efectivo".into(),
+            motivo: "Producto defectuoso".into(),
+            items: vec![Item { nombre: "Sansevieria".into(), qty: 1, precio: 9990 }],
+            neto: 8395, iva: 1595, total: 9990,
+        }
+    }
+
+    #[test]
+    fn nc_init_corte_sin_gaveta() {
+        let b = build_credit_note(&sample_nc());
+        assert_eq!(&b[0..2], &[0x1B, 0x40]);
+        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x00]));
+        assert!(!contains(&b, &[0x1B, 0x70, 0x00, 0x19, 0xFA])); // sin gaveta
+    }
+
+    #[test]
+    fn nc_incluye_textos() {
+        let b = build_credit_note(&sample_nc());
+        assert!(contains(&b, b"NOTA DE CREDITO"));
+        assert!(contains(&b, b"No 501"));
+        assert!(contains(&b, b"Ref. boleta: 438"));
+        assert!(contains(&b, b"Sansevieria"));
+        assert!(contains(&b, b"Producto defectuoso"));
     }
 }
