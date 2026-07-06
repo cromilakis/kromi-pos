@@ -263,11 +263,13 @@ pub struct CierrePayload {
     pub card: i64,
     pub fondo: i64,
     pub contado: i64,
+    pub nc_cash: i64,
+    pub nc_card: i64,
 }
 
 pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
     let total = p.cash + p.card;
-    let esperado = p.fondo + p.cash;
+    let esperado = p.fondo + p.cash - p.nc_cash;
     let diff = p.contado - esperado;
     let pct = if esperado != 0 { (diff as f64) / (esperado as f64) * 100.0 } else { 0.0 };
     let estado = if diff == 0 {
@@ -322,6 +324,8 @@ pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1B, 0x45, 0x00]);
     line_lr(&mut b, "Fondo de apertura", &money(p.fondo), COL);
     line_lr(&mut b, "Ventas en efectivo", &money(p.cash), COL);
+    if p.nc_cash != 0 { line_lr(&mut b, "Notas de credito (efectivo)", &format!("-{}", money(p.nc_cash)), COL); }
+    if p.nc_card != 0 { line_lr(&mut b, "Reversos tarjeta", &format!("-{}", money(p.nc_card)), COL); }
     line_lr(&mut b, "Esperado en caja", &money(esperado), COL);
     line_lr(&mut b, "Efectivo contado", &money(p.contado), COL);
     rule(&mut b, b'-');
@@ -533,6 +537,8 @@ mod tests {
             card: 98000,
             fondo: 50000,
             contado,
+            nc_cash: 0,
+            nc_card: 0,
         }
     }
 
@@ -568,6 +574,18 @@ mod tests {
     fn cierre_no_incluye_timbre_ni_qr() {
         let b = build_cierre(&sample_cierre(192300));
         assert!(!contains(&b, &[0x1D, 0x28, 0x6B])); // sin QR
+    }
+
+    #[test]
+    fn cierre_incluye_notas_credito_y_ajusta_esperado() {
+        let mut p = sample_cierre(0);
+        p.nc_cash = 10000;
+        p.nc_card = 0;
+        // esperado = fondo(50000) + cash(142300) - nc_cash(10000) = 182300
+        p.contado = 182300;
+        let b = build_cierre(&p);
+        assert!(contains(&b, b"Notas de credito"));
+        assert!(contains(&b, b"CUADRADO (exacto)"));
     }
 
     fn sample_quote() -> QuotePayload {

@@ -2695,7 +2695,6 @@ class Component extends DCLogic {
     return { cierres: [rec, ...s.cierres], cierreDone: true, cajaOpen: false, cart: [], cierreConfirm: false, lastCierre: rec, convertingQuoteId: null };
   });
   // Notas de crédito: crear desde boleta o manual, reponer stock, folio.
-  printCreditNote = (nc) => {}; // TEMPORAL: reemplazado en tarea C5/C6
   openNcManual = () => {
     if (!this.state.cajaOpen) { this.flashPrintToast({ ok: false, label: 'Abre la caja para registrar una nota de crédito.', retry: null }); return; }
     this.setState({ ncForm: { id: null, saleFolio: null, method: 'efectivo', reason: '', lines: [{ name: '', qty: 1, price: 0, restock: true }] } });
@@ -2775,7 +2774,32 @@ class Component extends DCLogic {
       ventas: rec.salesCount || 0,
       cash: rec.cash || 0, card: rec.card || 0,
       fondo: rec.float || 0, contado: rec.counted || 0,
+      nc_cash: rec.ncCash || 0,
+      nc_card: rec.ncCard || 0,
     };
+  };
+  buildNcPayload = (nc) => {
+    const cr = this.state.cfgRecibo;
+    return {
+      negocio: { tagline: cr.tagline, razon_social: cr.razonSocial, rut: cr.rut, giro: cr.giro, direccion: cr.direccion, footer: cr.footer, printer_name: cr.printerName, social: null },
+      folio: nc.folio,
+      fecha: this.fmtIsoDate(nc.dateIso), hora: nc.time,
+      sale_folio: nc.saleFolio,
+      metodo: nc.method,
+      motivo: nc.reason || 'Sin motivo',
+      items: nc.lines.map(l => ({ nombre: l.name, qty: l.qty, precio: l.price })),
+      neto: nc.neto, iva: nc.iva, total: nc.total,
+    };
+  };
+  printCreditNote = (nc) => {
+    if (!nc) return;
+    const tauri = window.__TAURI__;
+    if (tauri && tauri.core && typeof tauri.core.invoke === 'function') {
+      this.flashPrintToast({ ok: null, label: 'Imprimiendo nota de crédito…', retry: null });
+      tauri.core.invoke('print_credit_note', { payload: this.buildNcPayload(nc) })
+        .then(() => this.flashPrintToast({ ok: true, label: 'Nota de crédito impresa.', retry: null }))
+        .catch(err => { console.error('print_credit_note:', err); this.flashPrintToast({ ok: false, label: 'No se pudo imprimir la nota de crédito.', retry: () => this.printCreditNote(nc) }); });
+    } else { try { window.print(); } catch (e) {} }
   };
   flashPrintToast = (toast) => {
     this.setState({ printToast: toast });
