@@ -829,6 +829,7 @@ input::placeholder{color:#9aa8bd;}
             <span style="{{ histTabCierresSubStyle }}">{{ histCierresCountStr }}</span>
           </span>
         </button>
+        <button onClick="{{ openNcManual }}" style="margin-left:auto;display:inline-flex;align-items:center;gap:8px;border:1px solid #E1E5EE;background:#fff;color:#c0392b;border-radius:11px;padding:9px 14px;font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer;">Nueva NC manual</button>
       </div>
       <sc-if value="{{ histTabVentas }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex;gap:8px;margin-bottom:14px;">
@@ -1652,6 +1653,9 @@ input::placeholder{color:#9aa8bd;}
       </div>
       <div style="padding:16px 24px;border-top:1px solid #E1E5EE;display:flex;gap:10px;">
         <button onClick="{{ printTicket }}" style="width:120px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:13px;padding:13px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Imprimir</button>
+        <sc-if value="{{ tkShowNc }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ ncFromCurrentSale }}" style="flex:none;border:1px solid #E1E5EE;background:#fff;color:#c0392b;border-radius:13px;padding:13px 16px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Nota de crédito</button>
+        </sc-if>
         <button onClick="{{ closeTicket }}" style="flex:1;border:0;background:var(--accent);color:#fff;border-radius:13px;padding:13px;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;">{{ ticketCloseLabel }}</button>
       </div>
     </div>
@@ -1897,6 +1901,48 @@ input::placeholder{color:#9aa8bd;}
       <div style="display:flex;gap:10px;margin-top:20px;">
         <button onClick="{{ closeSupForm }}" style="flex:none;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:12px;padding:13px 20px;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;">Cancelar</button>
         <button onClick="{{ saveSupplier }}" style="{{ saveSupStyle }}">Guardar proveedor</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ================= NOTA DE CRÉDITO MODAL ================= -->
+  <sc-if value="{{ ncFormOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;background:rgba(15,42,27,.35);display:flex;align-items:center;justify-content:center;z-index:65;padding:24px;">
+    <div style="width:560px;max-width:100%;max-height:90%;overflow:auto;background:#fff;border-radius:20px;padding:26px 28px;box-shadow:0 24px 60px rgba(0,0,0,.25);">
+      <div style="display:flex;align-items:center;margin-bottom:16px;">
+        <div style="font-weight:900;font-size:19px;color:#0F2A1B;flex:1;">{{ ncFormTitle }}</div>
+        <button onClick="{{ closeNcForm }}" style="border:0;background:#F0F2F7;color:#5a6b7e;border-radius:9px;width:32px;height:32px;cursor:pointer;font-family:inherit;font-weight:700;font-size:16px;">×</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+        <sc-for list="{{ ncFormLines }}" as="l" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:10px;border:1px solid #E1E5EE;border-radius:12px;padding:10px 12px;">
+            <sc-if value="{{ l.isManual }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
+              <input value="{{ l.name }}" onInput="{{ l.onName }}" placeholder="Nombre del ítem" style="width:100%;border:1px solid #E1E5EE;border-radius:9px;padding:8px 10px;font-family:inherit;font-size:13.5px;font-weight:700;color:#0F2A1B;outline:none;box-sizing:border-box;" />
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:12px;color:#7C95A8;">Precio</span>
+                <input value="{{ l.priceInputStr }}" onInput="{{ l.onPrice }}" inputmode="numeric" style="width:100px;border:1px solid #E1E5EE;border-radius:9px;padding:6px 8px;font-family:inherit;font-size:13px;font-weight:700;color:#0F2A1B;outline:none;" />
+                <span style="font-size:12px;color:#7C95A8;">c/u · {{ l.subtotalStr }}</span>
+              </div>
+            </div>
+            </sc-if>
+            <sc-if value="{{ l.isReadonly }}" hint-placeholder-val="{{ true }}">
+            <div style="flex:1;min-width:0;"><div style="font-size:13.5px;font-weight:700;color:#0F2A1B;">{{ l.name }}</div><div style="font-size:12px;color:#7C95A8;">{{ l.priceStr }} c/u · {{ l.subtotalStr }}</div></div>
+            </sc-if>
+            <input value="{{ l.qtyStr }}" onInput="{{ l.onQty }}" inputmode="numeric" style="width:56px;text-align:center;border:1px solid #E1E5EE;border-radius:9px;padding:8px;font-family:inherit;font-size:14px;font-weight:700;color:#0F2A1B;outline:none;" />
+            <button onClick="{{ l.onToggleRestock }}" title="Reponer stock" style="display:flex;align-items:center;gap:6px;border:0;background:transparent;font-family:inherit;font-size:12px;color:#5a6b7e;cursor:pointer;"><span style="{{ l.restockBoxStyle }}">{{ l.restockCheck }}</span>Stock</button>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:12px;">
+        <div style="flex:1;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Medio de devolución</label><select value="{{ ncFormMethod }}" onChange="{{ onNcMethod }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 12px;font-family:inherit;font-size:14px;font-weight:700;color:#0F2A1B;outline:none;background:#F8FAFC;cursor:pointer;box-sizing:border-box;"><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta (reverso)</option></select></div>
+        <div style="flex:1;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Total a devolver</label><div style="border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-size:16px;font-weight:900;color:#c0392b;">{{ ncFormTotalStr }}</div></div>
+      </div>
+      <div style="margin-bottom:16px;"><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Motivo</label><input value="{{ ncFormReason }}" onInput="{{ onNcReason }}" placeholder="Ej. producto defectuoso" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
+      <div style="display:flex;gap:10px;">
+        <button onClick="{{ closeNcForm }}" style="flex:none;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:12px;padding:13px 20px;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;">Cancelar</button>
+        <button onClick="{{ saveCreditNote }}" style="{{ ncSaveStyle }}">Emitir nota de crédito</button>
       </div>
     </div>
   </div>
@@ -2671,6 +2717,12 @@ class Component extends DCLogic {
     return { ncForm: { ...s.ncForm, lines } };
   });
   toggleNcLineRestock = (idx) => this.setState(s => ({ ncForm: { ...s.ncForm, lines: s.ncForm.lines.map((l, i) => i === idx ? { ...l, restock: !l.restock } : l) } }));
+  onNcLineName = (idx, value) => this.setState(s => ({ ncForm: { ...s.ncForm, lines: s.ncForm.lines.map((l, i) => i === idx ? { ...l, name: value } : l) } }));
+  onNcLinePrice = (idx, value) => this.setState(s => {
+    const price = Math.max(0, parseInt((value || '0').replace(/[^\d]/g, ''), 10) || 0);
+    const lines = s.ncForm.lines.map((l, i) => i === idx ? { ...l, price } : l);
+    return { ncForm: { ...s.ncForm, lines } };
+  });
   saveCreditNote = () => {
     const s = this.state;
     const f = s.ncForm;
@@ -2992,7 +3044,7 @@ class Component extends DCLogic {
 
   componentDidUpdate(prevProps, prevState) {
     const s = this.state;
-    const overlay = s.payOpen || s.phoneGate || s.ticket || s.scanPickerOpen || s.prodForm || s.catForm || s.confirmDeleteId != null || s.catConfirmKey != null || s.supForm;
+    const overlay = s.payOpen || s.phoneGate || s.ticket || s.scanPickerOpen || s.prodForm || s.catForm || s.confirmDeleteId != null || s.catConfirmKey != null || s.supForm || s.ncForm;
     if (s.scanMode && !overlay) this.focusScan();
   }
 
@@ -4064,6 +4116,31 @@ class Component extends DCLogic {
       tkSocialRed: S.cfgRecibo.socialRed,
       closeTicket: this.closeTicket, printTicket: this.printTicket,
       ticketCloseLabel: S.ticketFromHistory ? 'Cerrar' : 'Nueva venta',
+      tkShowNc: !!S.ticketFromHistory && !!tk,
+      ncFromCurrentSale: () => { if (tk) this.openNcFromSale(tk.folio); },
+      openNcManual: this.openNcManual,
+      // nota de crédito modal
+      ncFormOpen: !!S.ncForm,
+      closeNcForm: this.closeNcForm,
+      saveCreditNote: this.saveCreditNote,
+      ncFormTitle: (S.ncForm && S.ncForm.saleFolio) ? ('Nota de crédito · boleta #' + String(S.ncForm.saleFolio).padStart(4, '0')) : 'Nota de crédito manual',
+      ncFormMethod: S.ncForm ? S.ncForm.method : 'efectivo',
+      onNcMethod: (e) => this.onNcField('method', e.target.value),
+      ncFormReason: S.ncForm ? S.ncForm.reason : '',
+      onNcReason: (e) => this.onNcField('reason', e.target.value),
+      ncFormTotalStr: S.ncForm ? fmt(S.ncForm.lines.filter(l => l.name && l.qty > 0).reduce((a, l) => a + l.qty * l.price, 0)) : '$0',
+      ncFormLines: S.ncForm ? S.ncForm.lines.map((l, i) => ({
+        idx: i, name: l.name, qtyStr: String(l.qty), priceStr: fmt(l.price), priceInputStr: String(l.price), subtotalStr: fmt(l.qty * l.price),
+        isManual: !S.ncForm.saleFolio, isReadonly: !!S.ncForm.saleFolio,
+        restock: l.restock, restockCheck: l.restock ? '✓' : '',
+        restockBoxStyle: { width: 22, height: 22, borderRadius: 7, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, color: '#fff', border: l.restock ? '0' : '1.5px solid #cdd5e3', background: l.restock ? 'var(--accent)' : '#fff', cursor: 'pointer' },
+        onQty: (e) => this.onNcLineQty(i, e.target.value),
+        onToggleRestock: () => this.toggleNcLineRestock(i),
+        onName: (e) => this.onNcLineName(i, e.target.value),
+        onPrice: (e) => this.onNcLinePrice(i, e.target.value),
+      })) : [],
+      ncSaveDisabled: !(S.ncForm && S.ncForm.lines.some(l => l.name && l.qty > 0)),
+      ncSaveStyle: { flex: 1, border: 0, borderRadius: 12, padding: '13px 18px', fontWeight: 700, fontSize: 15, fontFamily: 'inherit', color: '#fff', background: (S.ncForm && S.ncForm.lines.some(l => l.name && l.qty > 0)) ? '#c0392b' : '#e0a9a2', cursor: (S.ncForm && S.ncForm.lines.some(l => l.name && l.qty > 0)) ? 'pointer' : 'not-allowed' },
       // admin menu
       showAdminMenu: isAdmin, adminMenuOpen: S.adminMenuOpen, adminMenuItems,
       toggleAdminMenu: this.toggleAdminMenu, closeAdminMenu: this.closeAdminMenu,
