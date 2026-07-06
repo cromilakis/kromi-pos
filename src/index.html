@@ -40,6 +40,7 @@ input::placeholder{color:#9aa8bd;}
   #thermal-receipt{position:fixed !important;left:0 !important;top:0 !important;width:58mm !important;}
   #quote-print-area, #quote-print-area *{visibility:visible !important;}
   #quote-print-area{position:absolute !important;left:0 !important;top:0 !important;width:100% !important;}
+  .no-print{display:none !important;}
   @page{size:58mm auto;margin:0;}
 }
 </style>
@@ -2477,9 +2478,9 @@ class Component extends DCLogic {
     if ((s.loginPin || '') !== (u.password || '')) { this.setState({ loginError: 'PIN incorrecto.', loginPin: '' }); return; }
     this.setState({ session: { id: u.id, name: u.name, rut: u.rut, role: u.role }, screen: 'inicio', loginAt: Date.now(), loginRut: '', loginPin: '', loginStep: 'rut', loginUserId: null, loginError: '' });
   };
-  logout = () => this.setState({ session: null, cart: [], scanMode: false, screen: 'inicio', adminMenuOpen: false, viewingBiz: null, loginStep: 'rut', loginPin: '', loginUserId: null, loginRut: '', loginError: '' });
-  enterBiz = (id) => this.setState({ viewingBiz: id, screen: 'inicio', cart: [], adminMenuOpen: false });
-  exitToConsole = () => this.setState({ viewingBiz: null, screen: 'inicio', cart: [], adminMenuOpen: false });
+  logout = () => this.setState({ session: null, cart: [], scanMode: false, screen: 'inicio', adminMenuOpen: false, viewingBiz: null, loginStep: 'rut', loginPin: '', loginUserId: null, loginRut: '', loginError: '', convertingQuoteId: null });
+  enterBiz = (id) => this.setState({ viewingBiz: id, screen: 'inicio', cart: [], adminMenuOpen: false, convertingQuoteId: null });
+  exitToConsole = () => this.setState({ viewingBiz: null, screen: 'inicio', cart: [], adminMenuOpen: false, convertingQuoteId: null });
 
   componentDidMount() {
     this._onKey = (e) => {
@@ -2633,7 +2634,7 @@ class Component extends DCLogic {
       salesCount: mine.length, cash, card, float: 50000, counted,
     };
     rec.sales = mine.map(x => ({ folio: x.folio, time: x.time, method: x.method, total: x.total, lines: x.lines }));
-    return { cierres: [rec, ...s.cierres], cierreDone: true, cajaOpen: false, cart: [], cierreConfirm: false, lastCierre: rec };
+    return { cierres: [rec, ...s.cierres], cierreDone: true, cajaOpen: false, cart: [], cierreConfirm: false, lastCierre: rec, convertingQuoteId: null };
   });
   openCierreDetail = (id) => this.setState({ cierreDetailId: id });
   closeCierreDetail = () => this.setState({ cierreDetailId: null });
@@ -2742,7 +2743,7 @@ class Component extends DCLogic {
     });
   };
   removeCart = (id) => this.setState(s => ({ cart: s.cart.filter(x => x.id !== id) }));
-  clearCart = () => this.setState({ cart: [] });
+  clearCart = () => this.setState({ cart: [], convertingQuoteId: null });
 
   openPayNow = () => this.setState({ payOpen: true, payMethod: 'efectivo', cashStr: '' });
   openPay = () => {
