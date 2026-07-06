@@ -2905,6 +2905,27 @@ class Component extends DCLogic {
   };
   custName = (id) => { const c = this.state.customers.find(x => x.id === id); return c ? c.name : 'Público general'; };
 
+  onSupQuery = (e) => this.setState({ supQuery: e.target.value });
+  openAddSupplier = () => this.setState({ supForm: { id: null, razonSocial: '', rut: '', giro: '', contactName: '', phone: '', email: '', address: '', website: '', payTerms: 'contado', category: '', bank: '', account: '', notes: '', active: true } });
+  openEditSupplier = (id) => { const s = this.state.suppliers.find(x => x.id === id); if (!s) return; this.setState({ supForm: { ...s } }); };
+  closeSupForm = () => this.setState({ supForm: null });
+  onSupField = (field, value) => this.setState(s => ({ supForm: { ...s.supForm, [field]: value } }));
+  toggleSupplierActive = (id) => this.setState(s => ({ suppliers: s.suppliers.map(x => x.id === id ? { ...x, active: !x.active } : x) }));
+  saveSupplier = () => {
+    const f = this.state.supForm;
+    if (!f) return;
+    const razonSocial = (f.razonSocial || '').trim();
+    if (!razonSocial) { return; } // razón social obligatoria; el botón ya va deshabilitado
+    this.setState(s => {
+      const clean = { ...f, razonSocial, rut: this.fmtRut(this.normRut(f.rut)) };
+      if (!f.id) {
+        const id = 'sup' + (s.suppliers.reduce((m, x) => Math.max(m, parseInt((x.id || '').replace('sup', ''), 10) || 0), 0) + 1);
+        return { suppliers: [...s.suppliers, { ...clean, id }], supForm: null };
+      }
+      return { suppliers: s.suppliers.map(x => x.id === f.id ? { ...clean } : x), supForm: null };
+    });
+  };
+
   // Genera 12 meses de métricas sintéticas con patrones realistas (vivero, hemisferio sur).
   // Determinista (PRNG con semilla fija) → estable entre recargas. Memoizado en this._metrics.
   buildMetrics = () => {
