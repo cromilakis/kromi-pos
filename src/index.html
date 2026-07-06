@@ -1219,6 +1219,10 @@ input::placeholder{color:#9aa8bd;}
             <div style="font-size:13px;color:#7C95A8;margin-bottom:16px;">Cuente el efectivo en caja e ingrese el monto contado.</div>
             <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:7px;"><span>Fondo de apertura</span><span>{{ cierreFloatStr }}</span></div>
             <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:7px;"><span>Ventas en efectivo</span><span>{{ cierreCashStr }}</span></div>
+            <sc-if value="{{ cierreNcShow }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:#c0392b;margin-bottom:7px;"><span>Notas de crédito (efectivo)</span><span>{{ cierreNcCashStr }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#7C95A8;margin-bottom:7px;"><span>Reversos tarjeta (informativo)</span><span>{{ cierreNcCardStr }}</span></div>
+            </sc-if>
             <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#0F2A1B;border-top:1px solid #F0F2F7;padding-top:9px;margin-top:3px;"><span>Esperado en caja</span><span>{{ cierreExpectedStr }}</span></div>
             <sc-if value="{{ cajaOpen }}" hint-placeholder-val="{{ true }}">
             <label style="display:block;font-size:12px;font-weight:700;color:#7C95A8;margin:16px 0 6px;">Efectivo contado</label>
@@ -2624,6 +2628,9 @@ class Component extends DCLogic {
     const mine = s.sales.filter(x => x.cajaSessionId === s.cajaSessionId);
     const cash = mine.filter(x => x.method === 'efectivo').reduce((a, x) => a + x.total, 0);
     const card = mine.filter(x => x.method === 'tarjeta').reduce((a, x) => a + x.total, 0);
+    const ncTurno = s.creditNotes.filter(n => n.cajaSessionId === s.cajaSessionId);
+    const ncCash = ncTurno.filter(n => n.method === 'efectivo').reduce((a, n) => a + n.total, 0);
+    const ncCard = ncTurno.filter(n => n.method === 'tarjeta').reduce((a, n) => a + n.total, 0);
     const counted = parseInt(s.cierreCounted || '0', 10) || 0;
     const now = new Date();
     const pad2 = (n) => String(n).padStart(2, '0');
@@ -2635,9 +2642,10 @@ class Component extends DCLogic {
       dateLabel: `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]}`,
       cashierId: myId, cashierName: s.session ? s.session.name : '—',
       openTime: s.cajaOpenAt || '—', closeTime: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
-      salesCount: mine.length, cash, card, float: 50000, counted,
+      salesCount: mine.length, cash, card, ncCash, ncCard, float: 50000, counted,
     };
     rec.sales = mine.map(x => ({ folio: x.folio, time: x.time, method: x.method, total: x.total, lines: x.lines }));
+    rec.creditNotes = ncTurno.map(n => ({ folio: n.folio, method: n.method, total: n.total, reason: n.reason }));
     return { cierres: [rec, ...s.cierres], cierreDone: true, cajaOpen: false, cart: [], cierreConfirm: false, lastCierre: rec, convertingQuoteId: null };
   });
   // Notas de crédito: crear desde boleta o manual, reponer stock, folio.
@@ -3641,7 +3649,10 @@ class Component extends DCLogic {
     const cierreMine = S.sales.filter(s => s.cajaSessionId === S.cajaSessionId);
     const cashSales = cierreMine.filter(s => s.method === 'efectivo').reduce((a, s) => a + s.total, 0);
     const cardSales = cierreMine.filter(s => s.method === 'tarjeta').reduce((a, s) => a + s.total, 0);
-    const cierreTotal = cashSales + cardSales, cierreFloat = 50000, cierreExpected = cierreFloat + cashSales;
+    const ncTurnoLive = S.creditNotes.filter(n => n.cajaSessionId === S.cajaSessionId);
+    const ncCashLive = ncTurnoLive.filter(n => n.method === 'efectivo').reduce((a, n) => a + n.total, 0);
+    const ncCardLive = ncTurnoLive.filter(n => n.method === 'tarjeta').reduce((a, n) => a + n.total, 0);
+    const cierreTotal = cashSales + cardSales, cierreFloat = 50000, cierreExpected = cierreFloat + cashSales - ncCashLive;
     const counted = parseInt(S.cierreCounted || '0', 10);
     const cierreDiff = counted - cierreExpected, cierreHasCount = (S.cierreCounted || '').length > 0;
     const cierreDiffPct = cierreExpected ? (cierreDiff / cierreExpected * 100) : 0;
@@ -4173,6 +4184,9 @@ class Component extends DCLogic {
       cierreTotalStr: fmt(cierreTotal), cierreCountStr: cierreCount + (cierreCount === 1 ? ' venta en el turno' : ' ventas en el turno'),
       cierreCashStr: fmt(cashSales), cierreCardStr: fmt(cardSales),
       cierreFloatStr: fmt(cierreFloat), cierreExpectedStr: fmt(cierreExpected),
+      cierreNcShow: (ncCashLive + ncCardLive) > 0,
+      cierreNcCashStr: '-' + fmt(ncCashLive),
+      cierreNcCardStr: '-' + fmt(ncCardLive),
       cierreCountedDisplay: cierreHasCount ? fmt(counted) : '', onCierreCounted: this.onCierreCounted,
       cierreCountedStatic: fmt(counted || 0),
       cierreCountNum: cierreCount, cierreAvgStr: fmt(cierreAvg),
