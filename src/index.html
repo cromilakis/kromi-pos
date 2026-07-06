@@ -2651,6 +2651,35 @@ class Component extends DCLogic {
   };
   printLastCierre = () => this.printCierre(this.state.lastCierre);
   reprintCierreDetail = () => { const c = this.state.cierres.find(x => x.id === this.state.cierreDetailId); this.printCierre(c); };
+  buildQuotePayload = (q) => {
+    const cr = this.state.cfgRecibo;
+    const cust = this.state.customers.find(c => c.id === q.customerId);
+    return {
+      negocio: {
+        tagline: cr.tagline, razon_social: cr.razonSocial, rut: cr.rut,
+        giro: cr.giro, direccion: cr.direccion, footer: cr.footer,
+        printer_name: cr.printerName, social: null,
+      },
+      folio: q.folio,
+      fecha: this.fmtIsoDate(q.dateIso),
+      valido_hasta: this.fmtIsoDate(q.validUntilIso),
+      cliente: cust ? cust.name : 'Sin cliente',
+      items: q.lines.map(l => ({ nombre: l.name, qty: l.qty, precio: l.price })),
+      neto: q.neto, iva: q.iva, total: q.total,
+    };
+  };
+  printQuote = (q) => {
+    if (!q) return;
+    const tauri = window.__TAURI__;
+    if (tauri && tauri.core && typeof tauri.core.invoke === 'function') {
+      this.flashPrintToast({ ok: null, label: 'Imprimiendo cotización…', retry: null });
+      tauri.core.invoke('print_quote', { payload: this.buildQuotePayload(q) })
+        .then(() => this.flashPrintToast({ ok: true, label: 'Cotización impresa.', retry: null }))
+        .catch(err => { console.error('print_quote:', err); this.flashPrintToast({ ok: false, label: 'No se pudo imprimir la cotización.', retry: () => this.printQuote(q) }); });
+    } else {
+      try { window.print(); } catch (e) {}
+    }
+  };
   toggleBackupAuto = () => this.setState(s => ({ backupAuto: !s.backupAuto }));
   noop = () => {};
   setCat = (c) => this.setState({ cat: c });
@@ -2753,8 +2782,7 @@ class Component extends DCLogic {
     this.setState({ quotes: [quote, ...s.quotes], quoteSeq: s.quoteSeq + 1, cart: [], quoteView: 'cotizaciones' });
   };
   setQuoteView = (v) => this.setState({ quoteView: v });
-  // TEMP stubs: implemented in B4/B5/B6, which will replace these.
-  printQuote = (q) => {};
+  // TEMP stubs: implemented in B4/B6, which will replace these.
   openQuotePdf = (q) => {};
   convertQuote = (id) => {};
 
