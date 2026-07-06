@@ -1726,6 +1726,11 @@ input::placeholder{color:#9aa8bd;}
             <div style="font-size:12px;color:#7C95A8;">Si además está bajo el mínimo, se avisa en Inicio como reposición. Requiere un stock mínimo configurado.</div>
           </div>
         </div>
+        <div><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Proveedor (opcional)</label>
+          <select value="{{ formSupplierId }}" onChange="{{ onFormSupplier }}" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 12px;font-family:inherit;font-size:14px;font-weight:700;color:#0F2A1B;outline:none;background:#F8FAFC;cursor:pointer;box-sizing:border-box;">
+            <sc-for list="{{ formSupplierOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.value }}">{{ o.label }}</option></sc-for>
+          </select>
+        </div>
       </div>
       <div style="padding:16px 24px;border-top:1px solid #E1E5EE;background:#FAFBFD;display:flex;justify-content:flex-end;gap:10px;">
         <button onClick="{{ closeForm }}" style="min-width:110px;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:11px;padding:11px 18px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer;">Cancelar</button>
@@ -1847,6 +1852,13 @@ input::placeholder{color:#9aa8bd;}
         </div>
         <div><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Cuenta</label><input value="{{ supFAccount }}" onInput="{{ onSupAccount }}" placeholder="Cta Cte 12345678" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;" /></div>
         <div><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Notas</label><textarea value="{{ supFNotes }}" onInput="{{ onSupNotes }}" rows="2" style="width:100%;border:1px solid #E1E5EE;border-radius:11px;padding:11px 14px;font-family:inherit;font-size:14px;color:#0F2A1B;outline:none;box-sizing:border-box;resize:vertical;"></textarea></div>
+        <sc-if value="{{ supFProductsShow }}" hint-placeholder-val="{{ false }}">
+        <div><label style="font-size:12.5px;font-weight:700;color:#5a6b7e;display:block;margin-bottom:5px;">Productos asociados</label>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <sc-for list="{{ supFProducts }}" as="p" hint-placeholder-count="2"><span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:#EEF1F6;color:#0F2A1B;">{{ p.name }}</span></sc-for>
+          </div>
+        </div>
+        </sc-if>
       </div>
       <div style="display:flex;gap:10px;margin-top:20px;">
         <button onClick="{{ closeSupForm }}" style="flex:none;border:1px solid #E1E5EE;background:#fff;color:#2A3A2E;border-radius:12px;padding:13px 20px;font-weight:700;font-size:15px;font-family:inherit;cursor:pointer;">Cancelar</button>
@@ -2784,7 +2796,7 @@ class Component extends DCLogic {
     if (s.scanMode && !overlay) this.focusScan();
   }
 
-  openAddProduct = () => this.setState(s => ({ prodForm: { id: null, name: '', cat: (s.categories[0] && s.categories[0].key) || '', price: '', stock: '', minStock: '', img: null, critical: false } }));
+  openAddProduct = () => this.setState(s => ({ prodForm: { id: null, name: '', cat: (s.categories[0] && s.categories[0].key) || '', price: '', stock: '', minStock: '', img: null, critical: false, supplierId: '' } }));
 
   slugify = (s) => (s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'cat');
   openAddCategory = () => this.setState(s => ({ catForm: { key: null, label: '', colorIdx: s.categories.length % this.PALETTE.length }, catMsg: null }));
@@ -2817,7 +2829,7 @@ class Component extends DCLogic {
   openEditProduct = (id) => {
     const p = this.find(id);
     if (!p) return;
-    this.setState({ prodForm: { id: p.id, name: p.name, cat: p.cat, price: String(p.price), stock: String(p.stock), minStock: p.minStock ? String(p.minStock) : '', img: p.img, critical: !!p.critical } });
+    this.setState({ prodForm: { id: p.id, name: p.name, cat: p.cat, price: String(p.price), stock: String(p.stock), minStock: p.minStock ? String(p.minStock) : '', img: p.img, critical: !!p.critical, supplierId: p.supplierId || '' } });
   };
   closeForm = () => this.setState({ prodForm: null });
   onFormField = (field, value) => this.setState(s => ({ prodForm: { ...s.prodForm, [field]: value } }));
@@ -2849,9 +2861,9 @@ class Component extends DCLogic {
     this.setState(s => {
       if (f.id == null) {
         const nextId = s.products.reduce((m, p) => Math.max(m, p.id), 0) + 1;
-        return { products: [...s.products, { id: nextId, name, cat: f.cat, price, stock, minStock, critical: !!f.critical, img: f.img || null }], prodForm: null };
+        return { products: [...s.products, { id: nextId, name, cat: f.cat, price, stock, minStock, critical: !!f.critical, img: f.img || null, supplierId: f.supplierId || null }], prodForm: null };
       }
-      return { products: s.products.map(p => p.id === f.id ? { ...p, name, cat: f.cat, price, stock, minStock, critical: !!f.critical, img: f.img || null } : p), prodForm: null };
+      return { products: s.products.map(p => p.id === f.id ? { ...p, name, cat: f.cat, price, stock, minStock, critical: !!f.critical, img: f.img || null, supplierId: f.supplierId || null } : p), prodForm: null };
     });
   };
   toggleProdCritical = () => this.setState(s => s.prodForm ? ({ prodForm: { ...s.prodForm, critical: !s.prodForm.critical } }) : {});
@@ -3686,6 +3698,11 @@ class Component extends DCLogic {
       onFormCat: (e) => this.onFormField('cat', e.target.value),
       onFormPrice: (e) => this.onFormField('price', this.onlyDigits(e.target.value)),
       onFormStock: (e) => this.onFormField('stock', this.onlyDigits(e.target.value)),
+      formSupplierId: S.prodForm ? (S.prodForm.supplierId || '') : '',
+      onFormSupplier: (e) => this.onFormField('supplierId', e.target.value),
+      formSupplierOpts: [{ value: '', label: 'Sin proveedor' }].concat(
+        S.suppliers.filter(x => x.active).map(x => ({ value: x.id, label: x.razonSocial }))
+      ),
       onFormImage: this.onFormImage,
       formImgLabel: (S.prodForm && S.prodForm.img) ? 'Cambiar imagen' : 'Subir imagen',
       formImgBoxStyle: { width: 52, height: 52, borderRadius: 11, background: '#F6F7FB', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flex: 'none' },
@@ -3844,6 +3861,10 @@ class Component extends DCLogic {
       supFBank: S.supForm ? S.supForm.bank : '',
       supFAccount: S.supForm ? S.supForm.account : '',
       supFNotes: S.supForm ? S.supForm.notes : '',
+      supFProducts: (S.supForm && S.supForm.id)
+        ? S.products.filter(p => p.supplierId === S.supForm.id).map(p => ({ id: p.id, name: p.name }))
+        : [],
+      supFProductsShow: !!(S.supForm && S.supForm.id && S.products.some(p => p.supplierId === S.supForm.id)),
       onSupRazon: (e) => this.onSupField('razonSocial', e.target.value),
       onSupRut: (e) => this.onSupField('rut', e.target.value),
       onSupGiro: (e) => this.onSupField('giro', e.target.value),
