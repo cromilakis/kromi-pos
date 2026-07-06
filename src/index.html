@@ -2219,6 +2219,7 @@ class Component extends DCLogic {
       creditNotes: [],
       ncSeq: 501,
       ncForm: null,
+      lastNc: null,
       session: null,
       users: [
         { id: 'u1', name: 'Daniela Soto', rut: '11.111.111-1', password: '1234', role: 'admin', active: true },
@@ -2639,6 +2640,61 @@ class Component extends DCLogic {
     rec.sales = mine.map(x => ({ folio: x.folio, time: x.time, method: x.method, total: x.total, lines: x.lines }));
     return { cierres: [rec, ...s.cierres], cierreDone: true, cajaOpen: false, cart: [], cierreConfirm: false, lastCierre: rec, convertingQuoteId: null };
   });
+  // Notas de crédito: crear desde boleta o manual, reponer stock, folio.
+  printCreditNote = (nc) => {}; // TEMPORAL: reemplazado en tarea C5/C6
+  openNcManual = () => {
+    if (!this.state.cajaOpen) { this.flashPrintToast({ ok: false, label: 'Abre la caja para registrar una nota de crédito.', retry: null }); return; }
+    this.setState({ ncForm: { id: null, saleFolio: null, method: 'efectivo', reason: '', lines: [{ name: '', qty: 1, price: 0, restock: true }] } });
+  };
+  openNcFromSale = (folio) => {
+    if (!this.state.cajaOpen) { this.flashPrintToast({ ok: false, label: 'Abre la caja para registrar una nota de crédito.', retry: null }); return; }
+    const sale = this.state.sales.find(x => x.folio === folio);
+    if (!sale) return;
+    this.setState({ ncForm: {
+      id: null, saleFolio: sale.folio, method: sale.method, reason: '',
+      lines: sale.lines.map(l => ({ name: l.name, qty: l.qty, price: l.price, restock: true })),
+    } });
+  };
+  closeNcForm = () => this.setState({ ncForm: null });
+  onNcField = (field, value) => this.setState(s => ({ ncForm: { ...s.ncForm, [field]: value } }));
+  onNcLineQty = (idx, value) => this.setState(s => {
+    const qty = Math.max(0, parseInt((value || '0').replace(/[^\d]/g, ''), 10) || 0);
+    const lines = s.ncForm.lines.map((l, i) => i === idx ? { ...l, qty } : l);
+    return { ncForm: { ...s.ncForm, lines } };
+  });
+  toggleNcLineRestock = (idx) => this.setState(s => ({ ncForm: { ...s.ncForm, lines: s.ncForm.lines.map((l, i) => i === idx ? { ...l, restock: !l.restock } : l) } }));
+  saveCreditNote = () => {
+    const s = this.state;
+    const f = s.ncForm;
+    if (!f || !s.cajaOpen) return;
+    const lines = f.lines.filter(l => l.name && l.qty > 0);
+    if (!lines.length) return;
+    const total = lines.reduce((a, l) => a + l.qty * l.price, 0);
+    if (total <= 0) return;
+    const neto = Math.round(total / 1.19);
+    const now = new Date();
+    const pad2 = (n) => String(n).padStart(2, '0');
+    const nc = {
+      id: 'nc' + Date.now(),
+      folio: s.ncSeq,
+      dateIso: this.isoToday(),
+      time: `${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
+      cajaSessionId: s.cajaSessionId,
+      cashierId: s.session ? s.session.id : null,
+      saleFolio: f.saleFolio,
+      method: f.method,
+      reason: (f.reason || '').trim(),
+      lines: lines.map(l => ({ name: l.name, qty: l.qty, price: l.price, restock: !!l.restock })),
+      total, neto, iva: total - neto,
+    };
+    // reponer stock por línea con restock (match por nombre)
+    const products = s.products.map(p => {
+      const back = lines.filter(l => l.restock && l.name === p.name).reduce((a, l) => a + l.qty, 0);
+      return back ? { ...p, stock: p.stock + back } : p;
+    });
+    this.setState({ creditNotes: [nc, ...s.creditNotes], ncSeq: s.ncSeq + 1, ncForm: null, products, lastNc: nc },
+      () => this.printCreditNote(nc));
+  };
   openCierreDetail = (id) => this.setState({ cierreDetailId: id });
   closeCierreDetail = () => this.setState({ cierreDetailId: null });
   setCierreFilterCajero = (e) => this.setState({ cierreFilterCajero: e.target.value });
