@@ -829,6 +829,15 @@ input::placeholder{color:#9aa8bd;}
             <span style="{{ histTabCierresSubStyle }}">{{ histCierresCountStr }}</span>
           </span>
         </button>
+        <button onClick="{{ goHistNotas }}" style="{{ histTabNotasStyle }}">
+          <span style="{{ histTabNotasIconStyle }}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1 21 6l-4 3.9M3 12c0-4.97 4.03-9 9-9h9M7 21.9 3 18l4-3.9M21 12c0 4.97-4.03 9-9 9H3"/></svg>
+          </span>
+          <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;">
+            <span style="font-weight:800;font-size:14.5px;">Notas de crédito</span>
+            <span style="{{ histTabNotasSubStyle }}">{{ histNcCountStr }}</span>
+          </span>
+        </button>
         <button onClick="{{ openNcManual }}" style="margin-left:auto;display:inline-flex;align-items:center;gap:8px;border:1px solid #E1E5EE;background:#fff;color:#c0392b;border-radius:11px;padding:9px 14px;font-weight:700;font-size:13.5px;font-family:inherit;cursor:pointer;">Nueva NC manual</button>
       </div>
       <sc-if value="{{ histTabVentas }}" hint-placeholder-val="{{ true }}">
@@ -998,6 +1007,23 @@ input::placeholder{color:#9aa8bd;}
       </div>
       </sc-if>
 
+      </sc-if>
+
+      <!-- notas de crédito -->
+      <sc-if value="{{ histTabNotas }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <sc-for list="{{ ncHistoryRows }}" as="n" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:16px;background:#fff;border:1px solid #E1E5EE;border-radius:14px;padding:16px 18px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14.5px;font-weight:800;color:#0F2A1B;">{{ n.folioStr }} · {{ n.refStr }}</div>
+              <div style="font-size:12.5px;color:#7C95A8;margin-top:2px;">{{ n.dateStr }} · {{ n.methodStr }} · {{ n.reason }}</div>
+            </div>
+            <div style="font-size:16px;font-weight:900;color:#c0392b;">{{ n.totalStr }}</div>
+            <button onClick="{{ n.onReprint }}" style="border:1px solid #E1E5EE;background:#fff;color:#5a6b7e;border-radius:10px;padding:8px 12px;font-weight:700;font-size:13px;font-family:inherit;cursor:pointer;">Reimprimir</button>
+          </div>
+        </sc-for>
+        <sc-if value="{{ ncHistEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:34px 22px;text-align:center;font-size:13.5px;color:#9aa8bd;">No hay notas de crédito registradas.</div></sc-if>
+      </div>
       </sc-if>
     </div>
     </sc-if>
@@ -2695,6 +2721,7 @@ class Component extends DCLogic {
     return { cierres: [rec, ...s.cierres], cierreDone: true, cajaOpen: false, cart: [], cierreConfirm: false, lastCierre: rec, convertingQuoteId: null };
   });
   // Notas de crédito: crear desde boleta o manual, reponer stock, folio.
+  goHistNotas = () => this.setState({ histTab: 'notas', cierreDetailId: null });
   openNcManual = () => {
     if (!this.state.cajaOpen) { this.flashPrintToast({ ok: false, label: 'Abre la caja para registrar una nota de crédito.', retry: null }); return; }
     this.setState({ ncForm: { id: null, saleFolio: null, method: 'efectivo', reason: '', lines: [{ name: '', qty: 1, price: 0, restock: true }] } });
@@ -3577,6 +3604,7 @@ class Component extends DCLogic {
     const histTabAccents = {
       ventas: { main: 'var(--accent)', bg: '#E6F7EE', border: '#A7E3C0', text: '#0a6e36', sub: '#3f8f63' },
       cierres: { main: '#2563EB', bg: '#EAF0FF', border: '#BBD0FF', text: '#1d4ed8', sub: '#5b7fd6' },
+      notas: { main: '#c0392b', bg: '#FCEBEA', border: '#F0B4AE', text: '#c0392b', sub: '#d67268' },
     };
     const histTabBtnStyle = (active, ac) => ({ display: 'flex', alignItems: 'center', gap: 11, border: '1.5px solid ' + (active ? ac.border : '#E1E5EE'), background: active ? ac.bg : '#fff', color: active ? ac.text : '#5a6b7e', borderRadius: 14, padding: '10px 16px', fontFamily: 'inherit', cursor: 'pointer', transition: 'all .15s' });
     const histTabIconStyle = (active, ac) => ({ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', background: active ? ac.main : '#F0F2F7', color: active ? '#fff' : '#94A3B5' });
@@ -4046,19 +4074,35 @@ class Component extends DCLogic {
       historyRows, histTotalStr: fmt(histTotal * histFactor), histCount: histCount * histFactor, histAvgStr: fmt(histAvg), histPeriodTabs, histTitle,
       histQuery: S.histQuery, onHistQuery: this.onHistQuery, histDate: S.histDate, onHistDate: this.onHistDate,
       histHasFilter, clearHistFilters: this.clearHistFilters, histEmpty, histResultStr,
-      histTabVentas: histTabCur === 'ventas', histTabCierres: histTabCur === 'cierres',
+      histTabVentas: histTabCur === 'ventas', histTabCierres: histTabCur === 'cierres', histTabNotas: histTabCur === 'notas',
       goHistVentas: () => this.setState({ histTab: 'ventas', cierreDetailId: null }),
       goHistCierres: () => this.setState({ histTab: 'cierres', cierreDetailId: null }),
+      goHistNotas: this.goHistNotas,
       histVentasCountStr: histVtaCount + (histVtaCount === 1 ? ' venta' : ' ventas'),
       histCierresCountStr: histCieCount + (histCieCount === 1 ? ' cierre' : ' cierres'),
+      histNcCountStr: S.creditNotes.length + (S.creditNotes.length === 1 ? ' nota' : ' notas'),
       histTabVentasStyle: histTabBtnStyle(histTabCur === 'ventas', histTabAccents.ventas),
       histTabVentasIconStyle: histTabIconStyle(histTabCur === 'ventas', histTabAccents.ventas),
       histTabVentasSubStyle: histTabSubStyle(histTabCur === 'ventas', histTabAccents.ventas),
       histTabCierresStyle: histTabBtnStyle(histTabCur === 'cierres', histTabAccents.cierres),
       histTabCierresIconStyle: histTabIconStyle(histTabCur === 'cierres', histTabAccents.cierres),
       histTabCierresSubStyle: histTabSubStyle(histTabCur === 'cierres', histTabAccents.cierres),
-      histEyebrow: histTabCur === 'cierres' ? 'Arqueos' : 'Historial de ventas',
-      histHeading: histTabCur === 'cierres' ? 'Cierres de caja' : histTitle,
+      histTabNotasStyle: histTabBtnStyle(histTabCur === 'notas', histTabAccents.notas),
+      histTabNotasIconStyle: histTabIconStyle(histTabCur === 'notas', histTabAccents.notas),
+      histTabNotasSubStyle: histTabSubStyle(histTabCur === 'notas', histTabAccents.notas),
+      ncHistoryRows: S.creditNotes.map(n => ({
+        id: n.id,
+        folioStr: 'NC-' + n.folio,
+        dateStr: this.fmtIsoDate(n.dateIso) + ' · ' + n.time,
+        refStr: n.saleFolio ? ('Boleta ' + n.saleFolio) : 'Manual',
+        methodStr: n.method === 'efectivo' ? 'Efectivo' : 'Tarjeta',
+        reason: n.reason || '—',
+        totalStr: '-' + this.fmt(n.total),
+        onReprint: () => this.printCreditNote(n),
+      })),
+      ncHistEmpty: S.creditNotes.length === 0,
+      histEyebrow: histTabCur === 'cierres' ? 'Arqueos' : (histTabCur === 'notas' ? 'Notas de crédito' : 'Historial de ventas'),
+      histHeading: histTabCur === 'cierres' ? 'Cierres de caja' : (histTabCur === 'notas' ? 'Notas de crédito emitidas' : histTitle),
       scatterDots, xTicks, yTicks, gridLines, peakLabel, peakCount: peakN, scatterPolyline,
       // clientes
       // cajeros (admin)
