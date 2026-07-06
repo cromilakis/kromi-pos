@@ -569,6 +569,7 @@ input::placeholder{color:#9aa8bd;}
           <div style="display:flex;justify-content:space-between;font-size:13px;color:#7C95A8;margin-bottom:10px;"><span>IVA 19%</span><span>{{ ivaStr }}</span></div>
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;"><span style="font-weight:900;font-size:18px;color:#0F2A1B;">Total</span><span style="font-weight:900;font-size:28px;color:#0F2A1B;letter-spacing:-.02em;">{{ totalStr }}</span></div>
           <div style="display:flex;gap:10px;">
+            <button onClick="{{ createQuote }}" style="{{ cotizarStyle }}">Cotizar</button>
             <button onClick="{{ openPay }}" style="{{ cobrarStyle }}">Cobrar</button>
             <button onClick="{{ clearCart }}" title="Vaciar carrito" style="width:54px;height:54px;border:1px solid #E1E5EE;background:#fff;border-radius:14px;color:#7C95A8;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -2707,6 +2708,25 @@ class Component extends DCLogic {
     return { cashStr: v };
   });
 
+  createQuote = () => {
+    const s = this.state;
+    if (!s.cart.length) return;
+    const lines = s.cart.map(c => { const p = this.find(c.id); return { name: p.name, qty: c.qty, price: p.price }; });
+    const total = lines.reduce((a, l) => a + l.qty * l.price, 0);
+    const neto = Math.round(total / 1.19);
+    const dateIso = this.isoToday();
+    const quote = {
+      id: 'qt' + Date.now(),
+      folio: s.quoteSeq,
+      dateIso,
+      validUntilIso: this.isoPlusDays(dateIso, s.quoteDaysDefault),
+      customerId: s.customerId || null,
+      lines, total, neto, iva: total - neto,
+      converted: false, saleFolio: null,
+    };
+    this.setState({ quotes: [quote, ...s.quotes], quoteSeq: s.quoteSeq + 1, cart: [], quoteView: 'cotizaciones' });
+  };
+
   confirmPay = () => {
     const t = this.totals();
     if (t.total <= 0) return;
@@ -3664,6 +3684,8 @@ class Component extends DCLogic {
       onPhoneEmail: (e) => this.onPhoneField('email', e.target.value),
       phoneContinue: this.phoneContinue, phoneRegister: this.phoneRegister, phoneSkip: this.phoneSkip, closePhoneGate: this.closePhoneGate,
       cobrarStyle: { flex: 1, height: 54, border: 0, borderRadius: 14, background: S.cart.length ? 'var(--accent)' : '#EEF1F6', color: S.cart.length ? '#fff' : '#9aa8bd', fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: S.cart.length ? 'pointer' : 'not-allowed' },
+      createQuote: this.createQuote,
+      cotizarStyle: { border: '1px solid var(--accent)', borderRadius: 13, padding: '14px 22px', fontWeight: 700, fontSize: 15, fontFamily: 'inherit', cursor: S.cart.length ? 'pointer' : 'not-allowed', color: S.cart.length ? '#0a6e36' : '#9aa8bd', background: '#fff' },
       // stock
       stockGroups, openAddProduct: this.openAddProduct,
       stockQuery: S.stockQuery || '', onStockQuery: (e) => this.setState({ stockQuery: e.target.value }),
