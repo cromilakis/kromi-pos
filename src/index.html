@@ -43,6 +43,11 @@ input::placeholder{color:#9aa8bd;}
   .no-print{display:none !important;}
   @page{size:58mm auto;margin:0;}
 }
+@page a4quote{size:A4;margin:12mm;}
+@media print{
+  html.printing-a4 #thermal-receipt{display:none !important;}
+  html.printing-a4 #quote-print-area{page:a4quote;width:100% !important;max-width:100% !important;}
+}
 </style>
 </helmet>
 
@@ -2977,12 +2982,20 @@ class Component extends DCLogic {
       lines, total, neto, iva: total - neto,
       converted: false, saleFolio: null,
     };
-    this.setState({ quotes: [quote, ...s.quotes], quoteSeq: s.quoteSeq + 1, cart: [], quoteView: 'cotizaciones' });
+    this.setState({ quotes: [quote, ...s.quotes], quoteSeq: s.quoteSeq + 1, cart: [], quoteView: 'cotizaciones', convertingQuoteId: null });
   };
   setQuoteView = (v) => this.setState({ quoteView: v });
   openQuotePdf = (q) => this.setState({ quoteToPrint: q });
   closeQuotePdf = () => this.setState({ quoteToPrint: null });
-  doPrintPdf = () => { try { window.print(); } catch (e) {} };
+  doPrintPdf = () => {
+    try {
+      document.documentElement.classList.add('printing-a4');
+      const cleanup = () => { document.documentElement.classList.remove('printing-a4'); window.removeEventListener('afterprint', cleanup); };
+      window.addEventListener('afterprint', cleanup);
+      setTimeout(cleanup, 1000);
+      window.print();
+    } catch (e) {}
+  };
   convertQuote = (id) => {
     const s = this.state;
     const q = s.quotes.find(x => x.id === id);
