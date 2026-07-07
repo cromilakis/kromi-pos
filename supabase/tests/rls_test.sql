@@ -113,6 +113,30 @@ begin
   end;
 end $$;
 
+-- e) Regresión (fix cobro a precio arbitrario): _registrar_venta es el núcleo
+-- interno con precio EXPLÍCITO por línea; NO debe ser invocable directamente por
+-- authenticated (solo indirectamente vía cobrar_venta/convertir_cotizacion). El
+-- chequeo de privilegio de EXECUTE ocurre ANTES de ejecutar el cuerpo, por lo que
+-- el 42501 salta sin importar que los args sean dummy/inexistentes.
+do $$
+begin
+  begin
+    perform public._registrar_venta(
+      '00000000-0000-0000-0000-000000000000'::uuid,
+      '00000000-0000-0000-0000-000000000000'::uuid,
+      '[]'::jsonb,
+      'efectivo'::public.sale_method,
+      1,
+      null);
+    raise exception 'FUGA: authenticated pudo llamar _registrar_venta directamente';
+  exception
+    when sqlstate '42501' then
+      raise notice 'OK: _registrar_venta bloqueada para authenticated (RLS/GRANT 42501)';
+    when others then
+      raise exception 'FUGA: authenticated puede llamar _registrar_venta directamente (%)', sqlerrm;
+  end;
+end $$;
+
 reset role;
 \echo 'rls_test OK'
 rollback;

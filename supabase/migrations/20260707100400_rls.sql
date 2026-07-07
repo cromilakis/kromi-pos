@@ -164,6 +164,12 @@ grant usage on schema public to authenticated;
 grant select, insert, update, delete on all tables in schema public to authenticated;
 grant execute on all functions in schema public to authenticated;
 
+-- _registrar_venta es un núcleo interno con precio explícito por línea: solo debe
+-- invocarse indirectamente desde cobrar_venta/convertir_cotizacion (security definer,
+-- owner postgres). Se revoca DESPUÉS del grant amplio de arriba para que no quede expuesta
+-- a authenticated (evita cobros a precio arbitrario).
+revoke execute on function public._registrar_venta(uuid, uuid, jsonb, public.sale_method, int, uuid) from public, anon, authenticated;
+
 -- anon sin acceso directo a tablas (doctrina de seguridad): revoca cualquier
 -- grant heredado por default privileges de Supabase. RLS ya deniega por default,
 -- esto es defensa en profundidad. NO se revoca usage del schema (PostgREST lo necesita).
