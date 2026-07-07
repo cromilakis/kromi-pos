@@ -5,6 +5,7 @@ import { RequireRole } from "@/shell/RequireRole";
 import { AppLayout } from "@/shell/AppLayout";
 import { Placeholder } from "@/routes/placeholders";
 import { InicioScreen } from "@/modules/inicio/InicioScreen";
+import { StockScreen } from "@/modules/stock/StockScreen";
 
 function AdminRoute() {
   const { profile } = useAuth();
@@ -21,7 +22,7 @@ export default function App() {
       <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
         <Route index element={<InicioScreen />} />
         <Route path="venta" element={<Placeholder title="Venta" />} />
-        <Route path="stock" element={<Placeholder title="Stock" />} />
+        <Route path="stock" element={<StockScreen />} />
         <Route path="clientes" element={<Placeholder title="Clientes" />} />
         <Route path="cierre" element={<Placeholder title="Cierre" />} />
         <Route path="admin" element={<AdminRoute />} />
