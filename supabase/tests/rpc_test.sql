@@ -44,6 +44,9 @@ begin
     raise exception 'FALLO: se abrio segunda caja sobre una ya abierta';
   exception when others then
     if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%ya hay una caja abierta%' then
+      raise exception 'FALLO: abrir_caja fallo con mensaje inesperado: %', sqlerrm;
+    end if;
   end;
 end $$;
 
