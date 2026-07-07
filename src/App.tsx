@@ -8,7 +8,6 @@ import { InicioScreen } from "@/modules/inicio/InicioScreen";
 import { StockScreen } from "@/modules/stock/StockScreen";
 import { VentaScreen } from "@/modules/venta/VentaScreen";
 import { ClientesScreen } from "@/modules/clientes/ClientesScreen";
-import { CierreScreen } from "@/modules/cierre/CierreScreen";
 
 function AdminRoute() {
   const { profile } = useAuth();
@@ -27,7 +26,6 @@ export default function App() {
         <Route path="venta" element={<VentaScreen />} />
         <Route path="stock" element={<StockScreen />} />
         <Route path="clientes" element={<ClientesScreen />} />
-        <Route path="cierre" element={<CierreScreen />} />
         <Route path="admin" element={<AdminRoute />} />
       </Route>
     </Routes>

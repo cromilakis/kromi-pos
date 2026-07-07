@@ -1,11 +1,10 @@
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Home, ShoppingCart, Package, Users, Wallet, Settings, LogOut, type LucideIcon } from "lucide-react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Home, ShoppingCart, Package, Users, Settings, LogOut, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
 import { useWork } from "@/session/WorkContext";
 import { BranchGate } from "@/session/BranchGate";
-import { useOpenSession } from "@/data/work";
 import { Button } from "@/components/ui/button";
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -19,7 +18,6 @@ const NAV_ICON: Record<string, LucideIcon> = {
   Venta: ShoppingCart,
   Stock: Package,
   Clientes: Users,
-  Cierre: Wallet,
   Administración: Settings,
 };
 
@@ -48,22 +46,11 @@ function SidebarLink({ item }: { item: NavItem }) {
 }
 
 function Topbar() {
-  const { branch, register } = useWork();
-  const navigate = useNavigate();
-  const { data: openSession } = useOpenSession(register?.id);
+  const { branch } = useWork();
 
   return (
     <div className="h-14 border-b border-[#E1E5EE] bg-white flex items-center justify-between px-6 shrink-0">
       <div className="text-sm font-bold text-[#0F2A1B]">{branch?.name ?? "Sin sucursal"}</div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="border-[#E1E5EE] text-[#0F2A1B]"
-        disabled={!openSession}
-        onClick={() => navigate("/cierre")}
-      >
-        Cerrar caja
-      </Button>
     </div>
   );
 }

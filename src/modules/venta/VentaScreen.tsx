@@ -17,6 +17,7 @@ import { Cart, type CartLine } from "./Cart";
 import { PayDialog, type PayMethod } from "./PayDialog";
 import { QuotePanel } from "./QuotePanel";
 import { CreditNoteDialog } from "./CreditNoteDialog";
+import { CierrePanel } from "@/modules/cierre/CierrePanel";
 
 interface CartItem {
   id: string;
@@ -76,6 +77,7 @@ export function VentaScreen() {
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"venta" | "cotizaciones">("venta");
   const [ncOpen, setNcOpen] = useState(false);
+  const [cierreOpen, setCierreOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
 
   const allCustomers = customers ?? [];
@@ -233,9 +235,42 @@ export function VentaScreen() {
     }
   }
 
-  if (!openSession) return <AbrirCajaGate />;
+  // Diálogo de cierre de caja: se mantiene montado en una posición estable del árbol tanto si
+  // hay sesión abierta como si no, para no perder el resumen del cierre cuando `openSession`
+  // pasa a null justo después de confirmar (la venta pedirá reabrir caja).
+  const cierreDialog = cierreOpen && (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6"
+      onClick={() => setCierreOpen(false)}
+    >
+      <div
+        className="max-h-[90vh] w-[980px] max-w-full overflow-auto rounded-[24px] bg-white p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-2 flex justify-end">
+          <button
+            onClick={() => setCierreOpen(false)}
+            className="rounded-xl border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] font-bold text-[#5a6b7e]"
+          >
+            Cerrar
+          </button>
+        </div>
+        <CierrePanel />
+      </div>
+    </div>
+  );
+
+  if (!openSession) {
+    return (
+      <>
+        <AbrirCajaGate />
+        {cierreDialog}
+      </>
+    );
+  }
 
   return (
+    <>
     <div className="flex min-h-full">
       <div className="flex min-w-0 flex-1 flex-col px-[22px] pt-[18px]">
         <div className="mb-4 flex items-center gap-2.5">
@@ -283,6 +318,12 @@ export function VentaScreen() {
             className="rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
           >
             Nota de crédito
+          </button>
+          <button
+            onClick={() => setCierreOpen(true)}
+            className="rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
+          >
+            Cerrar caja
           </button>
         </div>
 
@@ -388,5 +429,7 @@ export function VentaScreen() {
         }}
       />
     </div>
+    {cierreDialog}
+    </>
   );
 }

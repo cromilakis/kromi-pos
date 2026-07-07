@@ -43,7 +43,7 @@ function DiffBox({ diff }: { diff: number }) {
   );
 }
 
-/** Sin sesión abierta: invita a abrir caja desde Venta (esta pantalla no abre caja). */
+/** Sin sesión abierta: invita a abrir caja desde Venta (este panel no abre caja). */
 function SinCaja() {
   return (
     <div className="flex min-h-full items-center justify-center p-6">
@@ -87,7 +87,13 @@ function HistorialCierres({ cierres }: { cierres: CierreRow[] }) {
   );
 }
 
-export function CierreScreen() {
+interface CierrePanelProps {
+  /** Se llama tras cerrar la caja con éxito (la venta pasará a pedir reabrir caja). */
+  onClosed?: () => void;
+}
+
+/** Arqueo y cierre de caja: contenido reutilizable, embebido en el diálogo de cierre dentro de Venta. */
+export function CierrePanel({ onClosed }: CierrePanelProps) {
   const { profile } = useAuth();
   const { branch, register } = useWork();
   const qc = useQueryClient();
@@ -98,7 +104,9 @@ export function CierreScreen() {
   const [busy, setBusy] = useState(false);
   const [resumen, setResumen] = useState<CierreResumen | null>(null);
 
-  if (!openSession) return <SinCaja />;
+  // Una vez cerrada la caja se conserva el resumen en pantalla aunque `openSession`
+  // pase a null (invalidación de ["open-session"] tras el cierre).
+  if (!openSession && !resumen) return <SinCaja />;
 
   async function handleCerrar() {
     if (!openSession) return;
@@ -110,6 +118,7 @@ export function CierreScreen() {
       toast.success("Caja cerrada.");
       qc.invalidateQueries({ queryKey: ["open-session"] });
       qc.invalidateQueries({ queryKey: ["cierres"] });
+      onClosed?.();
 
       try {
         const [openedAtIso, ventas] = await Promise.all([
@@ -152,7 +161,7 @@ export function CierreScreen() {
   }
 
   return (
-    <div className="min-h-full overflow-auto px-8 py-7">
+    <div className="min-h-full overflow-auto">
       <div className="mx-auto max-w-[940px]">
         <div className="mb-1 text-[11px] font-bold uppercase tracking-[.14em]" style={{ color: "var(--brand)" }}>
           Arqueo
