@@ -1,5 +1,5 @@
-/** Inyecta el color de acento del negocio como CSS var --accent en :root. */
+/** Inyecta el color de marca del negocio como CSS var --brand en :root. */
 export function applyAccent(hex: string | null | undefined): void {
   if (!hex) return;
-  document.documentElement.style.setProperty("--accent", hex);
+  document.documentElement.style.setProperty("--brand", hex);
 }
