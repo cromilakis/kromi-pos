@@ -7,7 +7,6 @@ import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
 import { useWork } from "@/session/WorkContext";
 import { BranchGate } from "@/session/BranchGate";
-import { CashGate } from "@/session/CashGate";
 import { useOpenSession, rpcCerrarCaja } from "@/data/work";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -208,7 +207,7 @@ export function AppLayout() {
         <Topbar />
         <main className="flex-1 overflow-auto">
           <BranchGate businessId={profile.business_id}>
-            <CashGate><Outlet /></CashGate>
+            <Outlet />
           </BranchGate>
         </main>
       </div>
