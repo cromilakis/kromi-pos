@@ -50,5 +50,83 @@ begin
   end;
 end $$;
 
+-- cobrar_venta: baja stock, calcula IVA, asigna folio, suma puntos
+do $$
+declare v_session uuid; v_sale public.sale; v_stock int; v_cust uuid;
+begin
+  -- Caja 2 aparte: la Caja 1 quedó abierta por el bloque anterior (misma transacción).
+  insert into public.register (id, branch_id, name) values
+    ('cccccccc-0000-0000-0000-000000000002','bbbbbbbb-0000-0000-0000-000000000001','Caja 2')
+    on conflict do nothing;
+  insert into public.cash_session (id, business_id, branch_id, register_id, status)
+    values ('f0000000-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001',
+            'bbbbbbbb-0000-0000-0000-000000000001','cccccccc-0000-0000-0000-000000000002','open')
+    on conflict do nothing;
+  v_session := 'f0000000-0000-0000-0000-000000000001';
+
+  insert into public.customer (id, business_id, name) values
+    ('c0000000-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','Camila');
+  v_cust := 'c0000000-0000-0000-0000-000000000001';
+
+  v_sale := public.cobrar_venta(
+    'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+    '[{"product_id":"eeeeeeee-0000-0000-0000-000000000001","qty":2}]'::jsonb,
+    'efectivo', 30000, v_cust);
+
+  if v_sale.total <> 29980 then raise exception 'total incorrecto: %', v_sale.total; end if;
+  if v_sale.neto <> round(29980/1.19) then raise exception 'neto incorrecto: %', v_sale.neto; end if;
+  if v_sale.iva <> 29980 - round(29980/1.19) then raise exception 'iva incorrecto: %', v_sale.iva; end if;
+  if v_sale.change <> 20 then raise exception 'vuelto incorrecto: %', v_sale.change; end if;
+  if v_sale.points <> 29 then raise exception 'puntos incorrectos: %', v_sale.points; end if;
+
+  select stock into v_stock from public.inventory
+    where product_id = 'eeeeeeee-0000-0000-0000-000000000001'
+      and branch_id  = 'bbbbbbbb-0000-0000-0000-000000000001';
+  if v_stock <> 6 then raise exception 'stock no bajo a 6: %', v_stock; end if;
+
+  select points into v_stock from public.customer where id = v_cust;
+  if v_stock <> 29 then raise exception 'puntos cliente no sumaron: %', v_stock; end if;
+end $$;
+
+-- cobrar_venta: stock insuficiente revierte todo (atomicidad)
+do $$
+declare v_folio_antes int; v_folio_despues int;
+begin
+  select next_value into v_folio_antes from public.folio_counter
+    where branch_id = 'bbbbbbbb-0000-0000-0000-000000000001' and doc_type = 'sale';
+  begin
+    perform public.cobrar_venta(
+      'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+      '[{"product_id":"eeeeeeee-0000-0000-0000-000000000001","qty":9999}]'::jsonb,
+      'efectivo', 999999999, null);
+    raise exception 'FALLO: cobro con stock insuficiente no fue rechazado';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%stock insuficiente%' then
+      raise exception 'error inesperado: %', sqlerrm;
+    end if;
+  end;
+  select next_value into v_folio_despues from public.folio_counter
+    where branch_id = 'bbbbbbbb-0000-0000-0000-000000000001' and doc_type = 'sale';
+  if v_folio_antes <> v_folio_despues then
+    raise exception 'atomicidad rota: folio avanzo pese al fallo (% -> %)', v_folio_antes, v_folio_despues;
+  end if;
+end $$;
+
+-- emitir_nota_credito: repone stock en líneas con restock=true
+do $$
+declare v_nc public.credit_note; v_stock int;
+begin
+  v_nc := public.emitir_nota_credito(
+    'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+    null, 'efectivo', 'devolución',
+    '[{"product_id":"eeeeeeee-0000-0000-0000-000000000001","qty":1,"restock":true}]'::jsonb);
+  if v_nc.total <> 14990 then raise exception 'total NC incorrecto: %', v_nc.total; end if;
+  select stock into v_stock from public.inventory
+    where product_id = 'eeeeeeee-0000-0000-0000-000000000001'
+      and branch_id  = 'bbbbbbbb-0000-0000-0000-000000000001';
+  if v_stock <> 7 then raise exception 'NC no repuso stock (esperado 7): %', v_stock; end if;
+end $$;
+
 \echo 'rpc_test (folios+caja) OK'
 rollback;
