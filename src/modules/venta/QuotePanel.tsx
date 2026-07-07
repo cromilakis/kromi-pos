@@ -32,7 +32,6 @@ function isoPlusDays(days: number): string {
 }
 
 interface QuotePanelProps {
-  businessId?: string;
   branchId?: string;
   customerId?: string | null;
   sessionId?: string;
@@ -44,7 +43,6 @@ interface QuotePanelProps {
 
 /** Panel de cotizaciones: crear desde el carrito actual, listar vigentes, convertir a venta e imprimir. Clona `createQuote`/`convertQuote` del prototipo. */
 export function QuotePanel({
-  businessId,
   branchId,
   customerId,
   sessionId,
@@ -76,15 +74,14 @@ export function QuotePanel({
   );
 
   async function handleCrearCotizacion() {
-    if (!businessId || !branchId || !cartLines.length) return;
+    if (!branchId || !cartLines.length) return;
     setCreating(true);
     try {
       const quote = await crearCotizacion({
-        business_id: businessId,
         branch_id: branchId,
         customer_id: customerId ?? null,
         valid_until: isoPlusDays(validDays),
-        lines: cartLines.map((l) => ({ product_id: l.product.id, qty: l.qty, price: l.product.price, name: l.product.name })),
+        lines: cartLines.map((l) => ({ product_id: l.product.id, qty: l.qty })),
       });
       toast.success(`Cotización #${quote.folio} generada.`);
       onQuoteCreated();

@@ -268,7 +268,6 @@ export function VentaScreen() {
 
         {tab === "cotizaciones" ? (
           <QuotePanel
-            businessId={businessId}
             branchId={branchId}
             customerId={null}
             sessionId={openSession.id}

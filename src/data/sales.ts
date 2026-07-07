@@ -78,11 +78,13 @@ export function cartToLines(cart: { id: string; qty: number }[]): CartItem[] {
 }
 
 // ----------------------------------------------------------------------------
-// Cotizaciones (quote/quote_line): escritura directa vía RLS (ver migración
-// 20260707120000_quote_write.sql); no mueven caja ni stock.
+// Cotizaciones (quote/quote_line): SOLO-LECTURA para el cliente. Se crean por
+// la RPC `crear_cotizacion` (security definer), que fija el precio desde
+// `product.price` en el servidor — el cliente nunca envía price/name (ver
+// migración 20260707120000_crear_cotizacion.sql). No mueven caja ni stock.
 // ----------------------------------------------------------------------------
 
-export interface QuoteLineInput { product_id: string; qty: number; price: number; name: string; }
+export interface QuoteLineInput { product_id: string; qty: number; }
 
 export interface QuoteLineRow { product_id: string | null; name_snapshot: string; price_snapshot: number; qty: number; }
 
@@ -115,43 +117,21 @@ export async function nextFolio(branchId: string, doc: "sale" | "quote" | "credi
   return data as number;
 }
 
-/** Crea una cotización + sus líneas. No mueve caja ni stock (RLS de escritura por negocio). */
+/** Crea una cotización vía RPC (precio del servidor). No mueve caja ni stock. */
 export async function crearCotizacion(args: {
-  business_id: string;
   branch_id: string;
   customer_id?: string | null;
   valid_until: string;
   lines: QuoteLineInput[];
 }) {
   if (!args.lines.length) throw new Error("La cotización no tiene líneas.");
-  const total = args.lines.reduce((s, l) => s + l.qty * l.price, 0);
-  const neto = Math.round(total / 1.19);
-  const folio = await nextFolio(args.branch_id, "quote");
-  const { data: quote, error } = await supabase
-    .from("quote")
-    .insert({
-      business_id: args.business_id,
-      branch_id: args.branch_id,
-      customer_id: args.customer_id ?? null,
-      valid_until: args.valid_until,
-      total,
-      neto,
-      iva: total - neto,
-      folio,
-    })
-    .select()
-    .single();
+  const { data: quote, error } = await supabase.rpc("crear_cotizacion", {
+    p_branch: args.branch_id,
+    p_customer: args.customer_id ?? null,
+    p_valid_until: args.valid_until,
+    p_lines: args.lines.map((l) => ({ product_id: l.product_id, qty: l.qty })),
+  });
   if (error) throw error;
-  const { error: e2 } = await supabase.from("quote_line").insert(
-    args.lines.map((l) => ({
-      quote_id: quote.id,
-      product_id: l.product_id,
-      name_snapshot: l.name,
-      price_snapshot: l.price,
-      qty: l.qty,
-    })),
-  );
-  if (e2) throw e2;
   return quote as { id: string; folio: number; valid_until: string; total: number; neto: number; iva: number };
 }
 
