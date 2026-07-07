@@ -6,6 +6,7 @@ import { useWork } from "@/session/WorkContext";
 import { useOpenSession, rpcAbrirCaja } from "@/data/work";
 import { useProductsWithStock, useCategories } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
+import { useCustomers } from "@/data/customers";
 import { cobrarVenta, cartToLines } from "@/data/sales";
 import { computeTotals, fmtCLP } from "@/lib/money";
 import { printReceipt } from "@/lib/print";
@@ -66,6 +67,7 @@ export function VentaScreen() {
   const { data: openSession } = useOpenSession(register?.id);
   const { data: products, isLoading } = useProductsWithStock(businessId, branchId);
   const { data: categories } = useCategories(businessId);
+  const { data: customers } = useCustomers(businessId);
 
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string>("todas");
@@ -74,6 +76,9 @@ export function VentaScreen() {
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<"venta" | "cotizaciones">("venta");
   const [ncOpen, setNcOpen] = useState(false);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+
+  const allCustomers = customers ?? [];
 
   const allProducts = products ?? [];
   const allCategories = categories ?? [];
@@ -176,7 +181,7 @@ export function VentaScreen() {
         p_lines: cartToLines(cart),
         p_method: method,
         p_recv: recv,
-        p_customer: null,
+        p_customer: customerId,
       });
 
       // Venta confirmada en BD: limpiar carrito, refrescar datos e imprimir la boleta.
@@ -188,6 +193,8 @@ export function VentaScreen() {
       qc.invalidateQueries({ queryKey: ["recent-sales"] });
       qc.invalidateQueries({ queryKey: ["products-with-stock"] });
       qc.invalidateQueries({ queryKey: ["critical-stock"] });
+      qc.invalidateQueries({ queryKey: ["customers", businessId] });
+      setCustomerId(null);
 
       const soldAt = new Date(sale.sold_at);
       // Forma esperada por `print_receipt` (struct ReceiptPayload en src-tauri/src/escpos.rs).
@@ -258,9 +265,22 @@ export function VentaScreen() {
               />
             </div>
           )}
+          <select
+            value={customerId ?? ""}
+            onChange={(e) => setCustomerId(e.target.value || null)}
+            title="Cliente de la venta"
+            className={`rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none ${tab === "venta" ? "" : "ml-auto"}`}
+          >
+            <option value="">Sin cliente</option>
+            {allCustomers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
           <button
             onClick={() => setNcOpen(true)}
-            className="ml-auto rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
+            className="rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
           >
             Nota de crédito
           </button>
@@ -269,7 +289,7 @@ export function VentaScreen() {
         {tab === "cotizaciones" ? (
           <QuotePanel
             branchId={branchId}
-            customerId={null}
+            customerId={customerId}
             sessionId={openSession.id}
             negocioNombre={profile?.name ?? "Kromi POS"}
             cartLines={cartLines}
