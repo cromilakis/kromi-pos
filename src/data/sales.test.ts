@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { summarizeSales } from "./sales";
+import { summarizeSales, cartToLines } from "./sales";
 
 describe("summarizeSales", () => {
   it("total, conteo y promedio de ventas del día", () => {
@@ -8,5 +8,11 @@ describe("summarizeSales", () => {
   });
   it("sin ventas = ceros y promedio 0", () => {
     expect(summarizeSales([])).toEqual({ total: 0, count: 0, avg: 0 });
+  });
+});
+
+describe("cartToLines", () => {
+  it("mapea id→product_id y conserva qty", () => {
+    expect(cartToLines([{ id: "p1", qty: 2 }])).toEqual([{ product_id: "p1", qty: 2 }]);
   });
 });

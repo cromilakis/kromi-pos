@@ -37,6 +37,46 @@ export function useRecentSales(branchId: string | undefined, limit = 8) {
   });
 }
 
+export interface CartItem { product_id: string; qty: number; }
+
+export interface Sale {
+  id: string;
+  folio: number;
+  total: number;
+  neto: number;
+  iva: number;
+  method: string;
+  recv: number;
+  change: number;
+  sold_at: string;
+}
+
+/** Cobra la venta de forma atómica vía RPC (descuenta stock, registra la venta y sus líneas). */
+export async function cobrarVenta(args: {
+  p_branch: string;
+  p_session: string;
+  p_lines: CartItem[];
+  p_method: "efectivo" | "tarjeta";
+  p_recv: number;
+  p_customer?: string | null;
+}): Promise<Sale> {
+  const { data, error } = await supabase.rpc("cobrar_venta", {
+    p_branch: args.p_branch,
+    p_session: args.p_session,
+    p_lines: args.p_lines,
+    p_method: args.p_method,
+    p_recv: args.p_recv,
+    p_customer: args.p_customer ?? null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+/** Convierte el carrito (con qty) a las líneas que espera la RPC. */
+export function cartToLines(cart: { id: string; qty: number }[]): CartItem[] {
+  return cart.map((c) => ({ product_id: c.id, qty: c.qty }));
+}
+
 export interface CriticalStockRow { name: string; stock: number; min_stock: number; }
 
 export function useCriticalStock(branchId: string | undefined) {
