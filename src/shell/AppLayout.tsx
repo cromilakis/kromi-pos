@@ -121,7 +121,7 @@ function Topbar() {
 }
 
 export function AppLayout() {
-  const { profile, profileLoading, profileError, business, signOut } = useAuth();
+  const { profile, profileLoading, profileError, signOut } = useAuth();
   const location = useLocation();
 
   if (profileError) {
@@ -141,22 +141,14 @@ export function AppLayout() {
   const adminItem = items.find((n) => n.label === "Administración");
   const baseItems = items.filter((n) => n.label !== "Administración");
   const adminActive = adminItem ? location.pathname.startsWith(adminItem.to) : false;
-  const brandName = business?.name ?? "Kromi POS";
+  const brandName = import.meta.env.VITE_STORE_NAME || "Mi Tienda";
 
   return (
     <div className="min-h-full flex">
       <aside className="w-[236px] shrink-0 bg-white border-r border-[#E1E5EE] flex flex-col p-3.5">
         <div className="flex items-center gap-[11px] px-2 pb-4">
-          <div
-            className="size-[38px] rounded-xl shrink-0 flex items-center justify-center shadow-[0_3px_10px_rgba(34,196,99,.28)]"
-            style={{ background: "linear-gradient(150deg,#22C463,#97F2CC)" }}
-          >
-            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0F2A1B" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M7 20h10" />
-              <path d="M10 20c5.5-2.5.8-6.4 3-10" />
-              <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
-              <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
-            </svg>
+          <div className="size-[38px] rounded-xl shrink-0 overflow-hidden shadow-[0_3px_10px_rgba(34,196,99,.28)]">
+            <img src="/logo.png" alt="Logo" className="size-full object-cover" />
           </div>
           <div className="min-w-0 leading-[1.1]">
             <div className="font-black text-[16px] text-[#0F2A1B] truncate">{brandName}</div>

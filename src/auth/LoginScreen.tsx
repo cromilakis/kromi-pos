@@ -28,6 +28,8 @@ function fmtRut(raw: string): string {
 // no los 4 del prototipo (que era un mockup sin backend real).
 const PIN_LENGTH = 6;
 
+const storeName = import.meta.env.VITE_STORE_NAME || "Mi Tienda";
+
 export function LoginScreen() {
   const { signIn } = useAuth();
   const [step, setStep] = useState<LoginStep>("rut");
@@ -168,7 +170,7 @@ export function LoginScreen() {
               style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", display: "block", flex: "none" }}
             />
             <div style={{ fontWeight: 900, fontSize: 22 }}>
-              Kromi POS <span style={{ fontWeight: 500, fontSize: 14, color: "rgba(255,255,255,.72)" }}>· Punto de venta</span>
+              {storeName} <span style={{ fontWeight: 500, fontSize: 14, color: "rgba(255,255,255,.72)" }}>· Punto de venta</span>
             </div>
           </div>
           <div style={{ position: "relative", maxWidth: 420 }}>
