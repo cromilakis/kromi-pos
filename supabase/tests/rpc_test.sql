@@ -162,6 +162,7 @@ begin
     on conflict do nothing;
 
   -- Cotización vigente (valid_until futura) con una línea del producto con stock.
+  -- El price_snapshot cotizado es 14990 (precio al momento de cotizar).
   insert into public.quote (id, business_id, branch_id, folio, valid_until, total, neto, iva) values
     (v_quote,'aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000001',
      public.siguiente_folio('bbbbbbbb-0000-0000-0000-000000000001','quote'),
@@ -169,13 +170,28 @@ begin
   insert into public.quote_line (quote_id, product_id, name_snapshot, price_snapshot, qty) values
     (v_quote,'eeeeeeee-0000-0000-0000-000000000001','Monstera',14990,1);
 
+  -- El precio del producto SUBE tras cotizar (14990 -> 29980). La conversión DEBE
+  -- cobrar al precio COTIZADO (price_snapshot = 14990), NO al precio nuevo (29980).
+  update public.product set price = 29980
+    where id = 'eeeeeeee-0000-0000-0000-000000000001';
+
   v_sale := public.convertir_cotizacion(v_quote, v_session, 'efectivo', 20000);
 
-  -- (a) se creó una venta coherente (folio > 0, total = 14990, vuelto = 5010).
+  -- Restaura el precio para no afectar assertions posteriores de otros bloques.
+  update public.product set price = 14990
+    where id = 'eeeeeeee-0000-0000-0000-000000000001';
+
+  -- (a) se cobró al precio COTIZADO: total = price_snapshot·qty = 14990, vuelto = 5010.
   if v_sale.id is null then raise exception 'convertir_cotizacion no creó venta'; end if;
   if v_sale.folio <= 0 then raise exception 'folio de venta inválido: %', v_sale.folio; end if;
-  if v_sale.total <> 14990 then raise exception 'total venta convertida incorrecto: %', v_sale.total; end if;
+  if v_sale.total <> 14990 then raise exception 'convertir_cotizacion no cobró el precio cotizado (esperado 14990, price_snapshot): %', v_sale.total; end if;
   if v_sale.change <> 5010 then raise exception 'vuelto venta convertida incorrecto: %', v_sale.change; end if;
+
+  -- (a.2) la sale_line quedó con el precio cotizado, no el precio nuevo del producto.
+  if (select price_snapshot from public.sale_line where sale_id = v_sale.id
+        and product_id = 'eeeeeeee-0000-0000-0000-000000000001') <> 14990 then
+    raise exception 'sale_line.price_snapshot no es el precio cotizado (14990)';
+  end if;
 
   -- (b) la cotización quedó convertida y con sale_id apuntando a la venta.
   select converted, sale_id into v_converted, v_sale_id from public.quote where id = v_quote;

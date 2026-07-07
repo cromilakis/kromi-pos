@@ -130,16 +130,20 @@ end;
 $$;
 
 -- ----------------------------------------------------------------------------
--- cobrar_venta — cobro atómico: valida stock, folio, inserta venta, baja stock,
--- suma fidelización. p_lines = [{product_id, qty}].
+-- _registrar_venta — NÚCLEO INTERNO del cobro (mecánica compartida). Recibe el
+-- precio EXPLÍCITO por línea: p_lines = [{product_id, qty, price}]. Valida sesión
+-- abierta+sucursal, stock, saca folio, inserta sale + sale_line (usando el price
+-- dado como price_snapshot y en el total), baja inventory, calcula IVA/puntos/
+-- vuelto y fideliza. NO valida tenancy del llamante: lo hacen los callers públicos
+-- (cobrar_venta, convertir_cotizacion). No expuesta al cliente (revoke al final).
 -- ----------------------------------------------------------------------------
-create or replace function public.cobrar_venta(
+create or replace function public._registrar_venta(
   p_branch   uuid,
   p_session  uuid,
   p_lines    jsonb,
   p_method   public.sale_method,
   p_recv     int,
-  p_customer uuid default null
+  p_customer uuid
 )
 returns public.sale
 language plpgsql
@@ -166,31 +170,29 @@ begin
     raise exception 'la caja no está abierta para esta sucursal';
   end if;
 
-  -- FIX I2: validación de tenancy (solo con sesión de usuario).
-  if auth.uid() is not null
-     and v_business is distinct from public.current_business_id()
-     and not public.is_kromi() then
-    raise exception 'no autorizado para operar en este negocio';
-  end if;
-
   if p_lines is null or jsonb_array_length(p_lines) = 0 then
     raise exception 'la venta no tiene líneas';
   end if;
 
-  -- Validar stock y acumular total (precio actual del producto)
+  -- Validar stock y acumular total con el precio EXPLÍCITO de cada línea
   for ln in
-    select (e->>'product_id')::uuid as product_id, (e->>'qty')::int as qty
+    select (e->>'product_id')::uuid as product_id,
+           (e->>'qty')::int as qty,
+           (e->>'price')::int as price
       from jsonb_array_elements(p_lines) e
   loop
     if ln.qty is null or ln.qty <= 0 then
       raise exception 'cantidad inválida en una línea';
+    end if;
+    if ln.price is null or ln.price < 0 then
+      raise exception 'precio inválido en una línea';
     end if;
     perform 1 from public.inventory
       where product_id = ln.product_id and branch_id = p_branch and stock >= ln.qty;
     if not found then
       raise exception 'stock insuficiente para el producto %', ln.product_id;
     end if;
-    v_total := v_total + ln.qty * (select price from public.product where id = ln.product_id);
+    v_total := v_total + ln.qty * ln.price;
   end loop;
 
   v_neto   := round(v_total / 1.19);
@@ -210,13 +212,15 @@ begin
           v_total, v_neto, v_iva, v_recv, v_change, v_points, p_customer, auth.uid())
   returning * into v_sale;
 
-  -- Líneas (snapshot) + baja de stock
+  -- Líneas (snapshot con el precio dado) + baja de stock
   for ln in
-    select (e->>'product_id')::uuid as product_id, (e->>'qty')::int as qty
+    select (e->>'product_id')::uuid as product_id,
+           (e->>'qty')::int as qty,
+           (e->>'price')::int as price
       from jsonb_array_elements(p_lines) e
   loop
     insert into public.sale_line (sale_id, product_id, name_snapshot, price_snapshot, category_snapshot, qty)
-    select v_sale.id, p.id, p.name, p.price,
+    select v_sale.id, p.id, p.name, ln.price,
            (select key from public.category c where c.id = p.category_id), ln.qty
       from public.product p where p.id = ln.product_id;
 
@@ -235,6 +239,60 @@ begin
   end if;
 
   return v_sale;
+end;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- cobrar_venta — venta normal: cobra al PRECIO ACTUAL del servidor (product.price).
+-- p_lines = [{product_id, qty}]. Valida tenancy del llamante, construye las líneas
+-- con el precio actual (NUNCA acepta precio del cliente) y delega en _registrar_venta.
+-- ----------------------------------------------------------------------------
+create or replace function public.cobrar_venta(
+  p_branch   uuid,
+  p_session  uuid,
+  p_lines    jsonb,
+  p_method   public.sale_method,
+  p_recv     int,
+  p_customer uuid default null
+)
+returns public.sale
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_business uuid;
+  v_lines    jsonb;
+begin
+  -- Sesión abierta y perteneciente a la sucursal (para validar tenancy)
+  select business_id into v_business
+    from public.cash_session
+   where id = p_session and branch_id = p_branch and status = 'open';
+  if v_business is null then
+    raise exception 'la caja no está abierta para esta sucursal';
+  end if;
+
+  -- FIX I2: validación de tenancy (solo con sesión de usuario).
+  if auth.uid() is not null
+     and v_business is distinct from public.current_business_id()
+     and not public.is_kromi() then
+    raise exception 'no autorizado para operar en este negocio';
+  end if;
+
+  if p_lines is null or jsonb_array_length(p_lines) = 0 then
+    raise exception 'la venta no tiene líneas';
+  end if;
+
+  -- Construye las líneas con el PRECIO ACTUAL del producto (dato del servidor,
+  -- nunca un precio arbitrario del cliente) y delega en el núcleo interno.
+  select jsonb_agg(jsonb_build_object(
+           'product_id', e.product_id,
+           'qty',        e.qty,
+           'price',      (select price from public.product where id = e.product_id)))
+    into v_lines
+    from jsonb_to_recordset(p_lines) as e(product_id uuid, qty int);
+
+  return public._registrar_venta(p_branch, p_session, v_lines, p_method, p_recv, p_customer);
 end;
 $$;
 
@@ -318,7 +376,10 @@ end;
 $$;
 
 -- ----------------------------------------------------------------------------
--- convertir_cotizacion — valida vigencia y reusa cobrar_venta
+-- convertir_cotizacion — cobra al PRECIO COTIZADO (quote_line.price_snapshot),
+-- NO al precio actual del producto. Valida no-convertida + vigencia + tenancy,
+-- construye las líneas con el precio congelado en la cotización (dato del
+-- servidor, seguro) y delega en el núcleo interno _registrar_venta.
 -- ----------------------------------------------------------------------------
 create or replace function public.convertir_cotizacion(
   p_quote   uuid,
@@ -348,8 +409,8 @@ begin
     raise exception 'la cotización está vencida';
   end if;
 
-  -- FIX I2: validación de tenancy (solo con sesión de usuario) antes de delegar
-  -- en cobrar_venta; el business_id se deriva del branch de la cotización.
+  -- FIX I2: validación de tenancy (solo con sesión de usuario) antes de delegar;
+  -- el business_id se deriva del branch de la cotización.
   select business_id into v_business from public.branch where id = v_branch;
   if auth.uid() is not null
      and v_business is distinct from public.current_business_id()
@@ -357,13 +418,28 @@ begin
     raise exception 'no autorizado para operar en este negocio';
   end if;
 
-  select jsonb_agg(jsonb_build_object('product_id', product_id, 'qty', qty))
+  -- Líneas con el PRECIO COTIZADO congelado en quote_line.price_snapshot
+  -- (no el precio actual del producto, que pudo cambiar desde la cotización).
+  select jsonb_agg(jsonb_build_object(
+           'product_id', product_id,
+           'qty',        qty,
+           'price',      price_snapshot))
     into v_lines
     from public.quote_line where quote_id = p_quote;
 
-  v_sale := public.cobrar_venta(v_branch, p_session, v_lines, p_method, p_recv, v_customer);
+  v_sale := public._registrar_venta(v_branch, p_session, v_lines, p_method, p_recv, v_customer);
 
   update public.quote set converted = true, sale_id = v_sale.id where id = p_quote;
   return v_sale;
 end;
 $$;
+
+-- ----------------------------------------------------------------------------
+-- Protección del núcleo interno: _registrar_venta acepta un precio EXPLÍCITO por
+-- línea, por lo que NO debe ser invocable directamente por el cliente (un cajero
+-- podría cobrar a $1 → fraude). Solo debe llamarse indirectamente desde las RPC
+-- públicas (cobrar_venta / convertir_cotizacion), que son SECURITY DEFINER con
+-- owner postgres y corren como owner, por lo que conservan el privilegio.
+-- ----------------------------------------------------------------------------
+revoke execute on function public._registrar_venta(uuid, uuid, jsonb, public.sale_method, int, uuid)
+  from public, anon, authenticated;

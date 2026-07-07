@@ -178,12 +178,21 @@ permisos/tenancy internamente. Ante error, `RAISE EXCEPTION` con mensaje claro (
 muestra) y **revierten por completo**.
 
 - **`cobrar_venta(p_branch, p_session, p_lines jsonb, p_method, p_recv, p_customer null)`**
+  — venta normal, cobra al **precio actual** del producto (`product.price`, dato del
+  servidor; **nunca** acepta un precio arbitrario del cliente). Valida tenancy del llamante,
+  construye las líneas `[{product_id, qty, price=product.price}]` y delega en el núcleo
+  interno `_registrar_venta`.
+- **`_registrar_venta(p_branch, p_session, p_lines jsonb, p_method, p_recv, p_customer)`**
+  — **núcleo interno compartido**, precio **explícito** por línea
+  (`[{product_id, qty, price}]`). NO expuesta al cliente (`revoke execute … from public,
+  anon, authenticated`): solo invocable indirectamente desde las RPC públicas
+  (`SECURITY DEFINER` con owner `postgres`). No valida tenancy (lo hacen los callers). Hace:
   1. valida que `p_session` esté `open` y pertenezca a `p_branch`;
   2. valida stock disponible por línea en `inventory(product, branch)`;
   3. obtiene folio vía `folio_counter(branch,'sale')`;
   4. calcula `total = Σ(qty·price)`, `neto = round(total/1.19)`, `iva = total-neto`,
      `points = floor(total/1000)`, `change = recv-total` (exige `recv >= total` si efectivo);
-  5. inserta `sale` + `sale_line` (con FK y snapshot);
+  5. inserta `sale` + `sale_line` (con FK y snapshot, usando el `price` dado como `price_snapshot`);
   6. **decrementa `inventory`** por línea;
   7. si hay cliente: `points += points`, `spent += total`, `visits += 1`;
   8. devuelve la venta creada (para impresión de boleta).
@@ -196,9 +205,11 @@ muestra) y **revierten por completo**.
 - **`emitir_nota_credito(p_branch, p_session, p_sale null, p_method, p_reason, p_lines jsonb)`**
   → inserta `credit_note` + líneas, **repone `inventory`** en las líneas con `restock=true`,
   obtiene folio `credit_note`, recalcula IVA.
-- **`convertir_cotizacion(p_quote, p_session, p_method, p_recv)`** → valida vigencia
-  (`valid_until >= today`), reconstruye líneas desde `quote_line`, reusa `cobrar_venta`,
-  marca `quote.converted=true` y `quote.sale_id`.
+- **`convertir_cotizacion(p_quote, p_session, p_method, p_recv)`** → valida no-convertida +
+  vigencia (`valid_until >= today`) + tenancy, reconstruye líneas desde `quote_line` cobrando
+  al **precio COTIZADO** (`quote_line.price_snapshot`, congelado al crear la cotización, **no**
+  el precio actual del producto que pudo cambiar), delega en el núcleo interno
+  `_registrar_venta`, y marca `quote.converted=true` y `quote.sale_id`.
 - Helper **`siguiente_folio(p_branch, p_doc_type)`** usado por las anteriores.
 
 ## 7. Autenticación y seguridad (RLS)
