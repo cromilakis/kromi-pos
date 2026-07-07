@@ -207,8 +207,9 @@ muestra) y **revierten por completo**.
 
 - El RUT normalizado (sin puntos/guion) se mapea a un **email sintético interno**:
   `{rut}@pos.kromi.local`. El **PIN es el password** (Supabase Auth lo hashea con bcrypt).
-- Se ajusta el largo mínimo de password en la config de Supabase para permitir **PIN de 4
-  dígitos**. El cajero solo ve "RUT + PIN"; el email sintético es un detalle interno.
+- El **PIN es de 6 dígitos**, que es el **largo mínimo de password por defecto de Supabase
+  Auth** (GoTrue). No se modifica la config de Auth. El cajero solo ve "RUT + PIN"; el email
+  sintético es un detalle interno.
 - Alta de usuario: crea el registro en `auth.users` (email sintético + PIN) y la fila
   espejo en `app_user` con `id = auth.users.id`. Se hace vía función/servicio de alta
   (rol admin), no por el cliente anónimo.
