@@ -77,6 +77,207 @@ export function cartToLines(cart: { id: string; qty: number }[]): CartItem[] {
   return cart.map((c) => ({ product_id: c.id, qty: c.qty }));
 }
 
+// ----------------------------------------------------------------------------
+// Cotizaciones (quote/quote_line): escritura directa vía RLS (ver migración
+// 20260707120000_quote_write.sql); no mueven caja ni stock.
+// ----------------------------------------------------------------------------
+
+export interface QuoteLineInput { product_id: string; qty: number; price: number; name: string; }
+
+export interface QuoteLineRow { product_id: string | null; name_snapshot: string; price_snapshot: number; qty: number; }
+
+export interface QuoteRow {
+  id: string;
+  folio: number;
+  branch_id: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  valid_until: string;
+  total: number;
+  neto: number;
+  iva: number;
+  converted: boolean;
+  sale_id: string | null;
+  created_at: string;
+  lines: QuoteLineRow[];
+}
+
+/** Vigente = no vencida (independiente de si ya fue convertida). */
+export function isQuoteVigente(validUntil: string, today: Date = new Date()): boolean {
+  const limit = new Date(`${validUntil}T23:59:59`);
+  return limit.getTime() >= today.getTime();
+}
+
+/** Correlativo atómico del backend (RPC `siguiente_folio`, grant amplio a authenticated). */
+export async function nextFolio(branchId: string, doc: "sale" | "quote" | "credit_note"): Promise<number> {
+  const { data, error } = await supabase.rpc("siguiente_folio", { p_branch: branchId, p_doc: doc });
+  if (error) throw error;
+  return data as number;
+}
+
+/** Crea una cotización + sus líneas. No mueve caja ni stock (RLS de escritura por negocio). */
+export async function crearCotizacion(args: {
+  business_id: string;
+  branch_id: string;
+  customer_id?: string | null;
+  valid_until: string;
+  lines: QuoteLineInput[];
+}) {
+  if (!args.lines.length) throw new Error("La cotización no tiene líneas.");
+  const total = args.lines.reduce((s, l) => s + l.qty * l.price, 0);
+  const neto = Math.round(total / 1.19);
+  const folio = await nextFolio(args.branch_id, "quote");
+  const { data: quote, error } = await supabase
+    .from("quote")
+    .insert({
+      business_id: args.business_id,
+      branch_id: args.branch_id,
+      customer_id: args.customer_id ?? null,
+      valid_until: args.valid_until,
+      total,
+      neto,
+      iva: total - neto,
+      folio,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  const { error: e2 } = await supabase.from("quote_line").insert(
+    args.lines.map((l) => ({
+      quote_id: quote.id,
+      product_id: l.product_id,
+      name_snapshot: l.name,
+      price_snapshot: l.price,
+      qty: l.qty,
+    })),
+  );
+  if (e2) throw e2;
+  return quote as { id: string; folio: number; valid_until: string; total: number; neto: number; iva: number };
+}
+
+/** Cotizaciones de la sucursal (vigentes, vencidas y convertidas), con sus líneas. */
+export function useQuotes(branchId: string | undefined) {
+  return useQuery({
+    queryKey: ["quotes", branchId],
+    enabled: !!branchId,
+    queryFn: async (): Promise<QuoteRow[]> => {
+      const { data, error } = await supabase
+        .from("quote")
+        .select(
+          "id,folio,branch_id,customer_id,valid_until,total,neto,iva,converted,sale_id,created_at," +
+            "customer:customer_id(name),quote_line(product_id,name_snapshot,price_snapshot,qty)",
+        )
+        .eq("branch_id", branchId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((q: any) => ({
+        id: q.id,
+        folio: q.folio,
+        branch_id: q.branch_id,
+        customer_id: q.customer_id,
+        customer_name: q.customer?.name ?? null,
+        valid_until: q.valid_until,
+        total: q.total,
+        neto: q.neto,
+        iva: q.iva,
+        converted: q.converted,
+        sale_id: q.sale_id,
+        created_at: q.created_at,
+        lines: (q.quote_line ?? []) as QuoteLineRow[],
+      }));
+    },
+  });
+}
+
+/** Convierte una cotización en venta al PRECIO COTIZADO (congelado en quote_line). */
+export async function convertirCotizacion(
+  quoteId: string,
+  session: string,
+  method: "efectivo" | "tarjeta",
+  recv: number,
+): Promise<Sale> {
+  const { data, error } = await supabase.rpc("convertir_cotizacion", {
+    p_quote: quoteId,
+    p_session: session,
+    p_method: method,
+    p_recv: recv,
+  });
+  if (error) throw error;
+  return data as Sale;
+}
+
+// ----------------------------------------------------------------------------
+// Notas de crédito (por boleta o manual): RPC atómica repone stock si corresponde.
+// ----------------------------------------------------------------------------
+
+export interface CreditNoteLineInput { product_id: string; qty: number; restock: boolean; }
+
+export interface CreditNote {
+  id: string;
+  folio: number;
+  sale_id: string | null;
+  method: string;
+  reason: string | null;
+  total: number;
+  neto: number;
+  iva: number;
+  created_at: string;
+}
+
+export async function emitirNotaCredito(args: {
+  p_branch: string;
+  p_session: string | null;
+  p_sale: string | null;
+  p_method: "efectivo" | "tarjeta";
+  p_reason: string;
+  p_lines: CreditNoteLineInput[];
+}): Promise<CreditNote> {
+  if (!args.p_lines.length) throw new Error("La nota de crédito no tiene líneas.");
+  const { data, error } = await supabase.rpc("emitir_nota_credito", {
+    p_branch: args.p_branch,
+    p_session: args.p_session,
+    p_sale: args.p_sale,
+    p_method: args.p_method,
+    p_reason: args.p_reason,
+    p_lines: args.p_lines,
+  });
+  if (error) throw error;
+  return data as CreditNote;
+}
+
+export interface SaleWithLines {
+  id: string;
+  folio: number;
+  method: string;
+  total: number;
+  neto: number;
+  iva: number;
+  sold_at: string;
+  lines: { product_id: string | null; name_snapshot: string; price_snapshot: number; qty: number }[];
+}
+
+/** Busca una venta por folio en la sucursal, con sus líneas (NC "por boleta"). */
+export async function buscarVentaPorFolio(branchId: string, folio: number): Promise<SaleWithLines | null> {
+  const { data, error } = await supabase
+    .from("sale")
+    .select("id,folio,method,total,neto,iva,sold_at,sale_line(product_id,name_snapshot,price_snapshot,qty)")
+    .eq("branch_id", branchId)
+    .eq("folio", folio)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    id: data.id,
+    folio: data.folio,
+    method: data.method,
+    total: data.total,
+    neto: data.neto,
+    iva: data.iva,
+    sold_at: data.sold_at,
+    lines: (data as any).sale_line ?? [],
+  };
+}
+
 export interface CriticalStockRow { name: string; stock: number; min_stock: number; }
 
 export function useCriticalStock(branchId: string | undefined) {

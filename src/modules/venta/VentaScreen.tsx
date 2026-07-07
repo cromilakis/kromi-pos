@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Cart, type CartLine } from "./Cart";
 import { PayDialog, type PayMethod } from "./PayDialog";
+import { QuotePanel } from "./QuotePanel";
+import { CreditNoteDialog } from "./CreditNoteDialog";
 
 interface CartItem {
   id: string;
@@ -70,6 +72,8 @@ export function VentaScreen() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [payOpen, setPayOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<"venta" | "cotizaciones">("venta");
+  const [ncOpen, setNcOpen] = useState(false);
 
   const allProducts = products ?? [];
   const allCategories = categories ?? [];
@@ -228,16 +232,53 @@ export function VentaScreen() {
     <div className="flex min-h-full">
       <div className="flex min-w-0 flex-1 flex-col px-[22px] pt-[18px]">
         <div className="mb-4 flex items-center gap-2.5">
-          <div className="flex max-w-[420px] flex-1 items-center gap-2.5 rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar planta, maceta, accesorio…"
-              className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#0F2A1B] outline-none"
-            />
+          <div className="inline-flex gap-1 rounded-full bg-[#F0F2F7] p-1">
+            <button
+              onClick={() => setTab("venta")}
+              className="rounded-full px-4 py-1.5 text-[13.5px] font-bold"
+              style={tab === "venta" ? { background: "var(--brand)", color: "#fff" } : { color: "#5a6b7e" }}
+            >
+              Venta
+            </button>
+            <button
+              onClick={() => setTab("cotizaciones")}
+              className="rounded-full px-4 py-1.5 text-[13.5px] font-bold"
+              style={tab === "cotizaciones" ? { background: "var(--brand)", color: "#fff" } : { color: "#5a6b7e" }}
+            >
+              Cotizaciones
+            </button>
           </div>
+          {tab === "venta" && (
+            <div className="flex max-w-[420px] flex-1 items-center gap-2.5 rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar planta, maceta, accesorio…"
+                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#0F2A1B] outline-none"
+              />
+            </div>
+          )}
+          <button
+            onClick={() => setNcOpen(true)}
+            className="ml-auto rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
+          >
+            Nota de crédito
+          </button>
         </div>
 
+        {tab === "cotizaciones" ? (
+          <QuotePanel
+            businessId={businessId}
+            branchId={branchId}
+            customerId={null}
+            sessionId={openSession.id}
+            negocioNombre={profile?.name ?? "Kromi POS"}
+            cartLines={cartLines}
+            totals={totals}
+            onQuoteCreated={() => setCart([])}
+          />
+        ) : (
+          <>
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {[{ id: "todas", label: "Todas" }, ...allCategories.map((c) => ({ id: c.id, label: c.label }))].map((c) => (
             <button
@@ -304,11 +345,28 @@ export function VentaScreen() {
             </div>
           ))}
         </div>
+          </>
+        )}
       </div>
 
-      <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onPay={() => setPayOpen(true)} />
+      {tab === "venta" && (
+        <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onPay={() => setPayOpen(true)} />
+      )}
 
       <PayDialog open={payOpen} total={totals.total} busy={busy} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />
+
+      <CreditNoteDialog
+        open={ncOpen}
+        branchId={branchId}
+        sessionId={openSession?.id ?? null}
+        products={allProducts}
+        negocioNombre={profile?.name ?? "Kromi POS"}
+        onClose={() => setNcOpen(false)}
+        onEmitted={() => {
+          qc.invalidateQueries({ queryKey: ["products-with-stock"] });
+          qc.invalidateQueries({ queryKey: ["critical-stock"] });
+        }}
+      />
     </div>
   );
 }
