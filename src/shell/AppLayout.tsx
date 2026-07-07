@@ -1,9 +1,78 @@
+import { useState, type MouseEvent } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { navForRole } from "@/session/nav";
+import { useWork } from "@/session/WorkContext";
 import { BranchGate } from "@/session/BranchGate";
 import { CashGate } from "@/session/CashGate";
+import { useOpenSession, rpcCerrarCaja } from "@/data/work";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+function Topbar() {
+  const { branch, register } = useWork();
+  const qc = useQueryClient();
+  const { data: openSession } = useOpenSession(register?.id);
+  const [counted, setCounted] = useState("");
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  async function cerrar(e: MouseEvent) {
+    e.preventDefault();
+    if (!openSession) return;
+    setBusy(true);
+    try {
+      await rpcCerrarCaja(openSession.id, Number(counted) || 0);
+      await qc.invalidateQueries({ queryKey: ["open-session"] });
+      setOpen(false);
+      setCounted("");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="h-12 border-b flex items-center justify-between px-4 shrink-0">
+      <div className="text-sm font-medium">{branch?.name ?? "Sin sucursal"}</div>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline" size="sm" disabled={!openSession}>Cerrar caja</Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cerrar caja</AlertDialogTitle>
+            <AlertDialogDescription>Ingresa el monto contado en efectivo para cerrar la caja actual.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <Input
+            autoFocus
+            inputMode="numeric"
+            placeholder="Monto contado"
+            value={counted}
+            onChange={(e) => setCounted(e.target.value)}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={busy} onClick={cerrar}>
+              {busy ? "Cerrando…" : "Confirmar cierre"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
 
 export function AppLayout() {
   const { profile, business, signOut } = useAuth();
@@ -25,11 +94,14 @@ export function AppLayout() {
           <Button variant="ghost" size="sm" onClick={signOut} className="mt-1 px-0">Salir</Button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto">
-        <BranchGate businessId={profile.business_id}>
-          <CashGate><Outlet /></CashGate>
-        </BranchGate>
-      </main>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Topbar />
+        <main className="flex-1 overflow-auto">
+          <BranchGate businessId={profile.business_id}>
+            <CashGate><Outlet /></CashGate>
+          </BranchGate>
+        </main>
+      </div>
     </div>
   );
 }
