@@ -10,7 +10,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "db:reset": "supabase db reset",
+    "test:schema": "docker exec -i supabase_db_kromi-pos psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f - < supabase/tests/schema_test.sql",
+    "test:rpc": "docker exec -i supabase_db_kromi-pos psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f - < supabase/tests/rpc_test.sql",
+    "test:rls": "docker exec -i supabase_db_kromi-pos psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f - < supabase/tests/rls_test.sql",
+    "test:db": "pnpm test:schema && pnpm test:rpc && pnpm test:rls"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
