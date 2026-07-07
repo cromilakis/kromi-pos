@@ -146,7 +146,9 @@ export function LoginScreen() {
             overflow: "hidden",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
             padding: 48,
           }}
         >
@@ -163,28 +165,21 @@ export function LoginScreen() {
               transform: "scale(1.08)",
             }}
           />
-          <div style={{ display: "flex", alignItems: "center", gap: 12, position: "relative" }}>
+          {/* Bloque de marca centrado: logo grande + nombre debajo */}
+          <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: 22 }}>
             <img
               src="/logo.png"
-              alt="Logo"
-              style={{ width: 46, height: 46, borderRadius: "50%", objectFit: "cover", display: "block", flex: "none" }}
+              alt={storeName}
+              style={{ width: 176, height: 176, borderRadius: "50%", objectFit: "cover", display: "block", boxShadow: "0 12px 34px rgba(0,0,0,.32)" }}
             />
-            <div style={{ fontWeight: 900, fontSize: 22 }}>
-              {storeName} <span style={{ fontWeight: 500, fontSize: 14, color: "rgba(255,255,255,.72)" }}>· Punto de venta</span>
+            <div>
+              <div style={{ fontWeight: 900, fontSize: 34, letterSpacing: "-.01em", lineHeight: 1.1 }}>{storeName}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".18em", textTransform: "uppercase", color: "#97F2CC", marginTop: 12 }}>
+                Punto de venta
+              </div>
             </div>
           </div>
-          <div style={{ position: "relative", maxWidth: 420 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: "#97F2CC", marginBottom: 14 }}>
-              Punto de venta
-            </div>
-            <h1 style={{ fontSize: 40, fontWeight: 900, lineHeight: 1.1, letterSpacing: "-.02em", margin: "0 0 16px" }}>
-              Haz crecer tu negocio.
-            </h1>
-            <p style={{ fontSize: 16, lineHeight: 1.55, color: "rgba(255,255,255,.78)", margin: 0 }}>
-              Gestiona ventas, stock, clientes y caja desde un solo lugar.
-            </p>
-          </div>
-          <div style={{ position: "relative", fontSize: 13, color: "rgba(255,255,255,.55)" }}>© 2026 · Powered by Kromi</div>
+          <div style={{ position: "absolute", bottom: 32, fontSize: 13, color: "rgba(255,255,255,.55)" }}>© 2026 · Powered by Kromi</div>
         </div>
 
         {/* ================= Formulario ================= */}
