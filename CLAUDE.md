@@ -4,7 +4,7 @@
 App de escritorio (Tauri). Resumen breve derivado de `.kromi/init.md`. (Completar al avanzar el wizard.)
 
 ## Stack (fijo)
-Tauri 2 (shell nativo en Rust) + frontend estático (HTML/CSS/JS autocontenido en `src/`, servido vía `frontendDist`). Gestor de paquetes: **pnpm**. Datos en memoria salvo que se agregue backend.
+Tauri 2 (shell nativo en Rust) + frontend estático (HTML/CSS/JS autocontenido en `src/`, servido vía `frontendDist`). Gestor de paquetes: **pnpm**. Datos en **Supabase/Postgres** (esquema en `supabase/migrations/`; lógica crítica en funciones RPC). Online-only por ahora, esquema preparado para sync.
 
 ## Estándar de idioma
 Prosa en español; técnico (código, identificadores, claves, flags) en inglés.
@@ -16,6 +16,9 @@ Prosa en español; técnico (código, identificadores, claves, flags) en inglés
 - `pnpm tauri dev` (o `pnpm dev`) — ventana de desarrollo
 - `pnpm tauri build` (o `pnpm build`) — empaqueta el instalable (macOS/Windows)
 - El frontend vive en `src/` (`index.html` autocontenido); el shell Rust en `src-tauri/`.
+- `pnpm db:reset` — recrea la base local (migraciones + seed)
+- `pnpm test:db` — corre tests de esquema, RPC y RLS
+- Base de datos: Supabase local (Docker). Ver `supabase/README.md`.
 
 ## Disciplina (reglas)
 - Validar entradas en la capa que corresponda; no confiar en datos sin verificar.
