@@ -153,3 +153,9 @@ create index idx_cash_session_register on public.cash_session(register_id);
 grant usage on schema public to authenticated;
 grant select, insert, update, delete on all tables in schema public to authenticated;
 grant execute on all functions in schema public to authenticated;
+
+-- anon sin acceso directo a tablas (doctrina de seguridad): revoca cualquier
+-- grant heredado por default privileges de Supabase. RLS ya deniega por default,
+-- esto es defensa en profundidad. NO se revoca usage del schema (PostgREST lo necesita).
+revoke all on all tables in schema public from anon;
+alter default privileges in schema public revoke all on tables from anon;

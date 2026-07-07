@@ -33,6 +33,68 @@ begin
   if nb <> 0 then raise exception 'FUGA: A ve categorías de B (%).', nb; end if;
 end $$;
 
+-- a) Escritura cross-tenant bloqueada: A intenta crear una categoría en el
+-- negocio B. Debe fallar por la policy category_write (with check).
+do $$
+begin
+  begin
+    insert into public.category (business_id, key, label) values
+      ('a2222222-0000-0000-0000-000000000002','z','Z');
+    raise exception 'FUGA: A escribió en el negocio B';
+  exception
+    when sqlstate '42501' then
+      raise notice 'OK: insert cross-tenant bloqueado (RLS 42501)';
+  end;
+end $$;
+
+reset role;
+
+-- Fixture: usuario CAJERO del negocio A (el trigger handle_new_user crea el
+-- espejo en app_user con role='cajero' a partir de raw_user_meta_data).
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('e3333333-0000-0000-0000-000000000003','uc@pos.kromi.local',
+    jsonb_build_object('business_id','a1111111-0000-0000-0000-000000000001','name','UC','rut','3-1','role','cajero'));
+
+-- Simular sesión del cajero
+set local role authenticated;
+select set_config('request.jwt.claims',
+  json_build_object('sub','e3333333-0000-0000-0000-000000000003','role','authenticated')::text, true);
+
+-- b) Cajero no puede escribir catálogo: intenta crear un producto de SU
+-- propio negocio. Debe fallar por is_pos_admin() en la policy product_write.
+do $$
+begin
+  begin
+    insert into public.product (business_id, name, price) values
+      ('a1111111-0000-0000-0000-000000000001','Prod cajero', 100);
+    raise exception 'FUGA: cajero escribió catálogo';
+  exception
+    when sqlstate '42501' then
+      raise notice 'OK: cajero no pudo escribir catálogo (RLS 42501)';
+  end;
+end $$;
+
+reset role;
+
+-- Fixture: sucursal + caja del negocio B.
+insert into public.branch (id, business_id, name) values
+  ('b2222222-0000-0000-0000-000000000002','a2222222-0000-0000-0000-000000000002','Suc B');
+insert into public.register (id, branch_id, name) values
+  ('c2222222-0000-0000-0000-000000000002','b2222222-0000-0000-0000-000000000002','Caja B');
+
+-- Volver a simular la sesión del usuario A
+set local role authenticated;
+select set_config('request.jwt.claims',
+  json_build_object('sub','e1111111-0000-0000-0000-000000000001','role','authenticated')::text, true);
+
+-- c) Aislamiento de register: A no debe ver la caja del negocio B.
+do $$
+declare n int;
+begin
+  select count(*) into n from public.register where branch_id = 'b2222222-0000-0000-0000-000000000002';
+  if n <> 0 then raise exception 'FUGA: A ve % register(s) del negocio B', n; end if;
+end $$;
+
 reset role;
 \echo 'rls_test OK'
 rollback;
