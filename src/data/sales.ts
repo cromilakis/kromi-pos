@@ -110,13 +110,6 @@ export function isQuoteVigente(validUntil: string, today: Date = new Date()): bo
   return limit.getTime() >= today.getTime();
 }
 
-/** Correlativo atómico del backend (RPC `siguiente_folio`, grant amplio a authenticated). */
-export async function nextFolio(branchId: string, doc: "sale" | "quote" | "credit_note"): Promise<number> {
-  const { data, error } = await supabase.rpc("siguiente_folio", { p_branch: branchId, p_doc: doc });
-  if (error) throw error;
-  return data as number;
-}
-
 /** Crea una cotización vía RPC (precio del servidor). No mueve caja ni stock. */
 export async function crearCotizacion(args: {
   branch_id: string;

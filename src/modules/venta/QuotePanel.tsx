@@ -33,6 +33,7 @@ function isoPlusDays(days: number): string {
 
 interface QuotePanelProps {
   branchId?: string;
+  businessId?: string;
   customerId?: string | null;
   sessionId?: string;
   negocioNombre: string;
@@ -44,6 +45,7 @@ interface QuotePanelProps {
 /** Panel de cotizaciones: crear desde el carrito actual, listar vigentes, convertir a venta e imprimir. Clona `createQuote`/`convertQuote` del prototipo. */
 export function QuotePanel({
   branchId,
+  businessId,
   customerId,
   sessionId,
   negocioNombre,
@@ -140,6 +142,7 @@ export function QuotePanel({
       qc.invalidateQueries({ queryKey: ["recent-sales"] });
       qc.invalidateQueries({ queryKey: ["products-with-stock"] });
       qc.invalidateQueries({ queryKey: ["critical-stock"] });
+      qc.invalidateQueries({ queryKey: ["customers", businessId] });
       try {
         await printReceipt({
           negocio,

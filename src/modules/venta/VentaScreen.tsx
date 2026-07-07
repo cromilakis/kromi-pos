@@ -289,6 +289,7 @@ export function VentaScreen() {
         {tab === "cotizaciones" ? (
           <QuotePanel
             branchId={branchId}
+            businessId={businessId}
             customerId={customerId}
             sessionId={openSession.id}
             negocioNombre={profile?.name ?? "Kromi POS"}
