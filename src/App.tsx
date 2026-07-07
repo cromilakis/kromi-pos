@@ -1,3 +1,30 @@
+import { Routes, Route } from "react-router-dom";
+import { useAuth } from "@/auth/AuthProvider";
+import { RequireAuth } from "@/shell/RequireAuth";
+import { RequireRole } from "@/shell/RequireRole";
+import { AppLayout } from "@/shell/AppLayout";
+import { Placeholder } from "@/routes/placeholders";
+
+function AdminRoute() {
+  const { profile } = useAuth();
+  return (
+    <RequireRole role={profile?.role} allow={["admin", "kromi"]}>
+      <Placeholder title="Administración" />
+    </RequireRole>
+  );
+}
+
 export default function App() {
-  return <div className="p-6 text-lg">Kromi POS — andamiaje</div>;
+  return (
+    <Routes>
+      <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+        <Route index element={<Placeholder title="Inicio" />} />
+        <Route path="venta" element={<Placeholder title="Venta" />} />
+        <Route path="stock" element={<Placeholder title="Stock" />} />
+        <Route path="clientes" element={<Placeholder title="Clientes" />} />
+        <Route path="cierre" element={<Placeholder title="Cierre" />} />
+        <Route path="admin" element={<AdminRoute />} />
+      </Route>
+    </Routes>
+  );
 }
