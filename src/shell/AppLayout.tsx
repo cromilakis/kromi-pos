@@ -1,8 +1,10 @@
 import { useState, type MouseEvent } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { Home, ShoppingCart, Package, Users, Wallet, Settings, LogOut, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
-import { navForRole } from "@/session/nav";
+import type { Role } from "@/auth/session";
+import { navForRole, type NavItem } from "@/session/nav";
 import { useWork } from "@/session/WorkContext";
 import { BranchGate } from "@/session/BranchGate";
 import { CashGate } from "@/session/CashGate";
@@ -21,6 +23,45 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+
+const ROLE_LABEL: Record<Role, string> = {
+  admin: "Administrador/a",
+  kromi: "Admin. del sistema",
+  cajero: "Cajero/a",
+};
+
+const NAV_ICON: Record<string, LucideIcon> = {
+  Inicio: Home,
+  Venta: ShoppingCart,
+  Stock: Package,
+  Clientes: Users,
+  Cierre: Wallet,
+  Administración: Settings,
+};
+
+function initialsOf(name: string): string {
+  return name.split(" ").slice(0, 2).map((w) => w[0]).filter(Boolean).join("").toUpperCase();
+}
+
+function SidebarLink({ item }: { item: NavItem }) {
+  const Icon = NAV_ICON[item.label] ?? Home;
+  return (
+    <NavLink to={item.to} end={item.to === "/"}>
+      {({ isActive }) => (
+        <span
+          className="flex items-center gap-[11px] rounded-[11px] px-3 py-2.5 text-sm font-bold transition-colors"
+          style={{
+            color: isActive ? "var(--brand)" : "#2A3A2E",
+            background: isActive ? "color-mix(in srgb, var(--brand) 14%, transparent)" : "transparent",
+          }}
+        >
+          <Icon className="size-[18px] shrink-0" strokeWidth={1.8} />
+          <span className="truncate">{item.label}</span>
+        </span>
+      )}
+    </NavLink>
+  );
+}
 
 function Topbar() {
   const { branch, register } = useWork();
@@ -47,11 +88,13 @@ function Topbar() {
   }
 
   return (
-    <div className="h-12 border-b flex items-center justify-between px-4 shrink-0">
-      <div className="text-sm font-medium">{branch?.name ?? "Sin sucursal"}</div>
+    <div className="h-14 border-b border-[#E1E5EE] bg-white flex items-center justify-between px-6 shrink-0">
+      <div className="text-sm font-bold text-[#0F2A1B]">{branch?.name ?? "Sin sucursal"}</div>
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogTrigger asChild>
-          <Button variant="outline" size="sm" disabled={!openSession}>Cerrar caja</Button>
+          <Button variant="outline" size="sm" className="border-[#E1E5EE] text-[#0F2A1B]" disabled={!openSession}>
+            Cerrar caja
+          </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -79,6 +122,7 @@ function Topbar() {
 
 export function AppLayout() {
   const { profile, profileLoading, profileError, business, signOut } = useAuth();
+  const location = useLocation();
 
   if (profileError) {
     return (
@@ -93,22 +137,82 @@ export function AppLayout() {
 
   if (profileLoading || !profile) return <div className="min-h-full grid place-items-center">Cargando perfil…</div>;
 
+  const items = navForRole(profile.role);
+  const adminItem = items.find((n) => n.label === "Administración");
+  const baseItems = items.filter((n) => n.label !== "Administración");
+  const adminActive = adminItem ? location.pathname.startsWith(adminItem.to) : false;
+  const brandName = business?.name ?? "Kromi POS";
+
   return (
     <div className="min-h-full flex">
-      <aside className="w-56 border-r p-4 flex flex-col gap-1">
-        <div className="font-bold mb-4">{business?.name ?? "Kromi POS"}</div>
-        {navForRole(profile.role).map((n) => (
-          <NavLink key={n.to} to={n.to} end={n.to === "/"}
-            className={({ isActive }) => `px-3 py-2 rounded-md text-sm ${isActive ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}>
-            {n.label}
-          </NavLink>
-        ))}
-        <div className="mt-auto pt-4 text-sm text-muted-foreground">
-          <div>{profile.name}</div>
-          <Button variant="ghost" size="sm" onClick={signOut} className="mt-1 px-0">Salir</Button>
+      <aside className="w-[236px] shrink-0 bg-white border-r border-[#E1E5EE] flex flex-col p-3.5">
+        <div className="flex items-center gap-[11px] px-2 pb-4">
+          <div
+            className="size-[38px] rounded-xl shrink-0 flex items-center justify-center shadow-[0_3px_10px_rgba(34,196,99,.28)]"
+            style={{ background: "linear-gradient(150deg,#22C463,#97F2CC)" }}
+          >
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#0F2A1B" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M7 20h10" />
+              <path d="M10 20c5.5-2.5.8-6.4 3-10" />
+              <path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z" />
+              <path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z" />
+            </svg>
+          </div>
+          <div className="min-w-0 leading-[1.1]">
+            <div className="font-black text-[16px] text-[#0F2A1B] truncate">{brandName}</div>
+            <div className="text-[11px] font-medium text-[#7C95A8]">Punto de venta</div>
+          </div>
+        </div>
+
+        <nav className="flex flex-col gap-[3px]">
+          {baseItems.map((item) => (
+            <SidebarLink key={item.to} item={item} />
+          ))}
+        </nav>
+
+        {adminItem && (
+          <>
+            <div className="text-[11px] font-bold tracking-[.13em] uppercase text-[#94A3B5] px-3 pt-5 pb-2">
+              Administración
+            </div>
+            <nav className="flex flex-col gap-[3px]">
+              <NavLink to={adminItem.to}>
+                <span
+                  className="flex items-center gap-[11px] rounded-[11px] px-3 py-2.5 text-sm font-bold transition-colors"
+                  style={{
+                    color: adminActive ? "var(--brand)" : "#2A3A2E",
+                    background: adminActive ? "color-mix(in srgb, var(--brand) 14%, transparent)" : "transparent",
+                  }}
+                >
+                  <Settings className="size-[18px] shrink-0" strokeWidth={1.8} />
+                  <span className="truncate">{adminItem.label}</span>
+                </span>
+              </NavLink>
+            </nav>
+          </>
+        )}
+
+        <div className="flex-1 min-h-4" />
+
+        <div className="border-t border-[#F0F2F7] pt-3 flex items-center gap-[10px]">
+          <div className="size-[38px] rounded-full shrink-0 bg-[#0F2A1B] text-white flex items-center justify-center font-bold text-[13px]">
+            {initialsOf(profile.name)}
+          </div>
+          <div className="min-w-0 flex-1 leading-[1.15]">
+            <div className="text-[13px] font-bold text-[#0F2A1B] truncate">{profile.name}</div>
+            <div className="text-[11px] text-[#7C95A8]">{ROLE_LABEL[profile.role]}</div>
+          </div>
+          <button
+            type="button"
+            title="Cerrar sesión"
+            onClick={signOut}
+            className="size-[34px] shrink-0 rounded-[10px] border border-[#E1E5EE] bg-white text-[#7C95A8] flex items-center justify-center hover:bg-[#F7F8FA]"
+          >
+            <LogOut className="size-[17px]" strokeWidth={1.7} />
+          </button>
         </div>
       </aside>
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden bg-[#F7F8FA]">
         <Topbar />
         <main className="flex-1 overflow-auto">
           <BranchGate businessId={profile.business_id}>
