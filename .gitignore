@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .superpowers/
+
+# Supabase local dev
+supabase/.branches
+supabase/.temp
