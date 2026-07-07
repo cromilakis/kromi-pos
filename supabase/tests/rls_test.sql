@@ -76,9 +76,11 @@ end $$;
 
 reset role;
 
--- Fixture: sucursal + caja del negocio B.
+-- Fixture: sucursal + caja del negocio B; y una sucursal del negocio A (para el
+-- test de inserción directa de documentos por el cliente — FIX I1).
 insert into public.branch (id, business_id, name) values
-  ('b2222222-0000-0000-0000-000000000002','a2222222-0000-0000-0000-000000000002','Suc B');
+  ('b2222222-0000-0000-0000-000000000002','a2222222-0000-0000-0000-000000000002','Suc B'),
+  ('b1111111-0000-0000-0000-000000000001','a1111111-0000-0000-0000-000000000001','Suc A');
 insert into public.register (id, branch_id, name) values
   ('c2222222-0000-0000-0000-000000000002','b2222222-0000-0000-0000-000000000002','Caja B');
 
@@ -93,6 +95,22 @@ declare n int;
 begin
   select count(*) into n from public.register where branch_id = 'b2222222-0000-0000-0000-000000000002';
   if n <> 0 then raise exception 'FUGA: A ve % register(s) del negocio B', n; end if;
+end $$;
+
+-- d) FIX I1: los documentos financieros son solo-lectura para el cliente. A NO
+-- puede insertar una venta directamente en su propio negocio saltándose la RPC;
+-- debe fallar por RLS (42501, no existe política de insert para authenticated).
+do $$
+begin
+  begin
+    insert into public.sale (business_id, branch_id, folio, method, total, neto, iva, recv, change, cashier_id)
+    values ('a1111111-0000-0000-0000-000000000001','b1111111-0000-0000-0000-000000000001',
+            1, 'efectivo', 1000, 840, 160, 1000, 0, 'e1111111-0000-0000-0000-000000000001');
+    raise exception 'FUGA: cliente insertó venta directamente saltándose la RPC';
+  exception
+    when sqlstate '42501' then
+      raise notice 'OK: insert directo de venta bloqueado por RLS (42501)';
+  end;
 end $$;
 
 reset role;

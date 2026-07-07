@@ -143,5 +143,47 @@ begin
   end if;
 end $$;
 
+-- convertir_cotizacion: crea venta desde una cotización vigente, baja stock y
+-- marca la cotización como convertida con sale_id apuntando a la venta.
+do $$
+declare
+  v_session uuid := 'f0000000-0000-0000-0000-000000000002';
+  v_quote   uuid := 'a0000000-0000-0000-0000-000000000001';
+  v_sale    public.sale;
+  v_converted boolean; v_sale_id uuid;
+begin
+  -- Caja 3 + sesión abierta propia (índice único de sesión abierta por register).
+  insert into public.register (id, branch_id, name) values
+    ('cccccccc-0000-0000-0000-000000000003','bbbbbbbb-0000-0000-0000-000000000001','Caja 3')
+    on conflict do nothing;
+  insert into public.cash_session (id, business_id, branch_id, register_id, status)
+    values (v_session,'aaaaaaaa-0000-0000-0000-000000000001',
+            'bbbbbbbb-0000-0000-0000-000000000001','cccccccc-0000-0000-0000-000000000003','open')
+    on conflict do nothing;
+
+  -- Cotización vigente (valid_until futura) con una línea del producto con stock.
+  insert into public.quote (id, business_id, branch_id, folio, valid_until, total, neto, iva) values
+    (v_quote,'aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000001',
+     public.siguiente_folio('bbbbbbbb-0000-0000-0000-000000000001','quote'),
+     current_date + 30, 14990, round(14990/1.19), 14990 - round(14990/1.19));
+  insert into public.quote_line (quote_id, product_id, name_snapshot, price_snapshot, qty) values
+    (v_quote,'eeeeeeee-0000-0000-0000-000000000001','Monstera',14990,1);
+
+  v_sale := public.convertir_cotizacion(v_quote, v_session, 'efectivo', 20000);
+
+  -- (a) se creó una venta coherente (folio > 0, total = 14990, vuelto = 5010).
+  if v_sale.id is null then raise exception 'convertir_cotizacion no creó venta'; end if;
+  if v_sale.folio <= 0 then raise exception 'folio de venta inválido: %', v_sale.folio; end if;
+  if v_sale.total <> 14990 then raise exception 'total venta convertida incorrecto: %', v_sale.total; end if;
+  if v_sale.change <> 5010 then raise exception 'vuelto venta convertida incorrecto: %', v_sale.change; end if;
+
+  -- (b) la cotización quedó convertida y con sale_id apuntando a la venta.
+  select converted, sale_id into v_converted, v_sale_id from public.quote where id = v_quote;
+  if v_converted is not true then raise exception 'quote.converted no quedó true'; end if;
+  if v_sale_id is distinct from v_sale.id then
+    raise exception 'quote.sale_id no apunta a la venta: % vs %', v_sale_id, v_sale.id;
+  end if;
+end $$;
+
 \echo 'rpc_test (folios+caja) OK'
 rollback;

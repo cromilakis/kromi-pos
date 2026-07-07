@@ -47,7 +47,9 @@ begin
   end loop;
 
   -- Escritura de catálogo/config: solo admin/kromi.
-  foreach t in array array['branch','app_user','supplier','category','product','module_state','module_notice'] loop
+  -- FIX I3: 'app_user' se saca de este loop genérico y recibe su propia política
+  -- (más abajo) para bloquear la auto-promoción al rol 'kromi'.
+  foreach t in array array['branch','supplier','category','product','module_state','module_notice'] loop
     execute format($p$
       create policy %1$s_write on public.%1$s for all
       using (business_id = public.current_business_id() and public.is_pos_admin())
@@ -62,15 +64,22 @@ begin
     with check (business_id = public.current_business_id());
   $p$;
 
-  -- Documentos (sale/quote/credit_note): insertables por usuarios del negocio.
-  foreach t in array array['cash_session','sale','quote','credit_note'] loop
-    execute format($p$
-      create policy %1$s_write on public.%1$s for all
-      using (business_id = public.current_business_id())
-      with check (business_id = public.current_business_id());
-    $p$, t);
-  end loop;
+  -- FIX I1: los documentos financieros (sale/cash_session/quote/credit_note) NO
+  -- son escribibles directamente por el cliente. Solo se crean vía las RPC
+  -- security definer (owner postgres, bypassan RLS). Aquí quedan SOLO-LECTURA:
+  -- la política *_read del primer loop ya concede el SELECT del negocio/kromi y
+  -- no se agrega ninguna política de insert/update/delete para authenticated.
 end $$;
+
+-- FIX I3: app_user con política propia (fuera del loop genérico de catálogo).
+-- Un admin puede gestionar los usuarios de SU negocio, PERO no puede asignar ni
+-- mantener el rol 'kromi' (auto-promoción a superusuario): solo quien YA es kromi
+-- puede escribir filas con role='kromi'. El resto de la condición es idéntica al
+-- patrón admin/kromi del negocio.
+create policy app_user_write on public.app_user for all
+  using (business_id = public.current_business_id() and public.is_pos_admin())
+  with check (business_id = public.current_business_id() and public.is_pos_admin()
+              and (role <> 'kromi' or public.is_kromi()));
 
 -- register: sin business_id directo (solo branch_id); se valida por la sucursal.
 -- Nota (fix vs. brief original): 'register' venía incluido en el loop de tablas
@@ -87,34 +96,35 @@ create policy register_write on public.register for all
   with check (exists (select 1 from public.branch b where b.id = branch_id
                    and b.business_id = public.current_business_id() and public.is_pos_admin()));
 
--- Tablas hijas (líneas / inventario): sin business_id directo; se validan por el padre.
+-- Tablas hijas de documentos (líneas): sin business_id directo; se validan por
+-- el padre. FIX I1: SOLO-LECTURA (las líneas se insertan vía RPC definer).
 alter table public.sale_line enable row level security;
-create policy sale_line_all on public.sale_line for all
+create policy sale_line_read on public.sale_line for select
   using (exists (select 1 from public.sale s where s.id = sale_id
-                   and (s.business_id = public.current_business_id() or public.is_kromi())))
-  with check (exists (select 1 from public.sale s where s.id = sale_id
-                   and s.business_id = public.current_business_id()));
+                   and (s.business_id = public.current_business_id() or public.is_kromi())));
 
 alter table public.quote_line enable row level security;
-create policy quote_line_all on public.quote_line for all
+create policy quote_line_read on public.quote_line for select
   using (exists (select 1 from public.quote q where q.id = quote_id
-                   and (q.business_id = public.current_business_id() or public.is_kromi())))
-  with check (exists (select 1 from public.quote q where q.id = quote_id
-                   and q.business_id = public.current_business_id()));
+                   and (q.business_id = public.current_business_id() or public.is_kromi())));
 
 alter table public.credit_note_line enable row level security;
-create policy credit_note_line_all on public.credit_note_line for all
+create policy credit_note_line_read on public.credit_note_line for select
   using (exists (select 1 from public.credit_note n where n.id = credit_note_id
-                   and (n.business_id = public.current_business_id() or public.is_kromi())))
-  with check (exists (select 1 from public.credit_note n where n.id = credit_note_id
-                   and n.business_id = public.current_business_id()));
+                   and (n.business_id = public.current_business_id() or public.is_kromi())));
 
+-- FIX I1: inventory. Lectura para cualquier usuario del negocio; pero los ajustes
+-- manuales de stock (insert/update/delete directos) SOLO los hace un admin del
+-- negocio. Las RPC (cobrar_venta/emitir_nota_credito) lo modifican por definer.
 alter table public.inventory enable row level security;
-create policy inventory_all on public.inventory for all
+create policy inventory_read on public.inventory for select
   using (exists (select 1 from public.branch b where b.id = branch_id
-                   and (b.business_id = public.current_business_id() or public.is_kromi())))
+                   and (b.business_id = public.current_business_id() or public.is_kromi())));
+create policy inventory_write on public.inventory for all
+  using (exists (select 1 from public.branch b where b.id = branch_id
+                   and b.business_id = public.current_business_id() and public.is_pos_admin()))
   with check (exists (select 1 from public.branch b where b.id = branch_id
-                   and b.business_id = public.current_business_id()));
+                   and b.business_id = public.current_business_id() and public.is_pos_admin()));
 
 alter table public.folio_counter enable row level security;
 create policy folio_counter_read on public.folio_counter for select

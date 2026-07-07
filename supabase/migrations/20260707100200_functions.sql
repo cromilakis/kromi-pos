@@ -51,8 +51,16 @@ begin
     raise exception 'la caja indicada no existe';
   end if;
 
+  -- FIX I2: validación de tenancy (solo si hay sesión de usuario; service_role/
+  -- backend/tests corren con auth.uid() NULL y no deben verse afectados).
+  if auth.uid() is not null
+     and v_business is distinct from public.current_business_id()
+     and not public.is_kromi() then
+    raise exception 'no autorizado para operar en este negocio';
+  end if;
+
   insert into public.cash_session (business_id, branch_id, register_id, opened_by, float_amount, status)
-  values (v_business, v_branch, p_register, auth.uid(), coalesce(p_float, 0), 'open')
+  values (v_business, v_branch, p_register, auth.uid(), coalesce(p_float, 50000), 'open')
   returning * into v_session;
 
   return v_session;
@@ -72,17 +80,25 @@ set search_path = ''
 as $$
 declare
   v_float int;
+  v_business uuid;
   v_cash  int;
   v_card  int;
   v_nc_cash int;
   v_nc_card int;
   v_expected int;
 begin
-  select float_amount into v_float
+  select float_amount, business_id into v_float, v_business
     from public.cash_session where id = p_session and status = 'open'
     for update;
   if v_float is null then
     raise exception 'la sesión de caja no existe o ya está cerrada';
+  end if;
+
+  -- FIX I2: validación de tenancy (solo con sesión de usuario).
+  if auth.uid() is not null
+     and v_business is distinct from public.current_business_id()
+     and not public.is_kromi() then
+    raise exception 'no autorizado para operar en este negocio';
   end if;
 
   select coalesce(sum(total) filter (where method = 'efectivo'), 0),
@@ -148,6 +164,13 @@ begin
    where id = p_session and branch_id = p_branch and status = 'open';
   if v_business is null then
     raise exception 'la caja no está abierta para esta sucursal';
+  end if;
+
+  -- FIX I2: validación de tenancy (solo con sesión de usuario).
+  if auth.uid() is not null
+     and v_business is distinct from public.current_business_id()
+     and not public.is_kromi() then
+    raise exception 'no autorizado para operar en este negocio';
   end if;
 
   if p_lines is null or jsonb_array_length(p_lines) = 0 then
@@ -244,6 +267,13 @@ begin
   select business_id into v_business from public.branch where id = p_branch;
   if v_business is null then raise exception 'la sucursal no existe'; end if;
 
+  -- FIX I2: validación de tenancy (solo con sesión de usuario).
+  if auth.uid() is not null
+     and v_business is distinct from public.current_business_id()
+     and not public.is_kromi() then
+    raise exception 'no autorizado para operar en este negocio';
+  end if;
+
   if p_lines is null or jsonb_array_length(p_lines) = 0 then
     raise exception 'la nota de crédito no tiene líneas';
   end if;
@@ -303,6 +333,7 @@ set search_path = ''
 as $$
 declare
   v_branch   uuid;
+  v_business uuid;
   v_customer uuid;
   v_valid    date;
   v_lines    jsonb;
@@ -315,6 +346,15 @@ begin
   end if;
   if v_valid < current_date then
     raise exception 'la cotización está vencida';
+  end if;
+
+  -- FIX I2: validación de tenancy (solo con sesión de usuario) antes de delegar
+  -- en cobrar_venta; el business_id se deriva del branch de la cotización.
+  select business_id into v_business from public.branch where id = v_branch;
+  if auth.uid() is not null
+     and v_business is distinct from public.current_business_id()
+     and not public.is_kromi() then
+    raise exception 'no autorizado para operar en este negocio';
   end if;
 
   select jsonb_agg(jsonb_build_object('product_id', product_id, 'qty', qty))
