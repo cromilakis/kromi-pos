@@ -7,6 +7,7 @@ import { Placeholder } from "@/routes/placeholders";
 import { InicioScreen } from "@/modules/inicio/InicioScreen";
 import { StockScreen } from "@/modules/stock/StockScreen";
 import { VentaScreen } from "@/modules/venta/VentaScreen";
+import { CierreScreen } from "@/modules/cierre/CierreScreen";
 
 function AdminRoute() {
   const { profile } = useAuth();
@@ -25,7 +26,7 @@ export default function App() {
         <Route path="venta" element={<VentaScreen />} />
         <Route path="stock" element={<StockScreen />} />
         <Route path="clientes" element={<Placeholder title="Clientes" />} />
-        <Route path="cierre" element={<Placeholder title="Cierre" />} />
+        <Route path="cierre" element={<CierreScreen />} />
         <Route path="admin" element={<AdminRoute />} />
       </Route>
     </Routes>
