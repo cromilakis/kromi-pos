@@ -58,5 +58,33 @@ do $$ begin
   end;
 end $$;
 
+-- Tablas operativas (Task 3)
+do $$
+declare t text;
+begin
+  foreach t in array array[
+    'cash_session','sale','sale_line','quote','quote_line',
+    'credit_note','credit_note_line','folio_counter'
+  ] loop
+    if to_regclass('public.'||t) is null then
+      raise exception 'FALTA tabla public.%', t;
+    end if;
+  end loop;
+end $$;
+
+-- Folio único por sucursal en sale
+do $$
+declare b uuid := '22222222-2222-2222-2222-222222222222';
+begin
+  insert into public.sale (business_id, branch_id, folio, method, total, neto, iva, recv, change, cashier_id)
+    values ('11111111-1111-1111-1111-111111111111', b, 1, 'efectivo', 1000, 840, 160, 1000, 0, null);
+  begin
+    insert into public.sale (business_id, branch_id, folio, method, total, neto, iva, recv, change, cashier_id)
+      values ('11111111-1111-1111-1111-111111111111', b, 1, 'efectivo', 1000, 840, 160, 1000, 0, null);
+    raise exception 'FALLO: folio duplicado aceptado en la misma sucursal';
+  exception when unique_violation then null;
+  end;
+end $$;
+
 rollback;
 \echo 'schema_test OK'
