@@ -10,6 +10,8 @@ import type { Profile, Business } from "./session";
 interface AuthCtx {
   session: Session | null;
   profile: Profile | null;
+  profileLoading: boolean;
+  profileError: Error | null;
   business: Business | null;
   loading: boolean;
   signIn: (rut: string, pin: string) => Promise<void>;
@@ -27,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const { data: profile } = useProfileQuery(session?.user.id);
+  const { data: profile, isLoading: profileLoading, error: profileError } = useProfileQuery(session?.user.id);
   const { data: business } = useBusinessQuery(profile?.business_id);
 
   useEffect(() => {
@@ -41,7 +43,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signOut() { await supabase.auth.signOut(); }
 
   return (
-    <Ctx.Provider value={{ session, profile: profile ?? null, business: business ?? null, loading, signIn, signOut }}>
+    <Ctx.Provider
+      value={{
+        session,
+        profile: profile ?? null,
+        profileLoading,
+        profileError: profileError ?? null,
+        business: business ?? null,
+        loading,
+        signIn,
+        signOut,
+      }}
+    >
       {children}
     </Ctx.Provider>
   );

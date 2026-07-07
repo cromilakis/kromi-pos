@@ -9,6 +9,7 @@ import { CashGate } from "@/session/CashGate";
 import { useOpenSession, rpcCerrarCaja } from "@/data/work";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +39,8 @@ function Topbar() {
       await qc.invalidateQueries({ queryKey: ["open-session"] });
       setOpen(false);
       setCounted("");
+    } catch (e) {
+      toast.error(`No se pudo cerrar la caja: ${e instanceof Error ? e.message : e}`);
     } finally {
       setBusy(false);
     }
@@ -75,9 +78,20 @@ function Topbar() {
 }
 
 export function AppLayout() {
-  const { profile, business, signOut } = useAuth();
+  const { profile, profileLoading, profileError, business, signOut } = useAuth();
 
-  if (!profile) return <div className="min-h-full grid place-items-center">Cargando perfil…</div>;
+  if (profileError) {
+    return (
+      <div className="min-h-full grid place-items-center p-6">
+        <div className="space-y-3 text-center max-w-sm">
+          <p className="text-sm text-destructive">{profileError.message}</p>
+          <Button variant="outline" size="sm" onClick={signOut}>Salir</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (profileLoading || !profile) return <div className="min-h-full grid place-items-center">Cargando perfil…</div>;
 
   return (
     <div className="min-h-full flex">
