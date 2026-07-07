@@ -1,6 +1,8 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { navForRole } from "@/session/nav";
+import { BranchGate } from "@/session/BranchGate";
+import { CashGate } from "@/session/CashGate";
 import { Button } from "@/components/ui/button";
 
 export function AppLayout() {
@@ -23,7 +25,11 @@ export function AppLayout() {
           <Button variant="ghost" size="sm" onClick={signOut} className="mt-1 px-0">Salir</Button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto"><Outlet /></main>
+      <main className="flex-1 overflow-auto">
+        <BranchGate businessId={profile.business_id}>
+          <CashGate><Outlet /></CashGate>
+        </BranchGate>
+      </main>
     </div>
   );
 }
