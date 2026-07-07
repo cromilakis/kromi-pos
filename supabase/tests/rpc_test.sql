@@ -128,5 +128,20 @@ begin
   if v_stock <> 7 then raise exception 'NC no repuso stock (esperado 7): %', v_stock; end if;
 end $$;
 
+-- handle_new_user: al insertar en auth.users se crea el espejo en app_user
+do $$
+declare v_uid uuid := '99999999-0000-0000-0000-000000000001'; v_name text;
+begin
+  insert into auth.users (id, email, raw_user_meta_data)
+  values (v_uid, '111111111@pos.kromi.local',
+          jsonb_build_object(
+            'business_id','aaaaaaaa-0000-0000-0000-000000000001',
+            'name','Daniela Soto','rut','11.111.111-1','role','admin'));
+  select name into v_name from public.app_user where id = v_uid;
+  if v_name is distinct from 'Daniela Soto' then
+    raise exception 'espejo app_user no creado o nombre incorrecto: %', v_name;
+  end if;
+end $$;
+
 \echo 'rpc_test (folios+caja) OK'
 rollback;
