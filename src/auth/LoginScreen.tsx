@@ -24,7 +24,9 @@ function fmtRut(raw: string): string {
   return body ? `${body}-${dv}` : dv;
 }
 
-const PIN_LENGTH = 4;
+// PIN de 6 dígitos: es el mínimo de Supabase Auth usado en producción (① backend),
+// no los 4 del prototipo (que era un mockup sin backend real).
+const PIN_LENGTH = 6;
 
 export function LoginScreen() {
   const { signIn } = useAuth();
