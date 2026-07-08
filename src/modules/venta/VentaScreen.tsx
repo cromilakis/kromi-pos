@@ -341,9 +341,10 @@ export function VentaScreen() {
       });
 
       // Venta confirmada en BD: limpiar carrito, refrescar datos e imprimir la boleta.
+      // El diálogo de cobro se cierra al FINAL (en finally), para que el botón quede
+      // en estado "Cobrando…" durante toda la emisión SII + impresión de la boleta.
       const soldLines = cartLines;
       setCart([]);
-      setPayOpen(false);
       qc.invalidateQueries({ queryKey: ["sales-today"] });
       qc.invalidateQueries({ queryKey: ["recent-sales"] });
       qc.invalidateQueries({ queryKey: ["products-with-stock"] });
@@ -389,6 +390,7 @@ export function VentaScreen() {
       toast.error(`No se pudo cobrar la venta: ${e instanceof Error ? e.message : e}`);
     } finally {
       setBusy(false);
+      setPayOpen(false);
     }
   }
 
