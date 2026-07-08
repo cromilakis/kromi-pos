@@ -3,7 +3,6 @@ import { Home, ShoppingCart, Package, Users, Settings, LogOut, type LucideIcon }
 import { useAuth } from "@/auth/AuthProvider";
 import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
-import { useWork } from "@/session/WorkContext";
 import { BranchGate } from "@/session/BranchGate";
 import { Button } from "@/components/ui/button";
 
@@ -42,16 +41,6 @@ function SidebarLink({ item }: { item: NavItem }) {
         </span>
       )}
     </NavLink>
-  );
-}
-
-function Topbar() {
-  const { branch } = useWork();
-
-  return (
-    <div className="h-14 border-b border-[#E1E5EE] bg-white flex items-center justify-between px-6 shrink-0">
-      <div className="text-sm font-bold text-[#0F2A1B]">{branch?.name ?? "Sin sucursal"}</div>
-    </div>
   );
 }
 
@@ -140,7 +129,6 @@ export function AppLayout() {
         </div>
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden bg-[#F7F8FA]">
-        <Topbar />
         <main className="flex-1 overflow-auto">
           <BranchGate businessId={profile.business_id}>
             <Outlet />
