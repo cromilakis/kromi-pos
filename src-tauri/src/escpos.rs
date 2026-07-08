@@ -28,6 +28,7 @@ pub struct ReceiptPayload {
     pub neto: i64,
     pub iva: i64,
     pub total: i64,
+    pub descuento: i64,
     pub metodo: String,
     pub open_drawer: bool,
 }
@@ -222,6 +223,9 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     // totales
     line_lr(&mut b, "Neto", &money(p.neto), COL);
     line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
+    if p.descuento > 0 {
+        line_lr(&mut b, "Descuento", &format!("-{}", money(p.descuento)), COL);
+    }
     nl(&mut b);
     b.extend_from_slice(&[0x1D, 0x21, 0x11]); // doble tamano
     line_lr(&mut b, "TOTAL", &money(p.total), 24);
@@ -498,7 +502,7 @@ mod tests {
             folio: 1234,
             fecha: "27/06/2026".into(), hora: "14:32".into(),
             items: vec![Item { nombre: "Echeveria".into(), qty: 1, precio: 3990 }],
-            neto: 3353, iva: 637, total: 3990,
+            neto: 3353, iva: 637, total: 3990, descuento: 0,
             metodo: metodo.into(), open_drawer: drawer,
         }
     }

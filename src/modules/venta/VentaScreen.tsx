@@ -299,6 +299,7 @@ export function VentaScreen() {
         neto: sale.neto,
         iva: sale.iva,
         total: sale.total,
+        descuento: sale.discount_amount + soldLines.reduce((s, l) => s + resolveDiscount(l.qty * l.product.price, l.disc_kind ?? null, l.disc_value ?? 0), 0),
         metodo: sale.method,
         open_drawer: sale.method === "efectivo",
       };
