@@ -57,9 +57,9 @@ El cliente Tauri **no** llama directo a SimpleFactura.
 ### Datos (migración)
 En `public.sale`, columnas para el DTE (todas opcionales, la venta ya existe):
 - `dte_status` text/enum: `pendiente` | `emitida` | `rechazada` | `error` (default `pendiente`).
-- `dte_folio` int (folio SII asignado).
-- `dte_ted` text (el TED/timbre, para regenerar el PDF417).
-- `dte_track_id` text (seguimiento del envío al SII).
+- `dte_folio` int (folio SII asignado — el número legal de la boleta).
+- `dte_timbre` text (el timbre PNG en base64 que devuelve `/dte/timbre`, para reimprimir).
+- `dte_track_id` text (seguimiento del envío al SII, si la API lo entrega).
 - `emitted_at` timestamptz.
 
 La escritura de estas columnas la hace la Edge Function (server-side, service role
@@ -108,14 +108,34 @@ o RPC), no el cliente.
   (no doble emisión).
 - Tests unitarios del armado del payload DTE (función pura) y del render del timbre.
 
-## Pendiente de detalle (se resuelve en el plan)
+## Detalle técnico de la API (confirmado desde la colección Postman)
 
-- El **JSON exacto** del request de emisión de boleta (DTE 39) y el **formato del
-  campo TED** en la respuesta, tomados del SDK/colección oficial de SimpleFactura
-  (o de la colección Postman/credenciales que provea el usuario) al escribir el plan.
-- Confirmar el **endpoint** exacto de boleta (la doc lista `/invoiceV2/Casa_Matriz`,
-  `/dte/timbre`, `/dte/pdf`, `/dte/xml`, `/documentIssued`).
-- Soporte **PDF417 nativo** de la GEZHI vs. raster.
+- **URL base**: `https://api.simplefactura.cl`. Auth: **Bearer** con el JWT obtenido en `/token`.
+- **Credenciales demo** (públicas, certificación): `email: demo@chilesystems.com`,
+  `password: Rv8Il4eV`. Se guardan como **secrets** de la Edge Function.
+- **`POST /token`** → body `{ "email", "password" }` → devuelve el JWT. Cachear (24h),
+  respetar rate limit (2 req/s, 100 req/min).
+- **`POST /invoiceV2/Casa_Matriz`** (emisión) → body:
+  ```json
+  { "Documento": { "Encabezado": {
+      "IdDoc": { "TipoDTE": 39, "FchEmis": "YYYY-MM-DD", "IndServicioBoleta": 3 },
+      "Emisor": { "RUTEmisor", "RznSocEmisor", "GiroEmisor", "DirOrigen", "CmnaOrigen" },
+      "Receptor": { ... opcional (boleta sin cliente lo omite / usa genérico) },
+      "Totales": { "MntNeto", "IVA", "MntTotal" } },
+    "Detalle": [ { "NroLinDet", "NmbItem", "QtyItem", "UnmdItem", "PrcItem", "MontoItem", "DscItem" } ] } }
+  ```
+  Respuesta: `{ "status", "message", "data": { "tipoDTE": 39, "rutEmisor", "folio", "fechaEmision", "total" } }`.
+  **El folio SII es `data.folio`** (el número legal de la boleta).
+- **`POST /dte/timbre`** → body `{ "credenciales": { "rutEmisor" }, "dteReferenciadoExterno": { "folio", "codigoTipoDte": 39, "ambiente" } }` →
+  respuesta `{ "status", "message", "data": "<PNG en base64>" }`. **El timbre es una imagen PNG**, no un TED en texto.
+- `POST /dte/pdf`, `POST /dte/xml`: PDF/XML completos (respaldo, opcional).
+
+### Impresión del timbre (implicación)
+Como el timbre es un **PNG**, se imprime como **raster ESC/POS** (decodificar el PNG
+y emitir `GS v 0`, reemplazando el `timbre_dummy`). En Rust se usa el crate `image`
+para decodificar/umbralizar el PNG, o se pre-convierte a bitmap 1-bit antes de pasarlo
+a la capa de impresión. Se persiste el PNG (base64) en `sale.dte_timbre` para reimprimir
+sin volver a llamar a la API. (Se descarta PDF417 nativo: la API entrega imagen, no TED.)
 
 ## Fuera de alcance (YAGNI)
 
