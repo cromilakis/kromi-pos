@@ -260,14 +260,17 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     push_text(&mut b, "Res. 80 de 2014 - www.sii.cl"); nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
-    // feed + corte
-    b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
-    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x00]);
-
-    // gaveta solo en efectivo
+    // gaveta solo en efectivo — ANTES del corte, para que el pulso salga con el
+    // documento actual y no quede retenido en el buffer hasta el siguiente ticket.
     if p.open_drawer {
         b.extend_from_slice(&[0x1B, 0x70, 0x00, 0x19, 0xFA]);
     }
+
+    // feed + corte con avance integrado (GS V 66 n): alimenta n puntos y corta.
+    // El avance empuja el buffer de línea de la impresora para que imprima y corte
+    // este ticket en el acto (evita que el corte quede pendiente al siguiente job).
+    b.extend_from_slice(&[0x0A, 0x0A]);
+    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x60]);
     b
 }
 
@@ -369,7 +372,7 @@ pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
 
     // feed + corte (sin gaveta, sin timbre SII: no es documento tributario)
     b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
-    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x00]);
+    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x60]);
     b
 }
 
@@ -422,7 +425,7 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
     b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
-    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x00]); // corte, sin gaveta
+    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x60]); // corte, sin gaveta
     b
 }
 
@@ -477,7 +480,7 @@ pub fn build_credit_note(p: &CreditNotePayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
     b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
-    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x00]);
+    b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x60]);
     b
 }
 
@@ -512,7 +515,7 @@ mod tests {
     fn empieza_con_init_y_termina_con_corte() {
         let b = build(&sample("efectivo", true));
         assert_eq!(&b[0..2], &[0x1B, 0x40]);                 // ESC @
-        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x00]));    // corte
+        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x60]));    // corte
     }
 
     #[test]
@@ -562,7 +565,7 @@ mod tests {
     fn cierre_init_corte_y_sin_gaveta() {
         let b = build_cierre(&sample_cierre(192300));
         assert_eq!(&b[0..2], &[0x1B, 0x40]);              // ESC @
-        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x00])); // corte
+        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x60])); // corte
         // un cierre NO debe abrir la gaveta
         assert!(!contains(&b, &[0x1B, 0x70, 0x00, 0x19, 0xFA]));
     }
@@ -621,7 +624,7 @@ mod tests {
     fn quote_init_corte_sin_gaveta_sin_timbre() {
         let b = build_quote(&sample_quote());
         assert_eq!(&b[0..2], &[0x1B, 0x40]);
-        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x00]));                 // corte
+        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x60]));                 // corte
         assert!(!contains(&b, &[0x1B, 0x70, 0x00, 0x19, 0xFA]));         // sin gaveta
         assert!(!contains(&b, &[0x1D, 0x28, 0x6B]));                     // sin QR/timbre
     }
@@ -654,7 +657,7 @@ mod tests {
     fn nc_init_corte_sin_gaveta() {
         let b = build_credit_note(&sample_nc());
         assert_eq!(&b[0..2], &[0x1B, 0x40]);
-        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x00]));
+        assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x60]));
         assert!(!contains(&b, &[0x1B, 0x70, 0x00, 0x19, 0xFA])); // sin gaveta
     }
 
