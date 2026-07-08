@@ -575,8 +575,8 @@ export function VentaScreen() {
                             {disabled ? "Sin stock" : `${available} disp.`}
                           </span>
                           {p.discount_pct > 0 ? (
-                            <span className="flex flex-col items-end leading-none">
-                              <span className="text-[10px] font-bold text-[#5E6E7E] line-through">{fmtCLP(p.price)}</span>
+                            <span className="flex items-baseline gap-1.5">
+                              <span className="text-[11px] font-bold text-[#5E6E7E] line-through">{fmtCLP(p.price)}</span>
                               <span className="whitespace-nowrap text-base font-black text-[#0a6e36]">{fmtCLP(discountedPrice(p.price, p.discount_pct))}</span>
                             </span>
                           ) : (
