@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { Bookmark, Undo2, Lock, Grid3x3, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -91,6 +92,9 @@ export function VentaScreen() {
   const [heldOpen, setHeldOpen] = useState(false);
   const [totalDisc, setTotalDisc] = useState<{ kind: "pct" | "amount"; value: number } | null>(null);
   const canDiscount = profile?.role === "admin" || profile?.role === "kromi";
+  const [mode, setMode] = useState<"catalogo" | "lectura">("catalogo");
+  const [scanQty, setScanQty] = useState(1);
+  const scanRef = useRef<HTMLInputElement>(null);
 
   const allCustomers = customers ?? [];
 
@@ -202,6 +206,35 @@ export function VentaScreen() {
 
   function setLineDiscount(id: string, kind: "pct" | "amount" | null, value: number) {
     setCart((c) => c.map((x) => (x.id === id ? { ...x, disc_kind: kind, disc_value: value } : x)));
+  }
+
+  function decCartAll(id: string) {
+    setCart((c) => c.filter((x) => x.id !== id));
+  }
+
+  function addToCartQty(p: ProductRow, qty: number) {
+    const current = cart.find((c) => c.id === p.id)?.qty ?? 0;
+    const next = Math.min(current + qty, p.stock);
+    if (next <= 0) {
+      toast.error(`${p.name}: sin stock disponible.`);
+      return;
+    }
+    setCart((c) => {
+      const i = c.findIndex((x) => x.id === p.id);
+      if (i >= 0) { const n = c.slice(); n[i] = { ...n[i], qty: next }; return n; }
+      return [...c, { id: p.id, qty: next }];
+    });
+  }
+
+  function handleScan(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter") return;
+    const match = findByBarcode(allProducts, query);
+    if (match) {
+      addToCartQty(match, Math.max(1, scanQty));
+      setQuery("");
+      setScanQty(1);
+      scanRef.current?.focus();
+    }
   }
 
   async function handleHold() {
@@ -363,6 +396,14 @@ export function VentaScreen() {
               className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#0F2A1B] outline-none"
             />
           </div>
+          <div className="inline-flex gap-1 rounded-full bg-[#F0F2F7] p-1">
+            <button onClick={() => setMode("catalogo")} className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-bold" style={mode === "catalogo" ? { background: "var(--brand)", color: "#fff" } : { color: "#5a6b7e" }}>
+              <Grid3x3 className="size-4" strokeWidth={1.9} /> Catálogo
+            </button>
+            <button onClick={() => setMode("lectura")} className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-bold" style={mode === "lectura" ? { background: "var(--brand)", color: "#fff" } : { color: "#5a6b7e" }}>
+              <ScanLine className="size-4" strokeWidth={1.9} /> Lectura
+            </button>
+          </div>
           <select
             value={customerId ?? ""}
             onChange={(e) => setCustomerId(e.target.value || null)}
@@ -378,24 +419,81 @@ export function VentaScreen() {
           </select>
           <button
             onClick={() => setHeldOpen(true)}
-            className="rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
           >
-            Guardadas{heldSales && heldSales.length > 0 ? ` (${heldSales.length})` : ""}
+            <Bookmark className="size-4" strokeWidth={1.9} /> Guardadas{heldSales && heldSales.length > 0 ? ` (${heldSales.length})` : ""}
           </button>
           <button
             onClick={() => setNcOpen(true)}
-            className="rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
           >
-            Nota de crédito
+            <Undo2 className="size-4" strokeWidth={1.9} /> Nota de crédito
           </button>
           <button
             onClick={() => setCierreOpen(true)}
-            className="rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
           >
-            Cerrar caja
+            <Lock className="size-4" strokeWidth={1.9} /> Cerrar caja
           </button>
         </div>
 
+        {mode === "lectura" ? (
+          <div className="flex min-h-0 flex-1 flex-col pb-4">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5">
+                <span className="text-[12.5px] font-bold text-[#7C95A8]">Cantidad</span>
+                <input value={scanQty || ""} onChange={(e) => setScanQty(Number(e.target.value.replace(/[^\d]/g, "")) || 0)} inputMode="numeric" className="w-16 border-0 bg-transparent text-center text-lg font-black text-[#0F2A1B] outline-none" />
+              </div>
+              <div className="flex flex-1 items-center gap-2.5 rounded-xl border-2 bg-white px-4 py-2.5" style={{ borderColor: "var(--brand)" }}>
+                <ScanLine className="size-5" strokeWidth={1.9} style={{ color: "var(--brand)" }} />
+                <input ref={scanRef} autoFocus value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={handleScan} placeholder="Escanea o escribe el código y presiona Enter…" className="min-w-0 flex-1 border-0 bg-transparent text-base text-[#0F2A1B] outline-none" />
+              </div>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-[#E1E5EE] bg-white">
+              <table className="w-full border-collapse text-[15px]">
+                <thead>
+                  <tr className="bg-[#F7FAF8] text-left text-[11.5px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">
+                    <th className="px-4 py-3">Producto</th>
+                    <th className="px-4 py-3 text-right">P. unit</th>
+                    <th className="px-4 py-3 text-center">Cantidad</th>
+                    <th className="px-4 py-3 text-right">Subtotal</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cartLines.length === 0 && (
+                    <tr><td colSpan={5} className="px-4 py-12 text-center text-[14px] text-[#9aa8bd]">Escanea productos para agregarlos a la venta.</td></tr>
+                  )}
+                  {cartLines.map(({ product, qty }) => (
+                    <tr key={product.id} className="border-t border-[#EEF1F6]">
+                      <td className="px-4 py-3 font-bold text-[#0F2A1B]">{product.name}</td>
+                      <td className="px-4 py-3 text-right text-[#7C95A8]">{fmtCLP(product.price)}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <button onClick={() => decCart(product.id)} className="flex size-7 items-center justify-center rounded-lg border border-[#E1E5EE] bg-white text-[#7C95A8]">–</button>
+                          <span className="min-w-6 text-center font-black text-[#0F2A1B]">{qty}</span>
+                          <button onClick={() => incCart(product.id)} disabled={qty >= product.stock} className="flex size-7 items-center justify-center rounded-lg bg-[#D3F4E0] disabled:opacity-40" style={{ color: "var(--brand)" }}>+</button>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-black text-[#0F2A1B]">{fmtCLP(product.price * qty)}</td>
+                      <td className="px-4 py-3 text-right"><button onClick={() => decCartAll(product.id)} title="Quitar" className="text-[#D02E2E]">🗑</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-3 flex items-center justify-between rounded-2xl border border-[#E1E5EE] bg-white px-5 py-4">
+              <div className="flex items-baseline gap-2">
+                <span className="text-[15px] font-bold text-[#7C95A8]">Total</span>
+                <span className="text-[32px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(totals.total)}</span>
+              </div>
+              <button onClick={() => setPayOpen(true)} disabled={cartLines.length === 0} className="rounded-[14px] px-8 py-4 text-base font-bold text-white disabled:cursor-not-allowed disabled:bg-[#EEF1F6] disabled:text-[#9aa8bd]" style={cartLines.length > 0 ? { background: "var(--brand)" } : undefined}>
+                Cobrar
+              </button>
+            </div>
+          </div>
+        ) : (
+        <>
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {[{ id: "todas", label: "Todas" }, ...allCategories.map((c) => ({ id: c.id, label: c.label }))].map((c) => (
             <button
@@ -462,9 +560,13 @@ export function VentaScreen() {
             </div>
           ))}
         </div>
+        </>
+        )}
       </div>
 
-      <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} canDiscount={canDiscount} totalDisc={totalDisc} onSetTotalDisc={setTotalDisc} onSetLineDisc={setLineDiscount} />
+      {mode === "catalogo" && (
+        <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} canDiscount={canDiscount} totalDisc={totalDisc} onSetTotalDisc={setTotalDisc} onSetLineDisc={setLineDiscount} />
+      )}
 
       <PayDialog open={payOpen} total={totals.total} busy={busy} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />
 
