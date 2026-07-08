@@ -33,7 +33,7 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onPay }: CartProps)
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto px-5 py-1.5">
+      <div className="min-h-0 flex-1 overflow-auto px-5 py-1.5">
         {!hasCart && (
           <div className="flex h-full flex-col items-center justify-center px-5 py-10 text-center text-[#9aa8bd]">
             <div className="text-[15px] font-bold text-[#7C95A8]">Carrito vacío</div>

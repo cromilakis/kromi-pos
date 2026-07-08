@@ -274,8 +274,8 @@ export function VentaScreen() {
 
   return (
     <>
-    <div className="flex min-h-full">
-      <div className="flex min-w-0 flex-1 flex-col px-[22px] pt-[18px]">
+    <div className="flex h-full">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col px-[22px] pt-[18px]">
         <div className="mb-4 flex items-center gap-2.5">
           <div className="inline-flex gap-1 rounded-full bg-[#F0F2F7] p-1">
             <button
@@ -360,7 +360,7 @@ export function VentaScreen() {
           ))}
         </div>
 
-        <div className="flex-1 overflow-auto pb-5">
+        <div className="min-h-0 flex-1 overflow-auto pb-5">
           {isLoading && <div className="py-10 text-center text-[13.5px] text-[#9aa8bd]">Cargando catálogo…</div>}
           {!isLoading && filtered.length === 0 && (
             <div className="flex flex-col items-center justify-center py-[60px] text-center text-[#9aa8bd]">
