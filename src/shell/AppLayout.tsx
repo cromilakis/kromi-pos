@@ -69,7 +69,7 @@ export function AppLayout() {
   const brandName = import.meta.env.VITE_STORE_NAME || "Mi Tienda";
 
   return (
-    <div className="min-h-full flex">
+    <div className="h-full flex">
       <aside className="w-[236px] shrink-0 bg-white border-r border-[#E1E5EE] flex flex-col p-3.5">
         <div className="flex items-center gap-[11px] px-2 pb-4">
           <div className="size-[38px] rounded-xl shrink-0 overflow-hidden shadow-[0_3px_10px_rgba(34,196,99,.28)]">
