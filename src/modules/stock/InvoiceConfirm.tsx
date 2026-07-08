@@ -59,16 +59,28 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
     extraction.lineas.map((l) => ({ ...l, product_id: "", newName: l.description, newCategoryId: "" })),
   );
 
-  // Aplica el mapeo proveedor→código→producto una sola vez, cuando llega (no pisa ediciones del usuario).
+  // Auto-mapeo de cada línea a un producto interno existente, una sola vez, sin pisar
+  // ediciones del usuario. Solo aplica cuando el proveedor ya existe (uno nuevo no tiene
+  // productos previos). La asociación usa el código del proveedor de la línea, ya sea por
+  // el mapeo guardado (supplier_product) o por el código interno con el formato con que se
+  // guarda: {correlativo del proveedor}-{código del proveedor} (ej. 001-00T017).
   const appliedMapRef = useRef(false);
   useEffect(() => {
-    if (appliedMapRef.current || !supplierMap) return;
+    if (appliedMapRef.current) return;
+    if (loadingSupplier) return; // aún resolviendo si el proveedor existe
+    if (existingSupplier && !supplierMap) return; // existe: esperar su mapa de códigos
     appliedMapRef.current = true;
+    if (!existingSupplier) return; // proveedor nuevo: nada previo que mapear
+    const seq3 = existingSupplier.seq != null ? String(existingSupplier.seq).padStart(3, "0") : null;
+    const byInternalCode = new Map<string, string>();
+    for (const p of products ?? []) if (p.internal_code) byInternalCode.set(p.internal_code, p.id);
     setLines((prev) => prev.map((l) => {
-      const pid = supplierMap.get(l.supplier_code);
+      if (!l.supplier_code) return l;
+      const pid = supplierMap?.get(l.supplier_code)
+        ?? (seq3 ? byInternalCode.get(`${seq3}-${l.supplier_code}`) : undefined);
       return pid ? { ...l, product_id: pid } : l;
     }));
-  }, [supplierMap]);
+  }, [loadingSupplier, existingSupplier, supplierMap, products]);
 
   const [submitting, setSubmitting] = useState(false);
 
@@ -259,7 +271,7 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
                           className="min-w-[180px] rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
                           <option value="">Ninguno (Crear nuevo)</option>
                           {(products ?? []).map((p) => (
-                            <option key={p.id} value={p.id}>{p.internal_code ? `${p.internal_code} · ${p.name}` : p.name}</option>
+                            <option key={p.id} value={p.id}>{p.name}</option>
                           ))}
                         </select>
                       </td>
