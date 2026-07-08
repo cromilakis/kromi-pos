@@ -4,7 +4,7 @@
 App de escritorio (Tauri). Resumen breve derivado de `.kromi/init.md`. (Completar al avanzar el wizard.)
 
 ## Stack (fijo)
-Tauri 2 (shell nativo en Rust) + frontend estático (HTML/CSS/JS autocontenido en `src/`, servido vía `frontendDist`). Gestor de paquetes: **pnpm**. Datos en **Supabase/Postgres** (esquema en `supabase/migrations/`; lógica crítica en funciones RPC). Online-only por ahora, esquema preparado para sync.
+Tauri 2 (shell nativo en Rust, `src-tauri/`) + frontend **React + Vite + TypeScript** en `src/` (SPA, `frontendDist` = `dist/`). Estilos con **Tailwind CSS v4** + **shadcn/ui** (Radix bajo el capó, componentes en `src/components/ui/`). Estado de servidor con **TanStack Query**. Gestor de paquetes: **pnpm**. Datos en **Supabase/Postgres** (esquema en `supabase/migrations/`; lógica crítica en funciones RPC; auth vía Supabase Auth con RUT→email sintético). Online-only por ahora, esquema preparado para sync. Ver `docs/frontend.md` para el detalle de la arquitectura del frontend.
 
 ## Estándar de idioma
 Prosa en español; técnico (código, identificadores, claves, flags) en inglés.
@@ -13,9 +13,12 @@ Prosa en español; técnico (código, identificadores, claves, flags) en inglés
 `.kromi/init.md` (funcional) y `.kromi/design.md` (diseño). La implementación debe ser trazable a estos documentos.
 
 ## Comandos
-- `pnpm tauri dev` (o `pnpm dev`) — ventana de desarrollo
-- `pnpm tauri build` (o `pnpm build`) — empaqueta el instalable (macOS/Windows)
-- El frontend vive en `src/` (`index.html` autocontenido); el shell Rust en `src-tauri/`.
+- `pnpm dev` — servidor Vite solo (frontend en el navegador, sin ventana nativa; útil para iterar rápido en UI)
+- `pnpm tauri dev` — ventana de desarrollo Tauri (frontend + shell Rust real)
+- `pnpm test` — corre los tests del frontend (Vitest)
+- `pnpm build` — compila el frontend (`tsc -b && vite build`, genera `dist/`)
+- `pnpm tauri build` — empaqueta el instalable (macOS/Windows)
+- El frontend vive en `src/` (React + Vite, ver `docs/frontend.md`); el shell Rust en `src-tauri/`.
 - `pnpm db:reset` — recrea la base local (migraciones + seed)
 - `pnpm test:db` — corre tests de esquema, RPC y RLS
 - Base de datos: Supabase local (Docker). Ver `supabase/README.md`.
