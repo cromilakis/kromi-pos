@@ -58,13 +58,15 @@ export function InvoiceUpload({ onClose, onDone }: InvoiceUploadProps) {
     <div className="flex justify-center py-4">
       <div className="w-[420px] max-w-full rounded-[20px] border border-[#E1E5EE] bg-white p-6 text-center">
         <div className="mb-1 text-[17px] font-black text-[#0F2A1B]">Cargar desde factura</div>
-        <div className="mb-5 text-[13px] leading-relaxed text-[#7C95A8]">
-          Sube el PDF de la factura del proveedor. La analizaremos automáticamente para armar la recepción de stock.
-        </div>
+        {!busy && (
+          <div className="mb-5 text-[13px] leading-relaxed text-[#7C95A8]">
+            Sube el PDF de la factura del proveedor. La analizaremos automáticamente para armar la recepción de stock.
+          </div>
+        )}
         {busy ? (
           <div className="flex flex-col items-center gap-3 py-7">
             <span className="inline-block h-9 w-9 animate-spin rounded-full" style={{ border: "3px solid #E7EFE8", borderTopColor: "var(--brand)" }} />
-            <div className="text-[14px] font-bold text-[#0F2A1B]">Analizando factura…</div>
+            <div className="text-[14px] font-bold text-[#0F2A1B]">Procesando Factura</div>
             <div className="text-[12px] font-normal text-[#9aa8bd]">Puede tardar unos segundos. Puedes cancelar.</div>
           </div>
         ) : (
