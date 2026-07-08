@@ -42,13 +42,16 @@ function AbrirCajaCard() {
       <div className="mb-1 text-[15px] font-extrabold text-[#0F2A1B]">Abrir caja{register ? ` — ${register.name}` : ""}</div>
       <div className="mb-3 text-[12.5px] text-[#9aa8bd]">Ingresa el fondo inicial para comenzar a vender.</div>
       <div className="flex items-center gap-2">
-        <Input
-          value={floatAmount}
-          inputMode="numeric"
-          onChange={(e) => setFloatAmount(e.target.value)}
-          className="max-w-[160px]"
-          disabled={!register || busy}
-        />
+        <div className="relative max-w-[160px]">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-[#7C95A8]">$</span>
+          <Input
+            value={floatAmount}
+            inputMode="numeric"
+            onChange={(e) => setFloatAmount(e.target.value)}
+            className="pl-7"
+            disabled={!register || busy}
+          />
+        </div>
         <Button onClick={abrir} disabled={!register || busy} style={{ background: "var(--brand)" }}>
           {busy ? "Abriendo…" : "Abrir caja"}
         </Button>

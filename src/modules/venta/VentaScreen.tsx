@@ -49,7 +49,10 @@ function AbrirCajaGate() {
       <Card className="w-full max-w-sm space-y-3 p-6 text-center">
         <h2 className="text-lg font-black text-[#0F2A1B]">La caja está cerrada</h2>
         <p className="text-sm text-[#7C95A8]">Abre la caja para comenzar a registrar ventas de este turno.</p>
-        <Input value={floatAmount} inputMode="numeric" onChange={(e) => setFloatAmount(e.target.value)} disabled={!register || busy} />
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-[#7C95A8]">$</span>
+          <Input value={floatAmount} inputMode="numeric" onChange={(e) => setFloatAmount(e.target.value)} className="pl-7" disabled={!register || busy} />
+        </div>
         <Button className="w-full" style={{ background: "var(--brand)" }} onClick={abrir} disabled={!register || busy}>
           {busy ? "Abriendo…" : "Abrir caja"}
         </Button>
