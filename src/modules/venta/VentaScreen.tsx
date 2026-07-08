@@ -28,7 +28,7 @@ interface CartItem {
 function AbrirCajaGate() {
   const { register } = useWork();
   const qc = useQueryClient();
-  const [floatAmount, setFloatAmount] = useState("50000");
+  const [floatAmount, setFloatAmount] = useState("0");
   const [busy, setBusy] = useState(false);
 
   async function abrir() {

@@ -21,7 +21,7 @@ function fmtHora(iso: string | undefined): string {
 function AbrirCajaCard() {
   const { register } = useWork();
   const qc = useQueryClient();
-  const [floatAmount, setFloatAmount] = useState("50000");
+  const [floatAmount, setFloatAmount] = useState("0");
   const [busy, setBusy] = useState(false);
 
   async function abrir() {
