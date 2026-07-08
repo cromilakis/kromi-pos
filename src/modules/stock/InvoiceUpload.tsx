@@ -62,7 +62,11 @@ export function InvoiceUpload({ onClose, onDone }: InvoiceUploadProps) {
           Sube el PDF de la factura del proveedor. La analizaremos automáticamente para armar la recepción de stock.
         </div>
         {busy ? (
-          <div className="py-7 text-[14px] font-bold text-[#7C95A8]">Analizando factura…<div className="mt-1 text-[12px] font-normal text-[#9aa8bd]">Puede tardar unos segundos. Puedes cancelar.</div></div>
+          <div className="flex flex-col items-center gap-3 py-7">
+            <span className="inline-block h-9 w-9 animate-spin rounded-full" style={{ border: "3px solid #E7EFE8", borderTopColor: "var(--brand)" }} />
+            <div className="text-[14px] font-bold text-[#0F2A1B]">Analizando factura…</div>
+            <div className="text-[12px] font-normal text-[#9aa8bd]">Puede tardar unos segundos. Puedes cancelar.</div>
+          </div>
         ) : (
           <button
             onClick={pickFile}

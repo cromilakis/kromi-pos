@@ -160,7 +160,7 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] rounded-[20px] border border-[#E1E5EE] bg-white p-6">
+    <div className="w-full rounded-[20px] border border-[#E1E5EE] bg-white p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-2.5">
           <span className="text-[17px] font-black text-[#0F2A1B]">Confirmar recepción de factura</span>
@@ -311,10 +311,17 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
           <button
             onClick={handleConfirm}
             disabled={submitting}
-            className="rounded-[11px] px-[18px] py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            className="rounded-[11px] px-[18px] py-2.5 text-sm font-bold text-white disabled:opacity-70"
             style={{ background: "var(--brand)" }}
           >
-            {submitting ? "Guardando…" : "Confirmar recepción"}
+            {submitting ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="inline-block h-4 w-4 animate-spin rounded-full" style={{ border: "2px solid rgba(255,255,255,.4)", borderTopColor: "#fff" }} />
+                Guardando…
+              </span>
+            ) : (
+              "Confirmar recepción"
+            )}
           </button>
         </div>
     </div>
