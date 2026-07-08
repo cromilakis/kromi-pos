@@ -28,6 +28,9 @@ pub struct ReceiptPayload {
     pub iva: i64,
     pub total: i64,
     pub descuento: i64,
+    #[serde(default)] pub dte_folio: Option<u32>,
+    #[serde(default)] pub timbre_png: Option<String>,
+    #[serde(default)] pub reimpresion: bool,
     pub metodo: String,
     pub open_drawer: bool,
 }
@@ -138,6 +141,7 @@ fn qr_native(buf: &mut Vec<u8>, url: &str) {
     buf.extend_from_slice(&[0x1D,0x28,0x6B,0x03,0x00,0x31,0x51,0x30]);      // print
 }
 
+#[allow(dead_code)]
 fn timbre_dummy(buf: &mut Vec<u8>) {
     // raster pseudo-PDF417: 384px de ancho, 12 filas de 5px. Patron deterministico.
     let width = 384usize;
@@ -168,6 +172,38 @@ fn timbre_dummy(buf: &mut Vec<u8>) {
     nl(buf);
 }
 
+/// Imprime un PNG (base64) como raster monocromo ESC/POS (GS v 0), por bandas de
+/// hasta 255 filas. Devuelve false si el base64/PNG es inválido.
+fn timbre_png(buf: &mut Vec<u8>, b64: &str) -> bool {
+    use base64::Engine;
+    let bytes = match base64::engine::general_purpose::STANDARD.decode(b64.trim()) { Ok(b) => b, Err(_) => return false };
+    let img = match image::load_from_memory(&bytes) { Ok(i) => i.to_luma8(), Err(_) => return false };
+    let (w, h) = img.dimensions();
+    let bpr = ((w + 7) / 8) as usize;
+    let mut bits = vec![0u8; bpr * h as usize];
+    for y in 0..h {
+        for x in 0..w {
+            if img.get_pixel(x, y).0[0] < 128 {
+                bits[y as usize * bpr + (x / 8) as usize] |= 0x80 >> (x % 8);
+            }
+        }
+    }
+    let mut y0 = 0u32;
+    while y0 < h {
+        let band = (h - y0).min(255);
+        buf.extend_from_slice(&[0x1D, 0x76, 0x30, 0x00]);
+        buf.push((bpr & 0xFF) as u8); buf.push((bpr >> 8) as u8);
+        buf.push((band & 0xFF) as u8); buf.push((band >> 8) as u8);
+        let start = y0 as usize * bpr;
+        let end = start + band as usize * bpr;
+        buf.extend_from_slice(&bits[start..end]);
+        y0 += band;
+    }
+    nl(buf);
+    true
+}
+
+#[allow(dead_code)]
 fn set_bit(bits: &mut [u8], bpr: usize, x: usize, y0: usize, row_h: usize, width: usize) {
     if x >= width { return; }
     for dy in 0..row_h {
@@ -193,13 +229,22 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     line_center(&mut b, &p.negocio.direccion);
     nl(&mut b);
 
-    // recuadro de folio
+    // recuadro de folio — número del SII si la boleta ya fue emitida; si no, PENDIENTE.
+    let folio_txt = match p.dte_folio {
+        Some(f) => format!("No {}", f),
+        None => "PENDIENTE DE EMISION".to_string(),
+    };
     box_ascii(&mut b, &[
         &format!("R.U.T.: {}", p.negocio.rut),
         "BOLETA ELECTRONICA",
-        &format!("No {}", p.folio),
+        &folio_txt,
     ], 32);
     nl(&mut b);
+    if p.reimpresion {
+        b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+        push_text(&mut b, "** REIMPRESION **"); nl(&mut b);
+        b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+    }
 
     // fecha
     push_text(&mut b, &format!("Fecha: {} {}", p.fecha, p.hora)); nl(&mut b);
@@ -251,13 +296,18 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     push_text(&mut b, &p.negocio.footer); nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
-    // timbre SII (DUMMY v1: barras raster generadas + leyenda fija)
+    // timbre SII: si hay timbre real (PNG de SimpleFactura) se imprime como raster;
+    // si no, la boleta está pendiente de emisión.
     nl(&mut b);
     rule(&mut b, b'-');
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    push_text(&mut b, "Timbre Electronico SII"); nl(&mut b);
-    timbre_dummy(&mut b);
-    push_text(&mut b, "Res. 80 de 2014 - www.sii.cl"); nl(&mut b);
+    match &p.timbre_png {
+        Some(png) if timbre_png(&mut b, png) => {
+            push_text(&mut b, "Timbre Electronico SII"); nl(&mut b);
+            push_text(&mut b, "Res. 80 de 2014 - www.sii.cl"); nl(&mut b);
+        }
+        _ => { push_text(&mut b, "BOLETA PENDIENTE DE EMISION"); nl(&mut b); }
+    }
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
     // gaveta solo en efectivo — ANTES del corte, para que el pulso salga con el
@@ -503,6 +553,7 @@ mod tests {
             fecha: "27/06/2026".into(), hora: "14:32".into(),
             items: vec![Item { nombre: "Echeveria".into(), qty: 1, precio: 3990, descuento: 0 }],
             neto: 3353, iva: 637, total: 3990, descuento: 0,
+            dte_folio: None, timbre_png: None, reimpresion: false,
             metodo: metodo.into(), open_drawer: drawer,
         }
     }
