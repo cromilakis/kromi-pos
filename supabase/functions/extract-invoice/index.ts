@@ -4,6 +4,14 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// CORS: el WebView de Tauri (y el navegador en dev) hace preflight OPTIONS a la
+// función; sin estos headers el fetch falla con "Failed to send a request".
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 // Esquema de extraccion (structured outputs).
 const schema = {
   name: "invoice_extraction",
@@ -27,6 +35,7 @@ const schema = {
 };
 
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     // Cliente con el JWT del usuario (para resolver su business_id vía RLS/RPC).
@@ -86,5 +95,5 @@ Deno.serve(async (req) => {
 });
 
 function json(body: unknown, status: number) {
-  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...corsHeaders } });
 }
