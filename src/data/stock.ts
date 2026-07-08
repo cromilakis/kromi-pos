@@ -125,6 +125,13 @@ export async function updateProduct(
   if (error) throw error;
 }
 
+/** Reasigna la categoría de varios productos en una sola operación. `categoryId` null = "Sin categoría". */
+export async function updateProductsCategory(ids: string[], categoryId: string | null) {
+  if (ids.length === 0) return;
+  const { error } = await supabase.from("product").update({ category_id: categoryId }).in("id", ids);
+  if (error) throw error;
+}
+
 export async function softDeleteProduct(id: string) {
   const { error } = await supabase.from("product").update({ deleted_at: new Date().toISOString() }).eq("id", id);
   if (error) throw error;

@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
-import { useCategories, useProductsWithStock, useSuppliers, softDeleteProduct, upsertInventory } from "@/data/stock";
+import { useCategories, useProductsWithStock, useSuppliers, softDeleteProduct, upsertInventory, updateProductsCategory } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
 import { fmtCLP } from "@/lib/money";
 import { ProductForm } from "./ProductForm";
@@ -51,9 +51,8 @@ export function StockScreen() {
   const [criticalOpen, setCriticalOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ProductRow | null>(null);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [view, setView] = useState<"list" | "cargar" | "facturas">("list");
+  const [view, setView] = useState<"list" | "cargar" | "facturas" | "categorias">("list");
   const [stockView, setStockViewState] = useState<"table" | "blocks">(
     () => (typeof localStorage !== "undefined" && localStorage.getItem("kromi.stockView") === "blocks" ? "blocks" : "table"),
   );
@@ -61,6 +60,12 @@ export function StockScreen() {
     setStockViewState(v);
     try { localStorage.setItem("kromi.stockView", v); } catch { /* no-op */ }
   };
+
+  // Selección múltiple (solo vista Tabla) para recategorización masiva.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [anchorId, setAnchorId] = useState<string | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
+  const [ctxSubmenuOpen, setCtxSubmenuOpen] = useState(false);
 
   const allProducts = products ?? [];
   const allCategories = categories ?? [];
@@ -105,6 +110,73 @@ export function StockScreen() {
     if (none && none.length) out.push({ key: "__none__", label: "Sin categoría", dot: "#9aa8bd", items: none });
     return out;
   }, [filtered, allCategories, catById]);
+
+  // Limpia la selección cuando cambia lo visible (evita rangos sobre filas ya no listadas).
+  useEffect(() => {
+    setSelectedIds(new Set());
+    setAnchorId(null);
+    setCtxMenu(null);
+  }, [query, catFilter, stockView, view]);
+
+  // Cierra el menú contextual con Escape.
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setCtxMenu(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [ctxMenu]);
+
+  function handleRowClick(e: React.MouseEvent, product: ProductRow, index: number) {
+    if (!canManage) return;
+    if (e.shiftKey && anchorId) {
+      const anchorIdx = filtered.findIndex((p) => p.id === anchorId);
+      if (anchorIdx !== -1) {
+        const [a, b] = anchorIdx <= index ? [anchorIdx, index] : [index, anchorIdx];
+        setSelectedIds(new Set(filtered.slice(a, b + 1).map((p) => p.id)));
+        return;
+      }
+    }
+    if (e.ctrlKey || e.metaKey) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(product.id)) next.delete(product.id);
+        else next.add(product.id);
+        return next;
+      });
+      setAnchorId(product.id);
+      return;
+    }
+    setSelectedIds(new Set([product.id]));
+    setAnchorId(product.id);
+  }
+
+  function handleRowContextMenu(e: React.MouseEvent, product: ProductRow) {
+    if (!canManage) return;
+    e.preventDefault();
+    // Si la fila no está en la selección, el menú actúa sobre ella sola.
+    if (!selectedIds.has(product.id)) {
+      setSelectedIds(new Set([product.id]));
+      setAnchorId(product.id);
+    }
+    setCtxSubmenuOpen(false);
+    setCtxMenu({ x: e.clientX, y: e.clientY });
+  }
+
+  async function applyCategoryToSelection(categoryId: string | null) {
+    const ids = [...selectedIds];
+    setCtxMenu(null);
+    if (ids.length === 0) return;
+    try {
+      await updateProductsCategory(ids, categoryId);
+      const label = categoryId ? catById.get(categoryId)?.label ?? "la categoría" : "Sin categoría";
+      toast.success(`${ids.length} ${ids.length === 1 ? "producto movido" : "productos movidos"} a “${label}”.`);
+      setSelectedIds(new Set());
+      setAnchorId(null);
+      refetchAll();
+    } catch (err) {
+      toast.error(`No se pudo cambiar la categoría: ${err instanceof Error ? err.message : err}`);
+    }
+  }
 
   function refetchAll() {
     qc.invalidateQueries({ queryKey: ["products-with-stock", businessId, branchId] });
@@ -183,6 +255,26 @@ export function StockScreen() {
     );
   }
 
+  if (view === "categorias") {
+    return (
+      <div className="relative min-h-full overflow-auto px-[32px] py-[28px]">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[.14em]" style={{ color: "var(--brand)" }}>Mantención</div>
+            <h2 className="m-0 text-[26px] font-black tracking-[-.01em] text-[#0F2A1B]">Categorías</h2>
+          </div>
+          <button onClick={() => setView("list")} className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]">← Volver a stock</button>
+        </div>
+        <CategoryManager
+          categories={allCategories}
+          productCountByCategory={productCountByCategory}
+          businessId={businessId ?? ""}
+          onChanged={refetchCategories}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-full overflow-auto px-[32px] py-[28px]">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
@@ -195,7 +287,7 @@ export function StockScreen() {
         {canManage ? (
           <div className="flex gap-2.5">
             <button
-              onClick={() => setCategoriesOpen(true)}
+              onClick={() => setView("categorias")}
               className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
             >
               Categorías
@@ -324,6 +416,24 @@ export function StockScreen() {
         </div>
       )}
 
+      {stockView === "table" && canManage && !loadingProducts && filtered.length > 0 && (
+        <div className="mb-2.5 flex items-center gap-3 text-[12.5px] text-[#7C95A8]">
+          {selectedIds.size > 0 ? (
+            <>
+              <span className="font-bold text-[#0F2A1B]">
+                {selectedIds.size} {selectedIds.size === 1 ? "seleccionado" : "seleccionados"}
+              </span>
+              <span>· clic derecho para cambiar la categoría</span>
+              <button onClick={() => { setSelectedIds(new Set()); setAnchorId(null); }} className="ml-auto font-bold text-[#7C95A8] hover:text-[#0F2A1B]">
+                Limpiar selección
+              </button>
+            </>
+          ) : (
+            <span>Clic para seleccionar · Shift para rango · Ctrl/Cmd para sumar · clic derecho para cambiar categoría</span>
+          )}
+        </div>
+      )}
+
       {stockView === "table" && !loadingProducts && filtered.length > 0 && (
         <div className="overflow-x-auto rounded-2xl border border-[#E1E5EE] bg-white">
           <table className="w-full border-collapse text-[13px]">
@@ -338,10 +448,21 @@ export function StockScreen() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((p) => {
+              {filtered.map((p, index) => {
                 const low = isLowStock(p);
+                const selected = selectedIds.has(p.id);
                 return (
-                  <tr key={p.id} className="border-t border-[#EEF1F6]">
+                  <tr
+                    key={p.id}
+                    onClick={canManage ? (e) => handleRowClick(e, p, index) : undefined}
+                    onContextMenu={canManage ? (e) => handleRowContextMenu(e, p) : undefined}
+                    className="border-t border-[#EEF1F6]"
+                    style={{
+                      cursor: canManage ? "pointer" : undefined,
+                      background: selected ? "#E6F7EE" : undefined,
+                      userSelect: canManage ? "none" : undefined,
+                    }}
+                  >
                     <td className="px-4 py-2 font-bold text-[#0F2A1B]">
                       <span className="flex items-center gap-2">
                         <span className="truncate">{p.name}</span>
@@ -358,7 +479,7 @@ export function StockScreen() {
                     <td className="px-4 py-2 text-right text-[#9aa8bd]">{p.min_stock > 0 ? p.min_stock : "—"}</td>
                     <td className="px-4 py-2 text-right font-black" style={{ color: low ? "#D02E2E" : "#0F2A1B" }}>{p.stock}</td>
                     {canManage && (
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
                           <button onClick={() => adjustStock(p, -1)} title="Restar 1" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[17px] text-[#7C95A8]">–</button>
                           <button onClick={() => adjustStock(p, 1)} title="Sumar 1" className="flex size-[28px] items-center justify-center rounded-[9px] bg-[#D3F4E0] text-[17px]" style={{ color: "var(--brand)" }}>+</button>
@@ -474,15 +595,49 @@ export function StockScreen() {
         />
       )}
 
-      {categoriesOpen && (
-        <CategoryManager
-          open={categoriesOpen}
-          onClose={() => setCategoriesOpen(false)}
-          categories={allCategories}
-          productCountByCategory={productCountByCategory}
-          businessId={businessId ?? ""}
-          onChanged={refetchCategories}
-        />
+      {ctxMenu && (
+        <div className="fixed inset-0 z-50" onClick={() => setCtxMenu(null)} onContextMenu={(e) => { e.preventDefault(); setCtxMenu(null); }}>
+          <div
+            className="absolute min-w-[210px] rounded-xl border border-[#E1E5EE] bg-white py-1.5 shadow-[0_12px_40px_rgba(15,42,27,.18)]"
+            style={{ left: ctxMenu.x, top: ctxMenu.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[.08em] text-[#9aa8bd]">
+              {selectedIds.size} {selectedIds.size === 1 ? "producto" : "productos"}
+            </div>
+            <div
+              className="relative"
+              onMouseEnter={() => setCtxSubmenuOpen(true)}
+              onMouseLeave={() => setCtxSubmenuOpen(false)}
+            >
+              <button className="flex w-full items-center justify-between gap-3 px-3.5 py-2 text-left text-[13.5px] font-bold text-[#2A3A2E] hover:bg-[#F2F7F4]">
+                <span>Categoría</span>
+                <span className="text-[#9aa8bd]">▸</span>
+              </button>
+              {ctxSubmenuOpen && (
+                <div className="absolute left-full top-0 ml-0.5 max-h-[320px] min-w-[190px] overflow-auto rounded-xl border border-[#E1E5EE] bg-white py-1.5 shadow-[0_12px_40px_rgba(15,42,27,.18)]">
+                  {allCategories.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => applyCategoryToSelection(c.id)}
+                      className="flex w-full items-center gap-2 px-3.5 py-2 text-left text-[13.5px] font-bold text-[#2A3A2E] hover:bg-[#F2F7F4]"
+                    >
+                      <span className="size-2.5 shrink-0 rounded-full" style={{ background: c.dot ?? "#7C95A8" }} />
+                      <span className="truncate">{c.label}</span>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => applyCategoryToSelection(null)}
+                    className="mt-1 flex w-full items-center gap-2 border-t border-[#F0F2F7] px-3.5 py-2 text-left text-[13.5px] font-bold text-[#7C95A8] hover:bg-[#F2F7F4]"
+                  >
+                    <span className="size-2.5 shrink-0 rounded-full bg-[#9aa8bd]" />
+                    <span>Sin categoría</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {confirmDeleteId && (
