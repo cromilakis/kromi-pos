@@ -25,9 +25,9 @@ create table public.purchase_invoice (
   doc_type    text,
   folio       text not null,
   issued_at   date,
-  neto        int not null default 0,
-  iva         int not null default 0,
-  total       int not null default 0,
+  neto        int not null default 0 check (neto >= 0),
+  iva         int not null default 0 check (iva >= 0),
+  total       int not null default 0 check (total >= 0),
   pdf_path    text,
   created_by  uuid references public.app_user(id) on delete set null,
   created_at  timestamptz not null default now(),
@@ -152,3 +152,7 @@ create policy purchase_invoices_insert on storage.objects for insert to authenti
     and (storage.foldername(name))[1] = public.current_business_id()::text);
 
 grant execute on function public.recepcionar_factura(uuid, jsonb, jsonb, jsonb, text) to authenticated;
+
+-- Las tablas nuevas necesitan GRANT explícito (el grant amplio de ① no las cubre;
+-- se crearon después). La escritura sigue solo por RPC (sin policies de write).
+grant select on public.supplier_product, public.purchase_invoice, public.purchase_invoice_line to authenticated;
