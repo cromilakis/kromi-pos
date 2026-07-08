@@ -557,7 +557,7 @@ export function VentaScreen() {
                       className="relative flex flex-col overflow-hidden rounded-2xl border border-[#E1E5EE] bg-white text-left disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {p.discount_pct > 0 && (
-                        <span className="absolute left-2 top-2 z-10 rounded-full bg-[#0a6e36] px-2 py-0.5 text-[11px] font-black text-white">
+                        <span className="absolute right-2 top-2 z-10 rounded-full bg-[#0a6e36] px-2 py-0.5 text-[11px] font-black text-white">
                           -{p.discount_pct}%
                         </span>
                       )}
