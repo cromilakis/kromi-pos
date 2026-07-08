@@ -58,6 +58,49 @@ Cada ítem del menú (`src/session/nav.ts`) hoy renderiza un `Placeholder` (`src
 6. Impresión térmica (ESC/POS) ya vive en Rust (`src-tauri/src/printing.rs`); desde React se invoca vía `@tauri-apps/api` (`invoke(...)`) — no reimplementar lógica de impresión en el frontend.
 7. Textos de UI en español; identificadores/código en inglés (estándar del proyecto, ver `CLAUDE.md`).
 
+## Recepción de compras por factura
+
+Módulo de Stock que permite cargar una factura de compra (PDF) de un proveedor, extraer sus datos automáticamente con IA, confirmarlos y sumar el stock recibido — sin digitar la factura línea por línea.
+
+### Flujo
+
+1. **Subir PDF** (`src/modules/stock/InvoiceUpload.tsx`, botón "Cargar desde factura" en `StockScreen`): el usuario elige el PDF de la factura del proveedor.
+2. **Extracción con IA** (`extractInvoice` en `src/data/purchases.ts`): el frontend invoca la edge function `extract-invoice` (`supabase.functions.invoke("extract-invoice", { body: form })`) enviando el PDF como `multipart/form-data`. La función:
+   - archiva el PDF en el bucket privado `purchase-invoices` (ruta `{business_id}/{uuid}.pdf`, RLS por negocio);
+   - sube el PDF a OpenAI Files y llama la **Responses API** con el modelo **`gpt-5-nano`** y un `json_schema` estricto (structured outputs) para extraer proveedor (razón social, RUT), datos del documento (tipo, folio, fecha, neto, IVA, total) y las líneas (código del proveedor, descripción, cantidad, costo unitario, total de línea);
+   - devuelve `{ pdf_path, extraction }` al cliente.
+3. **Pantalla de confirmación** (`src/modules/stock/InvoiceConfirm.tsx`): muestra los datos extraídos para revisión/edición antes de confirmar. Resuelve el proveedor por RUT (`useSupplierByRut`) — si no existe, se crea uno nuevo al confirmar — y mapea cada línea a un producto existente usando el mapeo proveedor→código guardado en `supplier_product` (`useSupplierProductMap`); si una línea no tiene mapeo, permite crear el producto nuevo.
+4. **Confirmar → RPC `recepcionar_factura`** (`recepcionarFactura` en `src/data/purchases.ts`, ver más abajo): registra la factura y sus líneas, actualiza/crea el mapeo `supplier_product` (código de proveedor → producto + último costo) y **suma el stock** de cada línea en la sucursal activa (`inventory.stock`), todo en una sola transacción atómica en la base.
+5. La factura queda **archivada y descargable**: `usePurchaseInvoices` lista las últimas facturas del negocio y `invoiceDownloadUrl` genera una signed URL (60s) del PDF en `purchase-invoices` para verla/descargarla.
+6. En facturas siguientes del **mismo proveedor**, las líneas cuyo código ya esté en `supplier_product` se **auto-mapean** al producto correspondiente (y se actualiza `last_cost`), evitando volver a mapear manualmente.
+
+### Configurar `OPENAI_API_KEY`
+
+La edge function `extract-invoice` (`supabase/functions/extract-invoice/index.ts`) requiere `OPENAI_API_KEY` (además de `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`, ya presentes en el entorno de Supabase).
+
+- **Local**: crear `supabase/functions/.env` (ver `supabase/functions/extract-invoice/.env.example`; el archivo `.env` está en `.gitignore`, nunca se commitea) con:
+  ```
+  OPENAI_API_KEY=sk-...
+  ```
+  y servir la función con ese archivo de entorno:
+  ```
+  supabase functions serve extract-invoice --env-file supabase/functions/.env
+  ```
+- **Cloud** (proyecto desplegado): configurar el secreto con la CLI, no en el repo:
+  ```
+  supabase secrets set OPENAI_API_KEY=sk-...
+  ```
+
+Sin red o sin la key configurada, la extracción automática falla (la función devuelve `{ error }` y el frontend muestra un toast), pero el resto de la app (BD, RLS, RPC) funciona igual — solo se ve afectada la carga por PDF.
+
+### Tablas y RPC (migración `supabase/migrations/20260707130000_purchases.sql`)
+
+- **`supplier_product`**: mapeo persistente `(supplier_id, supplier_code)` único → `product_id`, más `last_cost` (último costo pagado por ese proveedor/código). Es lo que habilita el auto-mapeo en facturas siguientes del mismo proveedor.
+- **`purchase_invoice`**: cabecera de la factura recibida (proveedor, sucursal, tipo/folio/fecha de documento, neto/IVA/total, `pdf_path` al PDF archivado). `unique (business_id, supplier_id, folio)` evita duplicar la misma factura.
+- **`purchase_invoice_line`**: líneas de la factura (producto, código del proveedor, descripción, cantidad, costo unitario, total de línea) — historial de costos de compra.
+- **RPC `recepcionar_factura(p_branch, p_supplier, p_doc, p_lines, p_pdf_path)`** (`security definer`, atómica): valida que la sucursal pertenezca al negocio del usuario, crea el proveedor si no existe, inserta la cabecera y las líneas, hace upsert de `supplier_product` (mapeo + último costo) y **suma stock** en `inventory` por cada línea (`on conflict ... do update set stock = stock + qty`). Es el único camino de escritura: las tres tablas tienen RLS habilitado con políticas de **solo lectura** por `business_id` (o `is_kromi()`); no hay políticas de `insert`/`update` para el cliente, todo pasa por esta función `grant`eada a `authenticated`.
+- El bucket de Storage `purchase-invoices` es privado, con políticas de `select`/`insert` restringidas a la carpeta `{business_id}/...` del usuario autenticado.
+
 ## Nota: alta de personal requiere edge function
 
 Crear usuarios nuevos (personal con RUT+PIN) requiere la **secret key** de Supabase (`service_role`), que no debe exponerse nunca en el cliente. Esta funcionalidad **debe implementarse como una Supabase Edge Function** dedicada (invocada desde el frontend con la sesión del admin autenticado, pero ejecutando la creación de usuario del lado del servidor con la secret key). No existe todavía en este repo; se diseña como pieza aparte en el sub-proyecto ③ o posterior.
