@@ -1,5 +1,23 @@
 import { describe, it, expect } from "vitest";
-import { normalizeExtraction, checkLineTotal, totalsMatch } from "./invoice";
+import { normalizeExtraction, checkLineTotal, totalsMatch, toIsoDate } from "./invoice";
+
+describe("toIsoDate", () => {
+  it("convierte dd/mm/yyyy a ISO YYYY-MM-DD", () => {
+    expect(toIsoDate("02/07/2026")).toBe("2026-07-02");
+  });
+  it("convierte d/m/yyyy (sin ceros) a ISO YYYY-MM-DD", () => {
+    expect(toIsoDate("2/7/2026")).toBe("2026-07-02");
+  });
+  it("deja igual una fecha ya en ISO YYYY-MM-DD", () => {
+    expect(toIsoDate("2026-07-02")).toBe("2026-07-02");
+  });
+  it("devuelve vacío si la entrada es vacía", () => {
+    expect(toIsoDate("")).toBe("");
+  });
+  it("deja la fecha igual si el formato no se reconoce", () => {
+    expect(toIsoDate("fecha inválida")).toBe("fecha inválida");
+  });
+});
 
 describe("normalizeExtraction", () => {
   it("coacciona montos a enteros y conserva líneas", () => {

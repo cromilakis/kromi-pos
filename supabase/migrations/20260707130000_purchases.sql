@@ -31,7 +31,7 @@ create table public.purchase_invoice (
   pdf_path    text,
   created_by  uuid references public.app_user(id) on delete set null,
   created_at  timestamptz not null default now(),
-  unique (business_id, supplier_id, folio)
+  unique (business_id, supplier_id, doc_type, folio)
 );
 
 create table public.purchase_invoice_line (
@@ -42,7 +42,7 @@ create table public.purchase_invoice_line (
   description   text,
   qty           int not null check (qty > 0),
   unit_cost     int not null check (unit_cost >= 0),
-  line_total    int not null
+  line_total    int not null check (line_total >= 0)
 );
 
 -- Triggers updated_at (reutiliza public.set_updated_at de ①)

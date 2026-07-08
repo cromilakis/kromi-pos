@@ -78,7 +78,7 @@ Módulo de Stock que permite cargar una factura de compra (PDF) de un proveedor,
 
 La edge function `extract-invoice` (`supabase/functions/extract-invoice/index.ts`) requiere `OPENAI_API_KEY` (además de `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`, ya presentes en el entorno de Supabase).
 
-- **Local**: crear `supabase/functions/.env` (ver `supabase/functions/extract-invoice/.env.example`; el archivo `.env` está en `.gitignore`, nunca se commitea) con:
+- **Local**: crear `supabase/functions/.env` (ver `supabase/functions/.env.example`; el archivo `.env` está en `.gitignore`, nunca se commitea) con:
   ```
   OPENAI_API_KEY=sk-...
   ```

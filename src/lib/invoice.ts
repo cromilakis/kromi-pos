@@ -7,12 +7,30 @@ export interface Extraction {
 
 const int = (n: unknown) => Math.round(Number(n) || 0);
 
+const DD_MM_YYYY = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Normaliza una fecha de factura chilena a ISO YYYY-MM-DD.
+ * - "dd/mm/yyyy" (o "d/m/yyyy") -> "yyyy-mm-dd"
+ * - ya en ISO "yyyy-mm-dd" -> se deja igual
+ * - formato no reconocido -> se deja igual (sin lanzar)
+ */
+export function toIsoDate(s: string): string {
+  if (!s) return s;
+  if (ISO_DATE.test(s)) return s;
+  const m = DD_MM_YYYY.exec(s);
+  if (!m) return s;
+  const [, d, mo, y] = m;
+  return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
+}
+
 export function normalizeExtraction(raw: any): Extraction {
   return {
     proveedor: { razon_social: String(raw?.proveedor?.razon_social ?? "").trim(), rut: String(raw?.proveedor?.rut ?? "").trim() },
     documento: {
       tipo: String(raw?.documento?.tipo ?? ""), folio: String(raw?.documento?.folio ?? ""),
-      fecha: String(raw?.documento?.fecha ?? ""),
+      fecha: toIsoDate(String(raw?.documento?.fecha ?? "")),
       neto: int(raw?.documento?.neto), iva: int(raw?.documento?.iva), total: int(raw?.documento?.total),
     },
     lineas: (raw?.lineas ?? []).map((l: any) => ({
