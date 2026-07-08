@@ -108,5 +108,29 @@ begin
     raise exception 'colisión: el código de respaldo se repitió entre facturas: %', v_new_code2; end if;
 end $$;
 
+-- Código de proveedor REPETIDO en varias líneas de la MISMA factura: debe crear
+-- UN solo producto y SUMAR el stock, sin unique_violation (fix del 409).
+do $$
+declare v_pid uuid; v_stock int; v_n int;
+begin
+  perform public.recepcionar_factura(
+    'bc000000-0000-0000-0000-000000000001',
+    '{"razon_social":"Repetido SA","rut":"76.555.444-2"}'::jsonb,
+    '{"doc_type":"factura","folio":"7000","issued_at":"2026-07-05","neto":3000,"iva":570,"total":3570}'::jsonb,
+    jsonb_build_array(
+      jsonb_build_object('new_product', jsonb_build_object('name','DUP A','category_id','ca000000-0000-0000-0000-000000000001'), 'supplier_code','DUP1','description','dup a','qty',2,'unit_cost',500,'line_total',1000),
+      jsonb_build_object('new_product', jsonb_build_object('name','DUP A (repetida)','category_id','ca000000-0000-0000-0000-000000000001'), 'supplier_code','DUP1','description','dup a','qty',4,'unit_cost',500,'line_total',2000)
+    ),
+    'bb000000-0000-0000-0000-000000000001/dup.pdf');
+
+  -- Un solo producto creado para ese proveedor (no dos con el mismo internal_code)
+  select count(*) into v_n from public.product p join public.supplier s on s.id=p.supplier_id where s.rut='76.555.444-2';
+  if v_n <> 1 then raise exception 'esperaba 1 producto creado para código repetido, got %', v_n; end if;
+  -- Stock sumado: 2 + 4 = 6
+  select product_id into v_pid from public.supplier_product where supplier_code='DUP1';
+  select stock into v_stock from public.inventory where product_id=v_pid and branch_id='bc000000-0000-0000-0000-000000000001';
+  if v_stock <> 6 then raise exception 'stock esperado 6 para código repetido, got %', v_stock; end if;
+end $$;
+
 \echo 'purchases_test OK'
 rollback;
