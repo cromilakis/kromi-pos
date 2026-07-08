@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -8,32 +8,17 @@ import type { ProductRow } from "@/data/stock";
 import { fmtCLP } from "@/lib/money";
 import { ProductForm } from "./ProductForm";
 import { CategoryManager } from "./CategoryManager";
-import { InvoiceUpload } from "./InvoiceUpload";
-import { PurchaseInvoicesList } from "@/modules/compras/PurchaseInvoicesList";
+import { StockLoad } from "./StockLoad";
+import { PurchaseInvoicesScreen } from "@/modules/compras/PurchaseInvoicesScreen";
 
 /** Bajo mínimo: mismo criterio que la alerta de Inicio (min_stock configurado y stock en o bajo el mínimo). */
 function isLowStock(p: ProductRow): boolean {
   return p.min_stock > 0 && p.stock <= p.min_stock;
 }
 
-interface ImportRow { id: string; name: string; current: number; add: number; next: number; }
-interface ImportPreview { rows: ImportRow[]; unknown: string[]; fileName: string; error: string | null; }
-
 function csvCell(v: string | number): string {
   const s = String(v ?? "");
   return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}
-
-function parseStockCsv(text: string): { codigo: string; cantidad: number }[] {
-  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  const out: { codigo: string; cantidad: number }[] = [];
-  lines.forEach((line, i) => {
-    const cells = line.split(/[,;]/).map((c) => c.trim().replace(/^"|"$/g, ""));
-    if (i === 0 && Number.isNaN(parseInt(cells[1], 10))) return; // encabezado
-    if (cells.length < 2) return;
-    out.push({ codigo: cells[0], cantidad: parseInt(cells[1], 10) });
-  });
-  return out;
 }
 
 function downloadCsv(filename: string, header: string[], rows: (string | number)[][]) {
@@ -68,8 +53,7 @@ export function StockScreen() {
   const [editing, setEditing] = useState<ProductRow | null>(null);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
-  const [view, setView] = useState<"list" | "recepcion">("list");
+  const [view, setView] = useState<"list" | "cargar" | "facturas">("list");
   const [stockView, setStockViewState] = useState<"table" | "blocks">(
     () => (typeof localStorage !== "undefined" && localStorage.getItem("kromi.stockView") === "blocks" ? "blocks" : "table"),
   );
@@ -77,8 +61,6 @@ export function StockScreen() {
     setStockViewState(v);
     try { localStorage.setItem("kromi.stockView", v); } catch { /* no-op */ }
   };
-  const [invoiceListOpen, setInvoiceListOpen] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const allProducts = products ?? [];
   const allCategories = categories ?? [];
@@ -169,85 +151,34 @@ export function StockScreen() {
     downloadCsv(`stock-critico-${stamp}.csv`, header, rows);
   }
 
-  function pickFile() {
-    if (fileRef.current) {
-      fileRef.current.value = "";
-      fileRef.current.click();
-    }
-  }
-
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const entries = parseStockCsv(String(reader.result ?? ""));
-        const byId = new Map(allProducts.map((p) => [p.id, p]));
-        const adds = new Map<string, number>();
-        const unknown: string[] = [];
-        for (const en of entries) {
-          if (!en.codigo || !(en.cantidad > 0)) continue;
-          const p = byId.get(en.codigo);
-          if (!p) {
-            unknown.push(en.codigo);
-            continue;
-          }
-          adds.set(p.id, (adds.get(p.id) ?? 0) + en.cantidad);
-        }
-        const rows: ImportRow[] = [...adds.entries()].map(([id, add]) => {
-          const p = byId.get(id)!;
-          return { id, name: p.name, current: p.stock, add, next: p.stock + add };
-        });
-        setImportPreview({ rows, unknown, fileName: file.name, error: null });
-      } catch (err) {
-        setImportPreview({ rows: [], unknown: [], fileName: file.name, error: `No se pudo leer el archivo: ${err instanceof Error ? err.message : "formato inválido"}` });
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  async function confirmImport() {
-    if (!importPreview || !importPreview.rows.length || !branchId) {
-      setImportPreview(null);
-      return;
-    }
-    try {
-      await Promise.all(importPreview.rows.map((r) => upsertInventory(r.id, branchId, r.next)));
-      toast.success(`Stock actualizado para ${importPreview.rows.length} producto(s).`);
-      setImportPreview(null);
-      refetchAll();
-    } catch (e) {
-      toast.error(`No se pudo aplicar la carga de stock: ${e instanceof Error ? e.message : e}`);
-    }
-  }
-
   const showCriticalBanner = canManage && lowStockList.length > 0;
 
-  if (view === "recepcion") {
+  if (view === "cargar") {
     return (
       <div className="relative min-h-full overflow-auto px-[32px] py-[28px]">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[.14em]" style={{ color: "var(--brand)" }}>
-              Mantención
-            </div>
-            <h2 className="m-0 text-[26px] font-black tracking-[-.01em] text-[#0F2A1B]">Cargar desde factura</h2>
+            <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[.14em]" style={{ color: "var(--brand)" }}>Mantención</div>
+            <h2 className="m-0 text-[26px] font-black tracking-[-.01em] text-[#0F2A1B]">Cargar stock</h2>
           </div>
-          <button
-            onClick={() => setView("list")}
-            className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
-          >
-            ← Volver a stock
-          </button>
+          <button onClick={() => setView("list")} className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]">← Volver a stock</button>
         </div>
-        <InvoiceUpload
-          onClose={() => setView("list")}
-          onDone={() => {
-            setView("list");
-            refetchAll();
-          }}
-        />
+        <StockLoad onClose={() => setView("list")} onDone={() => { setView("list"); refetchAll(); }} />
+      </div>
+    );
+  }
+
+  if (view === "facturas") {
+    return (
+      <div className="relative min-h-full overflow-auto px-[32px] py-[28px]">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[.14em]" style={{ color: "var(--brand)" }}>Compras</div>
+            <h2 className="m-0 text-[26px] font-black tracking-[-.01em] text-[#0F2A1B]">Facturas de compra</h2>
+          </div>
+          <button onClick={() => setView("list")} className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]">← Volver a stock</button>
+        </div>
+        <PurchaseInvoicesScreen businessId={businessId} />
       </div>
     );
   }
@@ -270,23 +201,15 @@ export function StockScreen() {
               Categorías
             </button>
             <button
-              onClick={pickFile}
-              title="Sumar stock desde un archivo CSV"
+              onClick={() => setView("cargar")}
+              title="Cargar stock desde CSV o factura PDF"
               className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
             >
               Cargar stock
             </button>
-            <input ref={fileRef} type="file" accept=".csv" onChange={onFile} className="hidden" />
             <button
-              onClick={() => setView("recepcion")}
-              title="Recepcionar una compra a partir del PDF de la factura"
-              className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
-            >
-              Cargar desde factura
-            </button>
-            <button
-              onClick={() => setInvoiceListOpen(true)}
-              title="Ver y descargar las facturas de compra archivadas"
+              onClick={() => setView("facturas")}
+              title="Ver y filtrar las facturas de compra archivadas"
               className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
             >
               Facturas de compra
@@ -551,8 +474,6 @@ export function StockScreen() {
         />
       )}
 
-      {invoiceListOpen && <PurchaseInvoicesList businessId={businessId} onClose={() => setInvoiceListOpen(false)} />}
-
       {categoriesOpen && (
         <CategoryManager
           open={categoriesOpen}
@@ -583,56 +504,6 @@ export function StockScreen() {
         </div>
       )}
 
-      {importPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={() => setImportPreview(null)}>
-          <div className="max-h-[80vh] w-[480px] max-w-full overflow-auto rounded-[20px] bg-white p-5" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-1 text-[17px] font-black text-[#0F2A1B]">Cargar stock</div>
-            <div className="mb-3 text-[12.5px] text-[#7C95A8]">{importPreview.fileName}</div>
-            {importPreview.error && (
-              <div className="mb-3 rounded-xl bg-[#FDECEC] px-3.5 py-2.5 text-[13.5px] font-semibold text-[#9a2533]">{importPreview.error}</div>
-            )}
-            {importPreview.rows.length > 0 && (
-              <>
-                <div className="mb-2.5 text-[13px] text-[#7C95A8]">
-                  Se sumarán al stock actual <b className="text-[#0F2A1B]">{importPreview.rows.length}</b> productos:
-                </div>
-                {importPreview.rows.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between gap-2 border-b border-[#F0F2F7] py-2 text-[13.5px] last:border-0">
-                    <span className="truncate font-semibold text-[#0F2A1B]">{r.name}</span>
-                    <span className="whitespace-nowrap text-[#7C95A8]">
-                      {r.current} + {r.add} → <b className="text-[#0F2A1B]">{r.next}</b>
-                    </span>
-                  </div>
-                ))}
-              </>
-            )}
-            {!importPreview.error && importPreview.rows.length === 0 && (
-              <div className="text-[13.5px] text-[#9aa8bd]">No se encontraron filas válidas en el archivo.</div>
-            )}
-            {importPreview.unknown.length > 0 && (
-              <div className="mt-3.5 rounded-xl bg-[#FBF1E0] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[#9a6a1e]">
-                <b>{importPreview.unknown.length}</b> código(s) no reconocido(s) (se ignoran): {importPreview.unknown.join(", ")}
-              </div>
-            )}
-            <div className="mt-4 flex justify-end gap-2.5">
-              <button
-                onClick={() => setImportPreview(null)}
-                className="rounded-[11px] border border-[#E1E5EE] bg-white px-[18px] py-2.5 text-sm font-bold text-[#2A3A2E]"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmImport}
-                disabled={!importPreview.rows.length}
-                className="rounded-[11px] px-[18px] py-2.5 text-sm font-bold text-white disabled:opacity-50"
-                style={{ background: "var(--brand)" }}
-              >
-                Confirmar carga
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
