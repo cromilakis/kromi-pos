@@ -497,10 +497,19 @@ export function VentaScreen() {
                 </tbody>
               </table>
             </div>
-            <div className="mt-3 flex items-center justify-between rounded-2xl border border-[#E1E5EE] bg-white px-5 py-4">
-              <div className="flex items-baseline gap-2">
-                <span className="text-[15px] font-bold text-[#556A7C]">Total</span>
-                <span className="text-[32px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(totals.total)}</span>
+            <div className="mt-3 flex items-center justify-between gap-6 rounded-2xl border border-[#E1E5EE] bg-white px-5 py-4">
+              <div className="flex items-center gap-6">
+                <div className="text-[13px] text-[#556A7C]">
+                  <div className="flex justify-between gap-4"><span>Subtotal</span><span>{fmtCLP(totals.neto)}</span></div>
+                  <div className="flex justify-between gap-4"><span>IVA 19%</span><span>{fmtCLP(totals.iva)}</span></div>
+                  {totals.discount > 0 && (
+                    <div className="flex justify-between gap-4 font-bold text-[#D02E2E]"><span>Descuento</span><span>-{fmtCLP(totals.discount)}</span></div>
+                  )}
+                </div>
+                <div className="flex items-baseline gap-2 border-l border-[#EEF1F6] pl-6">
+                  <span className="text-[15px] font-bold text-[#556A7C]">Total</span>
+                  <span className="text-[32px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(totals.total)}</span>
+                </div>
               </div>
               <button onClick={() => setPayOpen(true)} disabled={cartLines.length === 0} className="rounded-[14px] px-8 py-4 text-base font-bold text-white disabled:cursor-not-allowed disabled:bg-[#EEF1F6] disabled:text-[#5E6E7E]" style={cartLines.length > 0 ? { background: "var(--brand)" } : undefined}>
                 Cobrar
