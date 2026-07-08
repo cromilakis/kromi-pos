@@ -129,7 +129,7 @@ export function PayDialog({ open, total, busy, onClose, onConfirm }: PayDialogPr
               className="flex-1 rounded-2xl py-3.5 text-[15px] font-bold text-white disabled:opacity-50"
               style={{ background: "var(--brand)" }}
             >
-              {busy ? "Cobrando…" : "Confirmar cobro"}
+              {busy ? "Emitiendo boleta…" : "Confirmar cobro"}
             </button>
           </div>
         </div>
