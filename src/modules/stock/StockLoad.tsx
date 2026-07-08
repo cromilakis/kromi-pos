@@ -77,7 +77,11 @@ export function StockLoad({ onClose, onDone }: StockLoadProps) {
   }
 
   async function confirmCsv() {
-    if (!csv || !csv.result.rows.length || !branchId) return;
+    if (!csv || !csv.result.rows.length) return;
+    if (!branchId) {
+      toast.error("No hay sucursal seleccionada.");
+      return;
+    }
     setApplying(true);
     try {
       await Promise.all(csv.result.rows.map((r) => upsertInventory(r.id, branchId, r.next)));
