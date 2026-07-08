@@ -79,26 +79,25 @@ export function AppLayout() {
   return (
     <div className="h-full flex">
       <aside className={`shrink-0 bg-white border-r border-[#E1E5EE] flex flex-col ${collapsed ? "w-[68px] p-2" : "w-[236px] p-3.5"}`}>
-        {isVenta && (
-          <button
-            type="button"
-            onClick={() => setSidebarOpen((o) => !o)}
-            title={collapsed ? "Expandir menú" : "Contraer menú"}
-            className={`mb-1.5 flex size-[38px] items-center justify-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#7C95A8] hover:bg-[#F7F8FA] ${collapsed ? "self-center" : "self-end"}`}
-          >
-            <Menu className="size-[18px]" strokeWidth={1.9} />
-          </button>
-        )}
-
-        <div className={`pb-4 ${collapsed ? "flex justify-center" : "flex items-center gap-[11px] px-2"}`}>
+        <div className={`pb-4 ${collapsed ? "flex flex-col items-center gap-2" : "flex items-center gap-[11px] px-2"}`}>
           <div className="size-[38px] rounded-xl shrink-0 overflow-hidden shadow-[0_3px_10px_rgba(34,196,99,.28)]">
             <img src="/logo.png" alt="Logo" className="size-full object-cover" />
           </div>
           {!collapsed && (
-            <div className="min-w-0 leading-[1.1]">
+            <div className="min-w-0 flex-1 leading-[1.1]">
               <div className="font-black text-[16px] text-[#0F2A1B] truncate">{brandName}</div>
               <div className="text-[11px] font-medium text-[#7C95A8]">Punto de venta</div>
             </div>
+          )}
+          {isVenta && (
+            <button
+              type="button"
+              onClick={() => setSidebarOpen((o) => !o)}
+              title={collapsed ? "Expandir menú" : "Contraer menú"}
+              className="flex size-[34px] shrink-0 items-center justify-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#7C95A8] hover:bg-[#F7F8FA]"
+            >
+              <Menu className="size-[17px]" strokeWidth={1.9} />
+            </button>
           )}
         </div>
 
