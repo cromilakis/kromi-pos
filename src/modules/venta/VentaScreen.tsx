@@ -8,6 +8,7 @@ import { useProductsWithStock, useCategories } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
 import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
+import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data/heldSales";
 import { cobrarVenta, cartToLines } from "@/data/sales";
 import { computeTotals, fmtCLP } from "@/lib/money";
 import { printReceipt } from "@/lib/print";
@@ -75,6 +76,7 @@ export function VentaScreen() {
   const { data: categories } = useCategories(businessId);
   const { data: customers } = useCustomers(businessId);
   const { data: business } = useBusiness(businessId);
+  const { data: heldSales } = useHeldSales(branchId);
 
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string>("todas");
@@ -85,6 +87,7 @@ export function VentaScreen() {
   const [ncOpen, setNcOpen] = useState(false);
   const [cierreOpen, setCierreOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [heldOpen, setHeldOpen] = useState(false);
 
   const allCustomers = customers ?? [];
 
@@ -173,6 +176,59 @@ export function VentaScreen() {
   }
   function clearCart() {
     setCart([]);
+  }
+
+  async function handleHold() {
+    if (!businessId || !branchId || cart.length === 0) return;
+    try {
+      await holdSale({
+        business_id: businessId,
+        branch_id: branchId,
+        cashier_id: profile?.id ?? null,
+        customer_id: customerId,
+        cart: cartToLines(cart),
+        total_snapshot: totals.total,
+      });
+      setCart([]);
+      setCustomerId(null);
+      toast.success("Venta guardada.");
+      qc.invalidateQueries({ queryKey: ["held-sales", branchId] });
+    } catch (e) {
+      toast.error(`No se pudo guardar la venta: ${e instanceof Error ? e.message : e}`);
+    }
+  }
+
+  async function resumeHeld(h: HeldSaleRow) {
+    // Reconstruye el carrito con los productos que aún existen, ajustando al stock actual.
+    let ajustes = 0;
+    const next: CartItem[] = [];
+    for (const item of h.cart) {
+      const p = productById.get(item.product_id);
+      if (!p) { ajustes++; continue; }
+      const qty = Math.min(item.qty, p.stock);
+      if (qty <= 0) { ajustes++; continue; }
+      if (qty !== item.qty) ajustes++;
+      next.push({ id: item.product_id, qty });
+    }
+    setCart(next);
+    setCustomerId(h.customer_id);
+    setHeldOpen(false);
+    try {
+      await deleteHeldSale(h.id);
+      qc.invalidateQueries({ queryKey: ["held-sales", branchId] });
+    } catch (e) {
+      toast.error(`No se pudo quitar la venta guardada: ${e instanceof Error ? e.message : e}`);
+    }
+    if (ajustes > 0) toast.warning("Algunas líneas se ajustaron por stock o productos no disponibles.");
+  }
+
+  async function discardHeld(id: string) {
+    try {
+      await deleteHeldSale(id);
+      qc.invalidateQueries({ queryKey: ["held-sales", branchId] });
+    } catch (e) {
+      toast.error(`No se pudo descartar: ${e instanceof Error ? e.message : e}`);
+    }
   }
 
   function pad2(n: number): string {
@@ -309,6 +365,12 @@ export function VentaScreen() {
             ))}
           </select>
           <button
+            onClick={() => setHeldOpen(true)}
+            className="rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
+          >
+            Guardadas{heldSales && heldSales.length > 0 ? ` (${heldSales.length})` : ""}
+          </button>
+          <button
             onClick={() => setNcOpen(true)}
             className="rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
           >
@@ -406,7 +468,7 @@ export function VentaScreen() {
       </div>
 
       {tab === "venta" && (
-        <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onPay={() => setPayOpen(true)} />
+        <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} />
       )}
 
       <PayDialog open={payOpen} total={totals.total} busy={busy} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />
@@ -423,6 +485,48 @@ export function VentaScreen() {
           qc.invalidateQueries({ queryKey: ["critical-stock"] });
         }}
       />
+
+      {heldOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={() => setHeldOpen(false)}>
+          <div className="max-h-[80vh] w-[480px] max-w-full overflow-auto rounded-[22px] bg-white p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-[18px] font-black text-[#0F2A1B]">Ventas guardadas</div>
+              <button onClick={() => setHeldOpen(false)} className="rounded-lg border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] font-bold text-[#5a6b7e]">Cerrar</button>
+            </div>
+            {(!heldSales || heldSales.length === 0) ? (
+              <div className="py-10 text-center text-[13.5px] text-[#9aa8bd]">No hay ventas guardadas.</div>
+            ) : (
+              heldSales.map((h) => {
+                const cliente = h.customer_id ? (allCustomers.find((c) => c.id === h.customer_id)?.name ?? "Cliente") : "Sin cliente";
+                const items = h.cart.reduce((s, it) => s + it.qty, 0);
+                const hora = new Date(h.created_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+                return (
+                  <div key={h.id} className="flex items-center gap-3 border-b border-[#F0F2F7] py-3 last:border-0">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-bold text-[#0F2A1B]">{cliente}</div>
+                      <div className="text-xs text-[#7C95A8]">{hora} · {items} {items === 1 ? "ítem" : "ítems"} · {fmtCLP(h.total_snapshot)}</div>
+                    </div>
+                    <button
+                      onClick={() => resumeHeld(h)}
+                      className="rounded-[10px] px-3.5 py-2 text-[13px] font-bold text-white"
+                      style={{ background: "var(--brand)" }}
+                    >
+                      Retomar
+                    </button>
+                    <button
+                      onClick={() => discardHeld(h.id)}
+                      title="Descartar"
+                      className="flex size-[34px] items-center justify-center rounded-[10px] border border-[#F5C2C2] bg-white text-[#D02E2E]"
+                    >
+                      🗑
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
     </div>
     {cierreDialog}
     </>

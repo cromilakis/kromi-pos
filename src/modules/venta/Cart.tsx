@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { ProductRow } from "@/data/stock";
 import { fmtCLP } from "@/lib/money";
 import type { Totals } from "@/lib/money";
@@ -13,23 +14,46 @@ interface CartProps {
   onInc: (id: string) => void;
   onDec: (id: string) => void;
   onClear: () => void;
+  onHold: () => void;
   onPay: () => void;
 }
 
-/** Panel del carrito de la venta actual: líneas, totales (neto/IVA) y acciones. Clona el panel del prototipo. */
-export function Cart({ lines, totals, onInc, onDec, onClear, onPay }: CartProps) {
+/** Panel del carrito de la venta actual: líneas, totales (neto/IVA) y acciones.
+ *  En el encabezado: escoba (vaciar, con confirmación) y diskette (guardar/retener). */
+export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay }: CartProps) {
   const hasCart = lines.length > 0;
+  const [confirmClear, setConfirmClear] = useState(false);
 
   return (
     <div className="flex w-[320px] shrink-0 flex-col border-l border-[#E1E5EE] bg-white">
       <div className="border-b border-[#E1E5EE] p-5 pb-3">
-        <div className="flex items-center justify-between">
-          <div className="text-[18px] font-black text-[#0F2A1B]">Venta actual</div>
-          {hasCart && (
-            <span className="rounded-full bg-[#E7EFE8] px-2.5 py-0.5 text-xs font-bold text-[#0F2A1B]">
-              {totals.items}
-            </span>
-          )}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <div className="text-[18px] font-black text-[#0F2A1B]">Venta actual</div>
+            {hasCart && (
+              <span className="rounded-full bg-[#E7EFE8] px-2.5 py-0.5 text-xs font-bold text-[#0F2A1B]">
+                {totals.items}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={onHold}
+              disabled={!hasCart}
+              title="Guardar venta para retomarla después"
+              className="flex size-[32px] items-center justify-center rounded-[10px] border border-[#E1E5EE] bg-white text-[15px] text-[#5a6b7e] disabled:opacity-40"
+            >
+              💾
+            </button>
+            <button
+              onClick={() => setConfirmClear(true)}
+              disabled={!hasCart}
+              title="Vaciar carrito"
+              className="flex size-[32px] items-center justify-center rounded-[10px] border border-[#E1E5EE] bg-white text-[15px] text-[#5a6b7e] disabled:opacity-40"
+            >
+              🧹
+            </button>
+          </div>
         </div>
       </div>
 
@@ -80,25 +104,38 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onPay }: CartProps)
           <span className="text-lg font-black text-[#0F2A1B]">Total</span>
           <span className="text-[28px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(totals.total)}</span>
         </div>
-        <div className="flex gap-2.5">
-          <button
-            onClick={onPay}
-            disabled={!hasCart}
-            className="flex-1 rounded-[14px] py-3.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-[#EEF1F6] disabled:text-[#9aa8bd]"
-            style={hasCart ? { background: "var(--brand)" } : undefined}
-          >
-            Cobrar
-          </button>
-          <button
-            onClick={onClear}
-            disabled={!hasCart}
-            title="Vaciar carrito"
-            className="flex size-[54px] shrink-0 items-center justify-center rounded-[14px] border border-[#E1E5EE] bg-white text-[#7C95A8] disabled:opacity-40"
-          >
-            🗑
-          </button>
-        </div>
+        <button
+          onClick={onPay}
+          disabled={!hasCart}
+          className="w-full rounded-[14px] py-3.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-[#EEF1F6] disabled:text-[#9aa8bd]"
+          style={hasCart ? { background: "var(--brand)" } : undefined}
+        >
+          Cobrar
+        </button>
       </div>
+
+      {confirmClear && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={() => setConfirmClear(false)}>
+          <div className="w-[380px] max-w-full rounded-[20px] bg-white p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-1.5 text-[15px] font-extrabold text-[#0F2A1B]">¿Vaciar el carrito?</div>
+            <div className="mb-4 text-[13px] text-[#7C95A8]">Se quitarán todos los productos de la venta actual.</div>
+            <div className="flex justify-end gap-2.5">
+              <button
+                onClick={() => setConfirmClear(false)}
+                className="rounded-[11px] border border-[#E1E5EE] bg-white px-[18px] py-2.5 text-sm font-bold text-[#2A3A2E]"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { onClear(); setConfirmClear(false); }}
+                className="rounded-[11px] bg-[#D02E2E] px-[18px] py-2.5 text-sm font-bold text-white"
+              >
+                Vaciar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
