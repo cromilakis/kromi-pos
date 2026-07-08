@@ -170,23 +170,46 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
               {existingSupplier.address && <span className="text-[#7C95A8]">· {existingSupplier.address}</span>}
             </div>
           ) : (
-            <div className="rounded-2xl border border-[#F2E2A8] bg-[#FEF6DD] p-3">
-              <div className="mb-2 text-[12.5px] font-bold text-[#8A6D12]">
-                Proveedor nuevo — se creará como {supplierSeq != null ? String(supplierSeq).padStart(3, "0") : "…"}
+            <div className="rounded-2xl border border-[#E1E5EE] bg-white p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="rounded-full bg-[#FEF6DD] px-2 py-0.5 text-[11px] font-black uppercase tracking-[.04em] text-[#8A6D12]">
+                  Nuevo proveedor
+                </span>
+                <span className="text-[12.5px] text-[#9aa8bd]">
+                  se creará con ID {supplierSeq != null ? String(supplierSeq).padStart(3, "0") : "…"}
+                </span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <input value={newSupplier.razon_social} onChange={(e) => setNewSupplier((s) => ({ ...s, razon_social: e.target.value }))}
-                  placeholder="Razón social" className="col-span-2 rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
-                <input value={newSupplier.rut} onChange={(e) => setNewSupplier((s) => ({ ...s, rut: e.target.value }))}
-                  placeholder="RUT" className="rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
-                <input value={newSupplier.giro} onChange={(e) => setNewSupplier((s) => ({ ...s, giro: e.target.value }))}
-                  placeholder="Giro" className="rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
-                <input value={newSupplier.direccion} onChange={(e) => setNewSupplier((s) => ({ ...s, direccion: e.target.value }))}
-                  placeholder="Dirección" className="col-span-2 rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
-                <input value={newSupplier.email} onChange={(e) => setNewSupplier((s) => ({ ...s, email: e.target.value }))}
-                  placeholder="Email (opcional)" className="rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
-                <input value={newSupplier.phone} onChange={(e) => setNewSupplier((s) => ({ ...s, phone: e.target.value }))}
-                  placeholder="Teléfono (opcional)" className="rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
+              <div className="grid grid-cols-2 gap-3">
+                <label className="col-span-2 flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Razón social</span>
+                  <input value={newSupplier.razon_social} onChange={(e) => setNewSupplier((s) => ({ ...s, razon_social: e.target.value }))}
+                    className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[var(--brand)]" />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">RUT</span>
+                  <input value={newSupplier.rut} onChange={(e) => setNewSupplier((s) => ({ ...s, rut: e.target.value }))}
+                    className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13.5px] font-bold text-[#0F2A1B] outline-none focus:border-[var(--brand)]" />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Giro</span>
+                  <input value={newSupplier.giro} onChange={(e) => setNewSupplier((s) => ({ ...s, giro: e.target.value }))}
+                    className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[var(--brand)]" />
+                </label>
+                <label className="col-span-2 flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Dirección</span>
+                  <input value={newSupplier.direccion} onChange={(e) => setNewSupplier((s) => ({ ...s, direccion: e.target.value }))}
+                    className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[var(--brand)]" />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Email (opcional)</span>
+                  <input value={newSupplier.email} onChange={(e) => setNewSupplier((s) => ({ ...s, email: e.target.value }))}
+                    className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[var(--brand)]" />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Teléfono (opcional)</span>
+                  <input value={newSupplier.phone} onChange={(e) => setNewSupplier((s) => ({ ...s, phone: e.target.value }))}
+                    className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[var(--brand)]" />
+                </label>
               </div>
             </div>
           )}
