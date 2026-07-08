@@ -158,22 +158,39 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
               ))}
             </select>
           </div>
-          <div style={{ display: "flex", gap: 12, gridColumn: "1 / -1" }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Precio (CLP)</label>
-              <input style={inputStyle} value={price} onChange={(e) => setPrice(onlyDigits(e.target.value))} inputMode="numeric" placeholder="0" />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>Stock (unidades)</label>
-              <input style={inputStyle} value={stock} onChange={(e) => setStock(onlyDigits(e.target.value))} inputMode="numeric" placeholder="0" />
-            </div>
+          <div>
+            <label style={labelStyle}>Proveedor (opcional)</label>
+            <select style={inputStyle} value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+              <option value="">Sin proveedor</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.razon_social}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Precio (CLP)</label>
+            <input style={inputStyle} value={price} onChange={(e) => setPrice(onlyDigits(e.target.value))} inputMode="numeric" placeholder="0" />
+          </div>
+          <div>
+            <label style={labelStyle}>Stock (unidades)</label>
+            <input style={inputStyle} value={stock} onChange={(e) => setStock(onlyDigits(e.target.value))} inputMode="numeric" placeholder="0" />
           </div>
           <div>
             <label style={labelStyle}>Stock mínimo (opcional)</label>
             <input style={inputStyle} value={minStock} onChange={(e) => setMinStock(onlyDigits(e.target.value))} inputMode="numeric" placeholder="Sin alerta" />
-            <div style={{ fontSize: 11.5, color: "#5E6E7E", marginTop: 5, lineHeight: 1.4 }}>
-              Si el stock baja de este número se marca como <b style={{ color: "#9A6F12", fontWeight: 700 }}>stock bajo</b> en el inventario. Déjalo vacío para no monitorear este producto.
-            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Descuento (%)</label>
+            <input style={inputStyle} value={discountPct} onChange={(e) => setDiscountPct(onlyDigits(e.target.value).slice(0, 3))} inputMode="numeric" placeholder="0" />
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label style={labelStyle}>Código de barras (opcional)</label>
+            <input style={inputStyle} value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Escanea o escribe el código" />
+          </div>
+          <div style={{ gridColumn: "1 / -1", fontSize: 12, color: "#556A7C", lineHeight: 1.4, marginTop: -6 }}>
+            <b style={{ color: "#9A6F12", fontWeight: 700 }}>Stock mínimo</b>: si el stock baja de ese número se marca como stock bajo (vacío = sin alerta). <b style={{ color: "#0a6e36", fontWeight: 700 }}>Descuento</b> mayor a 0 vende el producto con ese % y lo marca <b style={{ color: "#0a6e36", fontWeight: 700 }}>CON DESCUENTO</b>.
           </div>
           <div
             onClick={() => setCritical((c) => !c)}
@@ -199,28 +216,6 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: 13.5, color: "#0F2A1B" }}>Producto crítico (esencial)</div>
               <div style={{ fontSize: 12, color: "#556A7C" }}>Aparece marcado con ★ y prioriza la reposición cuando esté bajo el mínimo.</div>
-            </div>
-          </div>
-          <div>
-            <label style={labelStyle}>Proveedor (opcional)</label>
-            <select style={inputStyle} value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-              <option value="">Sin proveedor</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.razon_social}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label style={labelStyle}>Código de barras (opcional)</label>
-            <input style={inputStyle} value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Escanea o escribe el código" />
-          </div>
-          <div>
-            <label style={labelStyle}>Descuento (%)</label>
-            <input style={inputStyle} value={discountPct} onChange={(e) => setDiscountPct(onlyDigits(e.target.value).slice(0, 3))} inputMode="numeric" placeholder="0" />
-            <div style={{ fontSize: 11.5, color: "#5E6E7E", marginTop: 5, lineHeight: 1.4 }}>
-              Si es mayor a 0, el producto se vende con ese % de descuento y se marca con una etiqueta <b style={{ color: "#0a6e36", fontWeight: 700 }}>CON DESCUENTO</b> en la venta.
             </div>
           </div>
           <div style={{ gridColumn: "1 / -1" }}>
