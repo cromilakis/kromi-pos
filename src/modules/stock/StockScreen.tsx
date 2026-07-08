@@ -70,6 +70,13 @@ export function StockScreen() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [view, setView] = useState<"list" | "recepcion">("list");
+  const [stockView, setStockViewState] = useState<"table" | "blocks">(
+    () => (typeof localStorage !== "undefined" && localStorage.getItem("kromi.stockView") === "blocks" ? "blocks" : "table"),
+  );
+  const setStockView = (v: "table" | "blocks") => {
+    setStockViewState(v);
+    try { localStorage.setItem("kromi.stockView", v); } catch { /* no-op */ }
+  };
   const [invoiceListOpen, setInvoiceListOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -354,6 +361,18 @@ export function StockScreen() {
             className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#0F2A1B] outline-none"
           />
         </div>
+        <div className="ml-auto flex items-center gap-1 rounded-xl border border-[#E1E5EE] bg-white p-1">
+          {(["table", "blocks"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setStockView(v)}
+              className="rounded-lg px-3 py-1.5 text-[13px] font-bold transition-colors"
+              style={stockView === v ? { background: "var(--brand)", color: "#fff" } : { color: "#7C95A8" }}
+            >
+              {v === "table" ? "Tabla" : "Bloques"}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mb-[18px] flex flex-wrap items-center gap-2">
@@ -382,7 +401,58 @@ export function StockScreen() {
         </div>
       )}
 
-      {groups.map((g) => (
+      {stockView === "table" && !loadingProducts && filtered.length > 0 && (
+        <div className="overflow-x-auto rounded-2xl border border-[#E1E5EE] bg-white">
+          <table className="w-full border-collapse text-[13px]">
+            <thead>
+              <tr className="bg-[#F7FAF8] text-left text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">
+                <th className="px-4 py-2.5">Producto</th>
+                <th className="px-4 py-2.5">Categoría</th>
+                <th className="px-4 py-2.5 text-right">Precio</th>
+                <th className="px-4 py-2.5 text-right">Mínimo</th>
+                <th className="px-4 py-2.5 text-right">Stock</th>
+                {canManage && <th className="px-4 py-2.5 text-right">Acciones</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((p) => {
+                const low = isLowStock(p);
+                return (
+                  <tr key={p.id} className="border-t border-[#EEF1F6]">
+                    <td className="px-4 py-2 font-bold text-[#0F2A1B]">
+                      <span className="flex items-center gap-2">
+                        <span className="truncate">{p.name}</span>
+                        {p.critical && <span className="whitespace-nowrap rounded-full bg-[#FBF1E0] px-2 py-0.5 text-[11px] font-bold text-[#9A6F12]">★ Crítico</span>}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-[#7C95A8]">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="size-2 shrink-0 rounded-full" style={{ background: p.category_id ? catById.get(p.category_id)?.dot ?? "#7C95A8" : "#9aa8bd" }} />
+                        {p.category_id ? catById.get(p.category_id)?.label ?? "—" : "Sin categoría"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-right font-bold text-[#7C95A8]">{fmtCLP(p.price)}</td>
+                    <td className="px-4 py-2 text-right text-[#9aa8bd]">{p.min_stock > 0 ? p.min_stock : "—"}</td>
+                    <td className="px-4 py-2 text-right font-black" style={{ color: low ? "#D02E2E" : "#0F2A1B" }}>{p.stock}</td>
+                    {canManage && (
+                      <td className="px-4 py-2">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button onClick={() => adjustStock(p, -1)} title="Restar 1" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[17px] text-[#7C95A8]">–</button>
+                          <button onClick={() => adjustStock(p, 1)} title="Sumar 1" className="flex size-[28px] items-center justify-center rounded-[9px] bg-[#D3F4E0] text-[17px]" style={{ color: "var(--brand)" }}>+</button>
+                          <button onClick={() => { setEditing(p); setFormOpen(true); }} title="Editar producto" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#7C95A8]">✎</button>
+                          <button onClick={() => setConfirmDeleteId(p.id)} title="Eliminar producto" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#F5C2C2] bg-white text-[#D02E2E]">🗑</button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {stockView === "blocks" && groups.map((g) => (
         <div key={g.key} className="mb-[26px]">
           <div className="mb-[13px] flex items-center gap-2.5">
             <span className="size-[9px] rounded-full" style={{ background: g.dot }} />
