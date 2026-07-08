@@ -4,6 +4,7 @@ import { businessToNegocio, type BusinessRow } from "./business";
 const base: BusinessRow = {
   id: "b1",
   name: "Vivero Kromi SpA",
+  nombre_comercial: "Kromi",
   rut: "76.123.456-7",
   giro: "Venta de plantas",
   direccion: "Av. Siempreviva 742",
