@@ -5,6 +5,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import { useBusiness, updateBusiness, type BusinessRow } from "@/data/business";
 import { ImageUploader } from "@/components/ImageUploader";
 import { uploadLogoImage } from "@/lib/image";
+import { PrinterSettings } from "@/shell/PrinterSettings";
 
 type FormState = Omit<BusinessRow, "id">;
 
@@ -112,6 +113,13 @@ export function BusinessSettings() {
               maxSize={400}
               label="logo"
             />
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#F0F2F7] pt-4">
+            <div>
+              <div className="text-[12.5px] font-bold text-[#5a6b7e]">Impresora de boletas</div>
+              <div className="text-[11.5px] text-[#9aa8bd]">Configura la impresora térmica de este equipo.</div>
+            </div>
+            <PrinterSettings />
           </div>
           <div className="mt-6 flex justify-end">
             <button

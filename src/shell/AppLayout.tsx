@@ -5,7 +5,6 @@ import { useAuth } from "@/auth/AuthProvider";
 import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
 import { BranchGate } from "@/session/BranchGate";
-import { PrinterSettings } from "@/shell/PrinterSettings";
 import { Button } from "@/components/ui/button";
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -79,7 +78,7 @@ export function AppLayout() {
   return (
     <div className="h-full flex">
       <aside className={`shrink-0 bg-white border-r border-[#E1E5EE] flex flex-col ${collapsed ? "w-[68px] p-2" : "w-[236px] p-3.5"}`}>
-        <div className={`pb-4 ${collapsed ? "flex flex-col items-center gap-2" : "flex items-center gap-[11px] px-2"}`}>
+        <div className={`pb-3 ${collapsed ? "flex justify-center" : "flex items-center gap-[11px] px-2"}`}>
           <div className="size-[38px] rounded-xl shrink-0 overflow-hidden shadow-[0_3px_10px_rgba(34,196,99,.28)]">
             <img src="/logo.png" alt="Logo" className="size-full object-cover" />
           </div>
@@ -89,17 +88,19 @@ export function AppLayout() {
               <div className="text-[11px] font-medium text-[#7C95A8]">Punto de venta</div>
             </div>
           )}
-          {isVenta && (
-            <button
-              type="button"
-              onClick={() => setSidebarOpen((o) => !o)}
-              title={collapsed ? "Expandir menú" : "Contraer menú"}
-              className="flex size-[34px] shrink-0 items-center justify-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#7C95A8] hover:bg-[#F7F8FA]"
-            >
-              <Menu className="size-[17px]" strokeWidth={1.9} />
-            </button>
-          )}
         </div>
+
+        {isVenta && (
+          <button
+            type="button"
+            onClick={() => setSidebarOpen((o) => !o)}
+            title={collapsed ? "Expandir menú" : "Contraer menú"}
+            className={`mb-2 flex items-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#7C95A8] hover:bg-[#F7F8FA] ${collapsed ? "size-[38px] self-center justify-center" : "gap-2 px-3 py-2 text-[13px] font-bold"}`}
+          >
+            <Menu className="size-[17px] shrink-0" strokeWidth={1.9} />
+            {!collapsed && <span>Contraer menú</span>}
+          </button>
+        )}
 
         <nav className="flex flex-col gap-[3px]">
           {baseItems.map((item) => (
@@ -143,7 +144,6 @@ export function AppLayout() {
               <div className="text-[11px] text-[#7C95A8]">{ROLE_LABEL[profile.role]}</div>
             </div>
           )}
-          <PrinterSettings />
           <button
             type="button"
             title="Cerrar sesión"
