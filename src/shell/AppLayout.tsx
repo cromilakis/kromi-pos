@@ -27,20 +27,20 @@ function initialsOf(name: string): string {
   return name.split(" ").slice(0, 2).map((w) => w[0]).filter(Boolean).join("").toUpperCase();
 }
 
-function SidebarLink({ item }: { item: NavItem }) {
+function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   const Icon = NAV_ICON[item.label] ?? Home;
   return (
-    <NavLink to={item.to} end={item.to === "/"}>
+    <NavLink to={item.to} end={item.to === "/"} title={collapsed ? item.label : undefined}>
       {({ isActive }) => (
         <span
-          className="flex items-center gap-[11px] rounded-[11px] px-3 py-2.5 text-sm font-bold transition-colors"
+          className={`flex items-center rounded-[11px] text-sm font-bold transition-colors ${collapsed ? "justify-center p-2.5" : "gap-[11px] px-3 py-2.5"}`}
           style={{
             color: isActive ? "var(--brand)" : "#2A3A2E",
             background: isActive ? "color-mix(in srgb, var(--brand) 14%, transparent)" : "transparent",
           }}
         >
           <Icon className="size-[18px] shrink-0" strokeWidth={1.8} />
-          <span className="truncate">{item.label}</span>
+          {!collapsed && <span className="truncate">{item.label}</span>}
         </span>
       )}
     </NavLink>
@@ -73,52 +73,59 @@ export function AppLayout() {
   const adminActive = adminItem ? location.pathname.startsWith(adminItem.to) : false;
   const brandName = import.meta.env.VITE_STORE_NAME || "Mi Tienda";
 
+  // En Venta el menú arranca colapsado a un rail de iconos (nunca desaparece del todo).
+  const collapsed = isVenta && !sidebarOpen;
+
   return (
     <div className="h-full flex">
-      {isVenta && (
-        <button
-          type="button"
-          onClick={() => setSidebarOpen((o) => !o)}
-          title="Menú"
-          className="fixed left-3 top-3 z-[60] flex size-[38px] items-center justify-center rounded-xl border border-[#E1E5EE] bg-white text-[#2A3A2E] shadow-sm"
-        >
-          <Menu className="size-[18px]" strokeWidth={1.9} />
-        </button>
-      )}
-      {(!isVenta || sidebarOpen) && (
-      <aside className="w-[236px] shrink-0 bg-white border-r border-[#E1E5EE] flex flex-col p-3.5">
-        <div className="flex items-center gap-[11px] px-2 pb-4">
+      <aside className={`shrink-0 bg-white border-r border-[#E1E5EE] flex flex-col ${collapsed ? "w-[68px] p-2" : "w-[236px] p-3.5"}`}>
+        {isVenta && (
+          <button
+            type="button"
+            onClick={() => setSidebarOpen((o) => !o)}
+            title={collapsed ? "Expandir menú" : "Contraer menú"}
+            className={`mb-1.5 flex size-[38px] items-center justify-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#7C95A8] hover:bg-[#F7F8FA] ${collapsed ? "self-center" : "self-end"}`}
+          >
+            <Menu className="size-[18px]" strokeWidth={1.9} />
+          </button>
+        )}
+
+        <div className={`pb-4 ${collapsed ? "flex justify-center" : "flex items-center gap-[11px] px-2"}`}>
           <div className="size-[38px] rounded-xl shrink-0 overflow-hidden shadow-[0_3px_10px_rgba(34,196,99,.28)]">
             <img src="/logo.png" alt="Logo" className="size-full object-cover" />
           </div>
-          <div className="min-w-0 leading-[1.1]">
-            <div className="font-black text-[16px] text-[#0F2A1B] truncate">{brandName}</div>
-            <div className="text-[11px] font-medium text-[#7C95A8]">Punto de venta</div>
-          </div>
+          {!collapsed && (
+            <div className="min-w-0 leading-[1.1]">
+              <div className="font-black text-[16px] text-[#0F2A1B] truncate">{brandName}</div>
+              <div className="text-[11px] font-medium text-[#7C95A8]">Punto de venta</div>
+            </div>
+          )}
         </div>
 
         <nav className="flex flex-col gap-[3px]">
           {baseItems.map((item) => (
-            <SidebarLink key={item.to} item={item} />
+            <SidebarLink key={item.to} item={item} collapsed={collapsed} />
           ))}
         </nav>
 
         {adminItem && (
           <>
-            <div className="text-[11px] font-bold tracking-[.13em] uppercase text-[#94A3B5] px-3 pt-5 pb-2">
-              Administración
-            </div>
-            <nav className="flex flex-col gap-[3px]">
-              <NavLink to={adminItem.to}>
+            {!collapsed && (
+              <div className="text-[11px] font-bold tracking-[.13em] uppercase text-[#94A3B5] px-3 pt-5 pb-2">
+                Administración
+              </div>
+            )}
+            <nav className={`flex flex-col gap-[3px] ${collapsed ? "pt-2" : ""}`}>
+              <NavLink to={adminItem.to} title={collapsed ? adminItem.label : undefined}>
                 <span
-                  className="flex items-center gap-[11px] rounded-[11px] px-3 py-2.5 text-sm font-bold transition-colors"
+                  className={`flex items-center rounded-[11px] text-sm font-bold transition-colors ${collapsed ? "justify-center p-2.5" : "gap-[11px] px-3 py-2.5"}`}
                   style={{
                     color: adminActive ? "var(--brand)" : "#2A3A2E",
                     background: adminActive ? "color-mix(in srgb, var(--brand) 14%, transparent)" : "transparent",
                   }}
                 >
                   <Settings className="size-[18px] shrink-0" strokeWidth={1.8} />
-                  <span className="truncate">{adminItem.label}</span>
+                  {!collapsed && <span className="truncate">{adminItem.label}</span>}
                 </span>
               </NavLink>
             </nav>
@@ -127,14 +134,16 @@ export function AppLayout() {
 
         <div className="flex-1 min-h-4" />
 
-        <div className="border-t border-[#F0F2F7] pt-3 flex items-center gap-[10px]">
-          <div className="size-[38px] rounded-full shrink-0 bg-[#0F2A1B] text-white flex items-center justify-center font-bold text-[13px]">
+        <div className={`border-t border-[#F0F2F7] pt-3 ${collapsed ? "flex flex-col items-center gap-2" : "flex items-center gap-[10px]"}`}>
+          <div className="size-[38px] rounded-full shrink-0 bg-[#0F2A1B] text-white flex items-center justify-center font-bold text-[13px]" title={collapsed ? profile.name : undefined}>
             {initialsOf(profile.name)}
           </div>
-          <div className="min-w-0 flex-1 leading-[1.15]">
-            <div className="text-[13px] font-bold text-[#0F2A1B] truncate">{profile.name}</div>
-            <div className="text-[11px] text-[#7C95A8]">{ROLE_LABEL[profile.role]}</div>
-          </div>
+          {!collapsed && (
+            <div className="min-w-0 flex-1 leading-[1.15]">
+              <div className="text-[13px] font-bold text-[#0F2A1B] truncate">{profile.name}</div>
+              <div className="text-[11px] text-[#7C95A8]">{ROLE_LABEL[profile.role]}</div>
+            </div>
+          )}
           <PrinterSettings />
           <button
             type="button"
@@ -146,7 +155,6 @@ export function AppLayout() {
           </button>
         </div>
       </aside>
-      )}
       <div className="flex-1 flex flex-col overflow-hidden bg-[#F7F8FA]">
         <main className="flex-1 overflow-auto">
           <BranchGate businessId={profile.business_id}>
