@@ -221,12 +221,12 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     }
     rule(&mut b, b'=');
 
-    // totales
+    // totales — orden: Neto, Descuento (si aplica) y luego IVA, para que se lea Total → Descuento → IVA.
     line_lr(&mut b, "Neto", &money(p.neto), COL);
-    line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
     if p.descuento > 0 {
         line_lr(&mut b, "Descuento", &format!("-{}", money(p.descuento)), COL);
     }
+    line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
     nl(&mut b);
     b.extend_from_slice(&[0x1D, 0x21, 0x11]); // doble tamano
     line_lr(&mut b, "TOTAL", &money(p.total), 24);
