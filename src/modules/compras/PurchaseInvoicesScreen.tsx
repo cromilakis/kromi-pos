@@ -4,16 +4,11 @@ import { usePurchaseInvoices, invoiceDownloadUrl } from "@/data/purchases";
 import { useSuppliers } from "@/data/stock";
 import { filterInvoices, type InvoiceFilters } from "@/lib/invoiceFilters";
 import { fmtCLP } from "@/lib/money";
+import { fmtDateCL } from "@/lib/dates";
+import { saveUrlAs } from "@/lib/fileSave";
 
 interface Props {
   businessId: string | undefined;
-}
-
-function fmtDate(iso: string | null): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 /** El join `supplier:supplier_id(razon_social)` se tipa como arreglo; tomamos el primero. */
@@ -47,9 +42,11 @@ export function PurchaseInvoicesScreen({ businessId }: Props) {
     setDownloadingId(id);
     try {
       const url = await invoiceDownloadUrl(pdfPath);
-      window.open(url, "_blank", "noopener,noreferrer");
+      const suggested = pdfPath.split("/").pop() ?? "factura.pdf";
+      const saved = await saveUrlAs(url, suggested);
+      if (saved) toast.success("PDF guardado.");
     } catch (err) {
-      toast.error(`No se pudo generar el enlace de descarga: ${err instanceof Error ? err.message : err}`);
+      toast.error(`No se pudo descargar el PDF: ${err instanceof Error ? err.message : err}`);
     } finally {
       setDownloadingId(null);
     }
@@ -106,7 +103,7 @@ export function PurchaseInvoicesScreen({ businessId }: Props) {
                 <tr key={inv.id} className="border-t border-[#EEF1F6]">
                   <td className="px-4 py-2.5 font-bold text-[#0F2A1B]">{inv.supplierName}</td>
                   <td className="px-4 py-2.5 text-[#2A3A2E]">{inv.folio ?? "—"}</td>
-                  <td className="px-4 py-2.5 text-[#2A3A2E]">{fmtDate(inv.issued_at)}</td>
+                  <td className="px-4 py-2.5 text-[#2A3A2E]">{fmtDateCL(inv.issued_at)}</td>
                   <td className="px-4 py-2.5 text-right font-bold text-[#0F2A1B]">{fmtCLP(inv.total ?? 0)}</td>
                   <td className="px-4 py-2.5 text-right">
                     <button onClick={() => handleDownload(inv.id, inv.pdf_path)} disabled={downloadingId === inv.id || !inv.pdf_path}

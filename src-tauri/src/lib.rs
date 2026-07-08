@@ -50,11 +50,19 @@ fn print_credit_note(payload: CreditNotePayload) -> Result<(), String> {
     }
 }
 
+/// Escribe bytes en la ruta elegida por el usuario en el diálogo "Guardar como".
+/// Usar un comando propio evita configurar el scope de tauri-plugin-fs para rutas arbitrarias.
+#[tauri::command]
+fn save_file(path: String, contents: Vec<u8>) -> Result<(), String> {
+    std::fs::write(&path, &contents).map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, print_receipt, print_cierre, print_quote, print_credit_note])
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![greet, print_receipt, print_cierre, print_quote, print_credit_note, save_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

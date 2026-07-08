@@ -57,6 +57,10 @@ export function usePurchaseInvoices(businessId: string | undefined) {
 }
 
 export async function invoiceDownloadUrl(pdfPath: string): Promise<string> {
-  const { data, error } = await supabase.storage.from("purchase-invoices").createSignedUrl(pdfPath, 60);
+  // download: true agrega Content-Disposition: attachment a la URL firmada, forzando
+  // la descarga en lugar de abrir el PDF (funciona aun siendo cross-origin).
+  const { data, error } = await supabase.storage
+    .from("purchase-invoices")
+    .createSignedUrl(pdfPath, 60, { download: true });
   if (error) throw error; return data.signedUrl;
 }
