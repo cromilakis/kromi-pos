@@ -49,8 +49,8 @@ export function usePurchaseInvoices(businessId: string | undefined) {
     queryKey: ["purchase-invoices", businessId], enabled: !!businessId,
     queryFn: async () => {
       const { data, error } = await supabase.from("purchase_invoice")
-        .select("id,folio,issued_at,total,pdf_path,supplier:supplier_id(razon_social)")
-        .eq("business_id", businessId!).order("created_at", { ascending: false }).limit(50);
+        .select("id,folio,issued_at,total,pdf_path,supplier_id,supplier:supplier_id(razon_social)")
+        .eq("business_id", businessId!).order("created_at", { ascending: false }).limit(500);
       if (error) throw error; return data ?? [];
     },
   });
