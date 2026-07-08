@@ -20,8 +20,10 @@ const schema = {
     type: "object", additionalProperties: false,
     required: ["proveedor", "documento", "lineas"],
     properties: {
-      proveedor: { type: "object", additionalProperties: false, required: ["razon_social", "rut"],
-        properties: { razon_social: { type: "string" }, rut: { type: "string" } } },
+      proveedor: { type: "object", additionalProperties: false, required: ["razon_social", "rut", "giro", "direccion"],
+        properties: { razon_social: { type: "string" }, rut: { type: "string" },
+          giro: { type: "string", description: "Giro/actividad económica del proveedor emisor. Vacío si no aparece." },
+          direccion: { type: "string", description: "Dirección del proveedor emisor. Vacío si no aparece." } } },
       documento: { type: "object", additionalProperties: false, required: ["tipo", "folio", "fecha", "neto", "iva", "total"],
         properties: { tipo: { type: "string" }, folio: { type: "string" },
           fecha: { type: "string", description: "Fecha de emisión del documento en formato ISO 8601 YYYY-MM-DD (ej: 2026-07-02). Nunca dd/mm/yyyy." },
@@ -75,7 +77,7 @@ Deno.serve(async (req) => {
         model: "gpt-5-nano",
         reasoning: { effort: "minimal" },
         input: [{ role: "user", content: [
-          { type: "input_text", text: "Extrae los datos de esta factura de compra chilena en el formato indicado. Montos en pesos (enteros, sin separadores). El proveedor es el emisor. La fecha del documento suele venir impresa como dd/mm/yyyy: conviértela y devuélvela SIEMPRE en formato ISO 8601 YYYY-MM-DD (ej: 02/07/2026 -> 2026-07-02)." },
+          { type: "input_text", text: "Extrae los datos de esta factura de compra chilena en el formato indicado. Montos en pesos (enteros, sin separadores). El proveedor es el emisor. La fecha del documento suele venir impresa como dd/mm/yyyy: conviértela y devuélvela SIEMPRE en formato ISO 8601 YYYY-MM-DD (ej: 02/07/2026 -> 2026-07-02). El proveedor es el emisor: extrae también su giro y su dirección (déjalos vacíos si no aparecen)." },
           { type: "input_file", file_id: fileId },
         ] }],
         text: { format: { type: "json_schema", ...schema } },

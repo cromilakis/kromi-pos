@@ -29,6 +29,19 @@ describe("normalizeExtraction", () => {
     expect(r.documento.total).toBe(586920);
     expect(r.lineas[0].qty).toBe(3);
   });
+
+  it("normaliza giro y dirección del proveedor (trim; default vacío)", () => {
+    const out = normalizeExtraction({
+      proveedor: { razon_social: "Floriterra", rut: "78.964.380-6", giro: "  Vivero  ", direccion: " Camino Real 123 " },
+      documento: {}, lineas: [],
+    });
+    expect(out.proveedor.giro).toBe("Vivero");
+    expect(out.proveedor.direccion).toBe("Camino Real 123");
+
+    const out2 = normalizeExtraction({ proveedor: { razon_social: "X", rut: "1-9" }, documento: {}, lineas: [] });
+    expect(out2.proveedor.giro).toBe("");
+    expect(out2.proveedor.direccion).toBe("");
+  });
 });
 
 describe("checkLineTotal / totalsMatch", () => {

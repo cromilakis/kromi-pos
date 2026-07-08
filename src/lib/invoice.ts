@@ -1,6 +1,6 @@
 export interface ExtractedLine { supplier_code: string; description: string; qty: number; unit_cost: number; line_total: number; }
 export interface Extraction {
-  proveedor: { razon_social: string; rut: string };
+  proveedor: { razon_social: string; rut: string; giro: string; direccion: string };
   documento: { tipo: string; folio: string; fecha: string; neto: number; iva: number; total: number };
   lineas: ExtractedLine[];
 }
@@ -27,7 +27,12 @@ export function toIsoDate(s: string): string {
 
 export function normalizeExtraction(raw: any): Extraction {
   return {
-    proveedor: { razon_social: String(raw?.proveedor?.razon_social ?? "").trim(), rut: String(raw?.proveedor?.rut ?? "").trim() },
+    proveedor: {
+      razon_social: String(raw?.proveedor?.razon_social ?? "").trim(),
+      rut: String(raw?.proveedor?.rut ?? "").trim(),
+      giro: String(raw?.proveedor?.giro ?? "").trim(),
+      direccion: String(raw?.proveedor?.direccion ?? "").trim(),
+    },
     documento: {
       tipo: String(raw?.documento?.tipo ?? ""), folio: String(raw?.documento?.folio ?? ""),
       fecha: toIsoDate(String(raw?.documento?.fecha ?? "")),
