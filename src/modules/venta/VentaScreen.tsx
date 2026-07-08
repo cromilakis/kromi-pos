@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Cart, type CartLine } from "./Cart";
 import { PayDialog, type PayMethod } from "./PayDialog";
-import { QuotePanel } from "./QuotePanel";
 import { CreditNoteDialog } from "./CreditNoteDialog";
 import { CierrePanel } from "@/modules/cierre/CierrePanel";
 
@@ -84,7 +83,6 @@ export function VentaScreen() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [payOpen, setPayOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState<"venta" | "cotizaciones">("venta");
   const [ncOpen, setNcOpen] = useState(false);
   const [cierreOpen, setCierreOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
@@ -326,37 +324,19 @@ export function VentaScreen() {
     <div className="flex h-full">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col px-[22px] pt-[18px]">
         <div className="mb-4 flex items-center gap-2.5">
-          <div className="inline-flex gap-1 rounded-full bg-[#F0F2F7] p-1">
-            <button
-              onClick={() => setTab("venta")}
-              className="rounded-full px-4 py-1.5 text-[13.5px] font-bold"
-              style={tab === "venta" ? { background: "var(--brand)", color: "#fff" } : { color: "#5a6b7e" }}
-            >
-              Venta
-            </button>
-            <button
-              onClick={() => setTab("cotizaciones")}
-              className="rounded-full px-4 py-1.5 text-[13.5px] font-bold"
-              style={tab === "cotizaciones" ? { background: "var(--brand)", color: "#fff" } : { color: "#5a6b7e" }}
-            >
-              Cotizaciones
-            </button>
+          <div className="flex max-w-[420px] flex-1 items-center gap-2.5 rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar planta, maceta, accesorio…"
+              className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#0F2A1B] outline-none"
+            />
           </div>
-          {tab === "venta" && (
-            <div className="flex max-w-[420px] flex-1 items-center gap-2.5 rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5">
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar planta, maceta, accesorio…"
-                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#0F2A1B] outline-none"
-              />
-            </div>
-          )}
           <select
             value={customerId ?? ""}
             onChange={(e) => setCustomerId(e.target.value || null)}
             title="Cliente de la venta"
-            className={`rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none ${tab === "venta" ? "" : "ml-auto"}`}
+            className="rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none"
           >
             <option value="">Sin cliente</option>
             {allCustomers.map((c) => (
@@ -385,19 +365,6 @@ export function VentaScreen() {
           </button>
         </div>
 
-        {tab === "cotizaciones" ? (
-          <QuotePanel
-            branchId={branchId}
-            businessId={businessId}
-            customerId={customerId}
-            sessionId={openSession.id}
-            business={business}
-            cartLines={cartLines}
-            totals={totals}
-            onQuoteCreated={() => setCart([])}
-          />
-        ) : (
-          <>
         <div className="mb-4 flex flex-wrap items-center gap-2">
           {[{ id: "todas", label: "Todas" }, ...allCategories.map((c) => ({ id: c.id, label: c.label }))].map((c) => (
             <button
@@ -464,13 +431,9 @@ export function VentaScreen() {
             </div>
           ))}
         </div>
-          </>
-        )}
       </div>
 
-      {tab === "venta" && (
-        <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} />
-      )}
+      <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} />
 
       <PayDialog open={payOpen} total={totals.total} busy={busy} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />
 
