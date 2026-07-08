@@ -4,6 +4,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
 import { BranchGate } from "@/session/BranchGate";
+import { PrinterSettings } from "@/shell/PrinterSettings";
 import { Button } from "@/components/ui/button";
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -118,6 +119,7 @@ export function AppLayout() {
             <div className="text-[13px] font-bold text-[#0F2A1B] truncate">{profile.name}</div>
             <div className="text-[11px] text-[#7C95A8]">{ROLE_LABEL[profile.role]}</div>
           </div>
+          <PrinterSettings />
           <button
             type="button"
             title="Cerrar sesión"

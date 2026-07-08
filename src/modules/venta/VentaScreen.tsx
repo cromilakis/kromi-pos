@@ -10,6 +10,7 @@ import { useCustomers } from "@/data/customers";
 import { cobrarVenta, cartToLines } from "@/data/sales";
 import { computeTotals, fmtCLP } from "@/lib/money";
 import { printReceipt } from "@/lib/print";
+import { getPrinterName } from "@/lib/printerConfig";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -213,7 +214,7 @@ export function VentaScreen() {
           giro: "",
           direccion: "",
           footer: "¡Gracias por su compra!",
-          printer_name: "",
+          printer_name: getPrinterName(),
           social: null,
         },
         folio: sale.folio,

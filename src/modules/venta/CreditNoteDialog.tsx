@@ -5,6 +5,7 @@ import { emitirNotaCredito, buscarVentaPorFolio, type SaleWithLines } from "@/da
 import type { ProductRow } from "@/data/stock";
 import { fmtCLP } from "@/lib/money";
 import { printCreditNote } from "@/lib/print";
+import { getPrinterName } from "@/lib/printerConfig";
 import type { PayMethod } from "./PayDialog";
 
 function pad2(n: number): string {
@@ -150,7 +151,7 @@ export function CreditNoteDialog({ open, branchId, sessionId, products, negocioN
             giro: "",
             direccion: "",
             footer: "¡Gracias por su compra!",
-            printer_name: "",
+            printer_name: getPrinterName(),
             social: null,
           },
           folio: nc.folio,

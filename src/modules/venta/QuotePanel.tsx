@@ -11,6 +11,7 @@ import {
 import { fmtCLP } from "@/lib/money";
 import type { Totals } from "@/lib/money";
 import { printQuote, printReceipt } from "@/lib/print";
+import { getPrinterName } from "@/lib/printerConfig";
 import { PayDialog, type PayMethod } from "./PayDialog";
 import type { CartLine } from "./Cart";
 
@@ -69,7 +70,7 @@ export function QuotePanel({
       giro: "",
       direccion: "",
       footer: "¡Gracias por su compra!",
-      printer_name: "",
+      printer_name: getPrinterName(),
       social: null,
     }),
     [negocioNombre],

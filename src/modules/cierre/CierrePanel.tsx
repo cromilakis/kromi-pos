@@ -6,6 +6,7 @@ import { useWork } from "@/session/WorkContext";
 import { useOpenSession } from "@/data/work";
 import { useCierres, cerrarCaja, contarVentasSesion, fetchSessionOpenedAt, type CierreResumen, type CierreRow } from "@/data/cash";
 import { printCierre } from "@/lib/print";
+import { getPrinterName } from "@/lib/printerConfig";
 import { fmtCLP } from "@/lib/money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -134,7 +135,7 @@ export function CierrePanel({ onClosed }: CierrePanelProps) {
             giro: "",
             direccion: "",
             footer: "¡Gracias por su compra!",
-            printer_name: "",
+            printer_name: getPrinterName(),
             social: null,
           },
           fecha: fmtFecha(now),
