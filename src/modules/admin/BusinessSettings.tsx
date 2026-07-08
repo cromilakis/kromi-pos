@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useBusiness, updateBusiness, type BusinessRow } from "@/data/business";
+import { ImageUploader } from "@/components/ImageUploader";
+import { uploadLogoImage } from "@/lib/image";
 
 type FormState = Omit<BusinessRow, "id">;
 
@@ -18,7 +20,6 @@ const FIELDS: { key: keyof FormState; label: string; placeholder?: string }[] = 
   { key: "direccion", label: "Dirección" },
   { key: "tagline", label: "Lema (tagline)" },
   { key: "footer", label: "Pie de boleta" },
-  { key: "logo_url", label: "Logo (URL)", placeholder: "https://…" },
   { key: "social_red", label: "Red social (nombre)", placeholder: "Instagram" },
   { key: "social_url", label: "Red social (URL)", placeholder: "https://…" },
 ];
@@ -101,6 +102,16 @@ export function BusinessSettings() {
                 />
               </label>
             ))}
+          </div>
+          <div className="mt-4 flex flex-col gap-1.5">
+            <span className="text-[12.5px] font-bold text-[#5a6b7e]">Logo del negocio</span>
+            <ImageUploader
+              value={form.logo_url || null}
+              onChange={(url) => setForm((s) => ({ ...s, logo_url: url ?? "" }))}
+              onUpload={(blob) => uploadLogoImage(businessId!, blob)}
+              maxSize={400}
+              label="logo"
+            />
           </div>
           <div className="mt-6 flex justify-end">
             <button
