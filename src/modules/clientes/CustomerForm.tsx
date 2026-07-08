@@ -23,7 +23,7 @@ const inputStyle: React.CSSProperties = {
   outline: "none",
   boxSizing: "border-box",
 };
-const labelStyle: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 700, color: "#7C95A8", marginBottom: 6 };
+const labelStyle: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 700, color: "#556A7C", marginBottom: 6 };
 
 export function CustomerForm({ open, onClose, customer, businessId, createdBy, onSaved }: CustomerFormProps) {
   const [name, setName] = useState("");
@@ -101,7 +101,7 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
           <div style={{ fontWeight: 900, fontSize: 19, color: "#0F2A1B", flex: 1 }}>{customer ? "Editar cliente" : "Nuevo cliente"}</div>
           <button
             onClick={onClose}
-            style={{ width: 32, height: 32, border: 0, background: "#F6F7FB", borderRadius: 9, color: "#7C95A8", fontSize: 18, cursor: "pointer", fontFamily: "inherit" }}
+            style={{ width: 32, height: 32, border: 0, background: "#F6F7FB", borderRadius: 9, color: "#556A7C", fontSize: 18, cursor: "pointer", fontFamily: "inherit" }}
           >
             ✕
           </button>

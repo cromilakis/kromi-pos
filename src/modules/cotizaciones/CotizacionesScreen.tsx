@@ -196,8 +196,8 @@ export function CotizacionesScreen() {
             className="mb-3 w-full rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5 text-sm text-[#0F2A1B] outline-none focus:border-[var(--brand)]"
           />
           <div className="flex max-h-[320px] flex-col gap-1.5 overflow-auto">
-            {query.trim() === "" && <div className="py-6 text-center text-[13px] text-[#9aa8bd]">Escribe para buscar productos.</div>}
-            {query.trim() !== "" && results.length === 0 && <div className="py-6 text-center text-[13px] text-[#9aa8bd]">Sin resultados.</div>}
+            {query.trim() === "" && <div className="py-6 text-center text-[13px] text-[#5E6E7E]">Escribe para buscar productos.</div>}
+            {query.trim() !== "" && results.length === 0 && <div className="py-6 text-center text-[13px] text-[#5E6E7E]">Sin resultados.</div>}
             {results.map((p) => (
               <button
                 key={p.id}
@@ -205,7 +205,7 @@ export function CotizacionesScreen() {
                 className="flex items-center gap-3 rounded-xl border border-[#EEF1F6] bg-white px-3 py-2 text-left hover:border-[#A7E3C0]"
               >
                 <div className="min-w-0 flex-1 truncate text-sm font-bold text-[#0F2A1B]">{p.name}</div>
-                <div className="text-[13px] font-bold text-[#7C95A8]">{fmtCLP(p.price)}</div>
+                <div className="text-[13px] font-bold text-[#556A7C]">{fmtCLP(p.price)}</div>
                 <span className="flex size-[26px] items-center justify-center rounded-lg bg-[#D3F4E0] text-lg" style={{ color: "var(--brand)" }}>+</span>
               </button>
             ))}
@@ -216,15 +216,15 @@ export function CotizacionesScreen() {
         <div className="flex flex-col rounded-2xl border border-[#E1E5EE] bg-white p-4">
           <div className="mb-3 text-[15px] font-black text-[#0F2A1B]">Cotización actual</div>
           <div className="mb-3 flex min-h-[80px] flex-col gap-1.5">
-            {quoteLines.length === 0 && <div className="py-6 text-center text-[13px] text-[#9aa8bd]">Sin ítems. Busca y agrega productos.</div>}
+            {quoteLines.length === 0 && <div className="py-6 text-center text-[13px] text-[#5E6E7E]">Sin ítems. Busca y agrega productos.</div>}
             {quoteLines.map(({ product, qty }) => (
               <div key={product.id} className="flex items-center gap-3 border-b border-[#F0F2F7] py-2 last:border-0">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-bold text-[#0F2A1B]">{product.name}</div>
-                  <div className="text-xs text-[#7C95A8]">{fmtCLP(product.price)} c/u</div>
+                  <div className="text-xs text-[#556A7C]">{fmtCLP(product.price)} c/u</div>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => decLine(product.id)} className="flex size-[26px] items-center justify-center rounded-lg border border-[#E1E5EE] bg-white text-base text-[#7C95A8]">–</button>
+                  <button onClick={() => decLine(product.id)} className="flex size-[26px] items-center justify-center rounded-lg border border-[#E1E5EE] bg-white text-base text-[#556A7C]">–</button>
                   <span className="min-w-4 text-center text-sm font-bold text-[#0F2A1B]">{qty}</span>
                   <button onClick={() => incLine(product.id)} className="flex size-[26px] items-center justify-center rounded-lg bg-[#D3F4E0] text-base" style={{ color: "var(--brand)" }}>+</button>
                 </div>
@@ -233,7 +233,7 @@ export function CotizacionesScreen() {
           </div>
 
           <div className="mb-3 flex items-baseline justify-between border-t border-[#E1E5EE] pt-3">
-            <span className="text-sm font-bold text-[#7C95A8]">Total ({totals.items} ítems)</span>
+            <span className="text-sm font-bold text-[#556A7C]">Total ({totals.items} ítems)</span>
             <span className="text-[22px] font-black text-[#0F2A1B]">{fmtCLP(totals.total)}</span>
           </div>
 
@@ -268,9 +268,9 @@ export function CotizacionesScreen() {
       </div>
 
       <div className="mb-3 text-[15px] font-black text-[#0F2A1B]">Cotizaciones</div>
-      {isLoading && <div className="py-6 text-center text-[13px] text-[#9aa8bd]">Cargando cotizaciones…</div>}
+      {isLoading && <div className="py-6 text-center text-[13px] text-[#5E6E7E]">Cargando cotizaciones…</div>}
       {!isLoading && rows.length === 0 && (
-        <div className="rounded-2xl border border-[#E1E5EE] bg-white py-8 text-center text-[13.5px] text-[#9aa8bd]">Aún no hay cotizaciones.</div>
+        <div className="rounded-2xl border border-[#E1E5EE] bg-white py-8 text-center text-[13.5px] text-[#5E6E7E]">Aún no hay cotizaciones.</div>
       )}
       <div className="flex flex-col gap-2.5">
         {rows.map((q) => {
@@ -284,7 +284,7 @@ export function CotizacionesScreen() {
             <div key={q.id} className="flex items-center gap-4 rounded-2xl border border-[#E1E5EE] bg-white px-[18px] py-4">
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[14.5px] font-extrabold text-[#0F2A1B]">COT-{q.folio} · {q.customer_name ?? "Sin cliente"}</div>
-                <div className="mt-0.5 text-[12.5px] text-[#7C95A8]">{fmtIsoDate(q.created_at.slice(0, 10))} · Vence {fmtIsoDate(q.valid_until)} · {items} ítems</div>
+                <div className="mt-0.5 text-[12.5px] text-[#556A7C]">{fmtIsoDate(q.created_at.slice(0, 10))} · Vence {fmtIsoDate(q.valid_until)} · {items} ítems</div>
               </div>
               <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold" style={{ background: badge.bg, color: badge.fg }}>{badge.label}</span>
               <div className="text-base font-black text-[#0F2A1B]">{fmtCLP(q.total)}</div>

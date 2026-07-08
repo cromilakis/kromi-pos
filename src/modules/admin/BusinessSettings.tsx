@@ -88,7 +88,7 @@ export function BusinessSettings() {
       </div>
 
       {isLoading ? (
-        <div className="py-10 text-center text-[13.5px] text-[#9aa8bd]">Cargando…</div>
+        <div className="py-10 text-center text-[13.5px] text-[#5E6E7E]">Cargando…</div>
       ) : (
         <div className="max-w-[640px] rounded-2xl border border-[#E1E5EE] bg-white p-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -117,7 +117,7 @@ export function BusinessSettings() {
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#F0F2F7] pt-4">
             <div>
               <div className="text-[12.5px] font-bold text-[#5a6b7e]">Impresora de boletas</div>
-              <div className="text-[11.5px] text-[#9aa8bd]">Configura la impresora térmica de este equipo.</div>
+              <div className="text-[11.5px] text-[#5E6E7E]">Configura la impresora térmica de este equipo.</div>
             </div>
             <PrinterSettings />
           </div>

@@ -114,7 +114,7 @@ export function LoginScreen() {
   const isPin = step === "pin";
   const rutNorm = normRut(rut);
   const hasValue = isPin ? pin.length > 0 : rutNorm.length > 0;
-  const iconColor = error ? "#D02E2E" : hasValue ? "#0a6e36" : "#9aa8bd";
+  const iconColor = error ? "#D02E2E" : hasValue ? "#0a6e36" : "#5E6E7E";
   const fieldLabel = isPin ? "PIN de seguridad" : "RUT";
   const title = isPin ? "Ingresa tu PIN" : "Ingresa tu RUT";
   const display = isPin
@@ -186,7 +186,7 @@ export function LoginScreen() {
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40, background: "#fff" }}>
           <div style={{ width: "100%", maxWidth: 372 }}>
             <h2 style={{ fontSize: 26, fontWeight: 900, color: "#0F2A1B", margin: "0 0 22px", letterSpacing: "-.01em" }}>{title}</h2>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#7C95A8", marginBottom: 8 }}>{fieldLabel}</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#556A7C", marginBottom: 8 }}>{fieldLabel}</label>
             <div
               style={{
                 display: "flex",

@@ -27,7 +27,7 @@ const inputStyle: React.CSSProperties = {
   outline: "none",
   boxSizing: "border-box",
 };
-const labelStyle: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 700, color: "#7C95A8", marginBottom: 6 };
+const labelStyle: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 700, color: "#556A7C", marginBottom: 6 };
 
 export function ProductForm({ open, onClose, product, categories, suppliers, businessId, branchId, onSaved }: ProductFormProps) {
   const [name, setName] = useState("");
@@ -137,7 +137,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           <div style={{ fontWeight: 900, fontSize: 19, color: "#0F2A1B", flex: 1 }}>{product ? "Editar producto" : "Agregar producto"}</div>
           <button
             onClick={onClose}
-            style={{ width: 32, height: 32, border: 0, background: "#F6F7FB", borderRadius: 9, color: "#7C95A8", fontSize: 18, cursor: "pointer", fontFamily: "inherit" }}
+            style={{ width: 32, height: 32, border: 0, background: "#F6F7FB", borderRadius: 9, color: "#556A7C", fontSize: 18, cursor: "pointer", fontFamily: "inherit" }}
           >
             ✕
           </button>
@@ -171,7 +171,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           <div>
             <label style={labelStyle}>Stock mínimo (opcional)</label>
             <input style={inputStyle} value={minStock} onChange={(e) => setMinStock(onlyDigits(e.target.value))} inputMode="numeric" placeholder="Sin alerta" />
-            <div style={{ fontSize: 11.5, color: "#94A3B5", marginTop: 5, lineHeight: 1.4 }}>
+            <div style={{ fontSize: 11.5, color: "#5E6E7E", marginTop: 5, lineHeight: 1.4 }}>
               Si el stock baja de este número se marca como <b style={{ color: "#9A6F12", fontWeight: 700 }}>stock bajo</b> en el inventario. Déjalo vacío para no monitorear este producto.
             </div>
           </div>
@@ -198,7 +198,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: 13.5, color: "#0F2A1B" }}>Producto crítico (esencial)</div>
-              <div style={{ fontSize: 12, color: "#7C95A8" }}>Aparece marcado con ★ y prioriza la reposición cuando esté bajo el mínimo.</div>
+              <div style={{ fontSize: 12, color: "#556A7C" }}>Aparece marcado con ★ y prioriza la reposición cuando esté bajo el mínimo.</div>
             </div>
           </div>
           <div>
@@ -219,7 +219,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           <div>
             <label style={labelStyle}>Descuento (%)</label>
             <input style={inputStyle} value={discountPct} onChange={(e) => setDiscountPct(onlyDigits(e.target.value).slice(0, 3))} inputMode="numeric" placeholder="0" />
-            <div style={{ fontSize: 11.5, color: "#94A3B5", marginTop: 5, lineHeight: 1.4 }}>
+            <div style={{ fontSize: 11.5, color: "#5E6E7E", marginTop: 5, lineHeight: 1.4 }}>
               Si es mayor a 0, el producto se vende con ese % de descuento y se marca con una etiqueta <b style={{ color: "#0a6e36", fontWeight: 700 }}>CON DESCUENTO</b> en la venta.
             </div>
           </div>

@@ -104,10 +104,10 @@ export function StockScreen() {
     const out: { key: string; label: string; dot: string; items: ProductRow[] }[] = [];
     for (const id of sortedCatIds) {
       const items = byCat.get(id);
-      if (items && items.length) out.push({ key: id, label: catById.get(id)?.label ?? "—", dot: catById.get(id)?.dot ?? "#7C95A8", items });
+      if (items && items.length) out.push({ key: id, label: catById.get(id)?.label ?? "—", dot: catById.get(id)?.dot ?? "#556A7C", items });
     }
     const none = byCat.get("__none__");
-    if (none && none.length) out.push({ key: "__none__", label: "Sin categoría", dot: "#9aa8bd", items: none });
+    if (none && none.length) out.push({ key: "__none__", label: "Sin categoría", dot: "#5E6E7E", items: none });
     return out;
   }, [filtered, allCategories, catById]);
 
@@ -317,7 +317,7 @@ export function StockScreen() {
             </button>
           </div>
         ) : (
-          <span className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-[13px] font-bold text-[#7C95A8]">
+          <span className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-[13px] font-bold text-[#556A7C]">
             Solo lectura
           </span>
         )}
@@ -351,10 +351,10 @@ export function StockScreen() {
               </div>
               {lowStockList.map((p) => (
                 <div key={p.id} className="flex items-center gap-[13px] border-b border-[#F0F2F7] py-[10px] last:border-0">
-                  <span className="size-2.5 shrink-0 rounded-full" style={{ background: p.category_id ? catById.get(p.category_id)?.dot ?? "#7C95A8" : "#9aa8bd" }} />
+                  <span className="size-2.5 shrink-0 rounded-full" style={{ background: p.category_id ? catById.get(p.category_id)?.dot ?? "#556A7C" : "#5E6E7E" }} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[14px] font-bold text-[#0F2A1B]">{p.name}</div>
-                    <div className="text-xs text-[#9aa8bd]">{p.category_id ? catById.get(p.category_id)?.label : "Sin categoría"}</div>
+                    <div className="text-xs text-[#5E6E7E]">{p.category_id ? catById.get(p.category_id)?.label : "Sin categoría"}</div>
                   </div>
                   <span className="whitespace-nowrap text-[12.5px] font-bold text-[#9a2533]">Faltan {Math.max(0, p.min_stock - p.stock)}</span>
                   <span className="min-w-[74px] whitespace-nowrap text-right text-[14px] font-black text-[#0F2A1B]">
@@ -382,7 +382,7 @@ export function StockScreen() {
               key={v}
               onClick={() => setStockView(v)}
               className="rounded-lg px-3 py-1.5 text-[13px] font-bold transition-colors"
-              style={stockView === v ? { background: "var(--brand)", color: "#fff" } : { color: "#7C95A8" }}
+              style={stockView === v ? { background: "var(--brand)", color: "#fff" } : { color: "#556A7C" }}
             >
               {v === "table" ? "Tabla" : "Bloques"}
             </button>
@@ -407,24 +407,24 @@ export function StockScreen() {
         ))}
       </div>
 
-      {loadingProducts && <div className="py-10 text-center text-[13.5px] text-[#9aa8bd]">Cargando inventario…</div>}
+      {loadingProducts && <div className="py-10 text-center text-[13.5px] text-[#5E6E7E]">Cargando inventario…</div>}
 
       {!loadingProducts && filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-[60px] text-center text-[#9aa8bd]">
-          <div className="text-[16px] font-bold text-[#7C95A8]">Sin resultados</div>
-          <div className="mt-[3px] text-[13.5px] text-[#9aa8bd]">Ningún producto coincide con la búsqueda o el filtro.</div>
+        <div className="flex flex-col items-center justify-center py-[60px] text-center text-[#5E6E7E]">
+          <div className="text-[16px] font-bold text-[#556A7C]">Sin resultados</div>
+          <div className="mt-[3px] text-[13.5px] text-[#5E6E7E]">Ningún producto coincide con la búsqueda o el filtro.</div>
         </div>
       )}
 
       {stockView === "table" && canManage && !loadingProducts && filtered.length > 0 && (
-        <div className="mb-2.5 flex items-center gap-3 text-[12.5px] text-[#7C95A8]">
+        <div className="mb-2.5 flex items-center gap-3 text-[12.5px] text-[#556A7C]">
           {selectedIds.size > 0 ? (
             <>
               <span className="font-bold text-[#0F2A1B]">
                 {selectedIds.size} {selectedIds.size === 1 ? "seleccionado" : "seleccionados"}
               </span>
               <span>· clic derecho para cambiar la categoría</span>
-              <button onClick={() => { setSelectedIds(new Set()); setAnchorId(null); }} className="ml-auto font-bold text-[#7C95A8] hover:text-[#0F2A1B]">
+              <button onClick={() => { setSelectedIds(new Set()); setAnchorId(null); }} className="ml-auto font-bold text-[#556A7C] hover:text-[#0F2A1B]">
                 Limpiar selección
               </button>
             </>
@@ -438,7 +438,7 @@ export function StockScreen() {
         <div className="overflow-x-auto rounded-2xl border border-[#E1E5EE] bg-white">
           <table className="w-full border-collapse text-[13px]">
             <thead>
-              <tr className="bg-[#F7FAF8] text-left text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">
+              <tr className="bg-[#F7FAF8] text-left text-[11px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">
                 <th className="px-4 py-2.5">Producto</th>
                 <th className="px-4 py-2.5">Categoría</th>
                 <th className="px-4 py-2.5 text-right">Precio</th>
@@ -469,21 +469,21 @@ export function StockScreen() {
                         {p.critical && <span className="whitespace-nowrap rounded-full bg-[#FBF1E0] px-2 py-0.5 text-[11px] font-bold text-[#9A6F12]">★ Crítico</span>}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-[#7C95A8]">
+                    <td className="px-4 py-2 text-[#556A7C]">
                       <span className="inline-flex items-center gap-1.5">
-                        <span className="size-2 shrink-0 rounded-full" style={{ background: p.category_id ? catById.get(p.category_id)?.dot ?? "#7C95A8" : "#9aa8bd" }} />
+                        <span className="size-2 shrink-0 rounded-full" style={{ background: p.category_id ? catById.get(p.category_id)?.dot ?? "#556A7C" : "#5E6E7E" }} />
                         {p.category_id ? catById.get(p.category_id)?.label ?? "—" : "Sin categoría"}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-right font-bold text-[#7C95A8]">{fmtCLP(p.price)}</td>
-                    <td className="px-4 py-2 text-right text-[#9aa8bd]">{p.min_stock > 0 ? p.min_stock : "—"}</td>
+                    <td className="px-4 py-2 text-right font-bold text-[#556A7C]">{fmtCLP(p.price)}</td>
+                    <td className="px-4 py-2 text-right text-[#5E6E7E]">{p.min_stock > 0 ? p.min_stock : "—"}</td>
                     <td className="px-4 py-2 text-right font-black" style={{ color: low ? "#D02E2E" : "#0F2A1B" }}>{p.stock}</td>
                     {canManage && (
                       <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
-                          <button onClick={() => adjustStock(p, -1)} title="Restar 1" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[17px] text-[#7C95A8]">–</button>
+                          <button onClick={() => adjustStock(p, -1)} title="Restar 1" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[17px] text-[#556A7C]">–</button>
                           <button onClick={() => adjustStock(p, 1)} title="Sumar 1" className="flex size-[28px] items-center justify-center rounded-[9px] bg-[#D3F4E0] text-[17px]" style={{ color: "var(--brand)" }}>+</button>
-                          <button onClick={() => { setEditing(p); setFormOpen(true); }} title="Editar producto" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#7C95A8]">✎</button>
+                          <button onClick={() => { setEditing(p); setFormOpen(true); }} title="Editar producto" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#556A7C]">✎</button>
                           <button onClick={() => setConfirmDeleteId(p.id)} title="Eliminar producto" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#F5C2C2] bg-white text-[#D02E2E]">🗑</button>
                         </div>
                       </td>
@@ -516,8 +516,8 @@ export function StockScreen() {
                       )}
                     </div>
                     <div className="mt-[3px] flex items-baseline justify-between gap-2">
-                      <span className="text-[13px] font-bold text-[#7C95A8]">{fmtCLP(p.price)}</span>
-                      <span className="text-[11.5px] font-bold" style={{ color: low ? "#D02E2E" : "#9aa8bd" }}>
+                      <span className="text-[13px] font-bold text-[#556A7C]">{fmtCLP(p.price)}</span>
+                      <span className="text-[11.5px] font-bold" style={{ color: low ? "#D02E2E" : "#5E6E7E" }}>
                         {p.min_stock > 0 ? `mín. ${p.min_stock}` : "sin mínimo"}
                       </span>
                     </div>
@@ -530,7 +530,7 @@ export function StockScreen() {
                               setFormOpen(true);
                             }}
                             title="Editar producto"
-                            className="flex size-[30px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#7C95A8]"
+                            className="flex size-[30px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#556A7C]"
                           >
                             ✎
                           </button>
@@ -545,7 +545,7 @@ export function StockScreen() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => adjustStock(p, -1)}
-                            className="flex size-[30px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[18px] text-[#7C95A8]"
+                            className="flex size-[30px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[18px] text-[#556A7C]"
                           >
                             –
                           </button>
@@ -563,14 +563,14 @@ export function StockScreen() {
                       </div>
                     ) : (
                       <div className="mt-3 flex items-center justify-between gap-2">
-                        <span className="text-[11.5px] font-bold" style={{ color: low ? "#D02E2E" : "#9aa8bd" }}>
+                        <span className="text-[11.5px] font-bold" style={{ color: low ? "#D02E2E" : "#5E6E7E" }}>
                           {low ? "Stock bajo" : "Stock"}
                         </span>
                         <span className="flex items-baseline gap-1">
                           <span className="text-[15px] font-black" style={{ color: low ? "#D02E2E" : "#0F2A1B" }}>
                             {p.stock}
                           </span>
-                          <span className="text-xs font-semibold text-[#9aa8bd]">u.</span>
+                          <span className="text-xs font-semibold text-[#5E6E7E]">u.</span>
                         </span>
                       </div>
                     )}
@@ -602,7 +602,7 @@ export function StockScreen() {
             style={{ left: ctxMenu.x, top: ctxMenu.y }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[.08em] text-[#9aa8bd]">
+            <div className="px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[.08em] text-[#5E6E7E]">
               {selectedIds.size} {selectedIds.size === 1 ? "producto" : "productos"}
             </div>
             <div
@@ -612,7 +612,7 @@ export function StockScreen() {
             >
               <button className="flex w-full items-center justify-between gap-3 px-3.5 py-2 text-left text-[13.5px] font-bold text-[#2A3A2E] hover:bg-[#F2F7F4]">
                 <span>Categoría</span>
-                <span className="text-[#9aa8bd]">▸</span>
+                <span className="text-[#5E6E7E]">▸</span>
               </button>
               {ctxSubmenuOpen && (
                 <div className="absolute left-full top-0 ml-0.5 max-h-[320px] min-w-[190px] overflow-auto rounded-xl border border-[#E1E5EE] bg-white py-1.5 shadow-[0_12px_40px_rgba(15,42,27,.18)]">
@@ -622,15 +622,15 @@ export function StockScreen() {
                       onClick={() => applyCategoryToSelection(c.id)}
                       className="flex w-full items-center gap-2 px-3.5 py-2 text-left text-[13.5px] font-bold text-[#2A3A2E] hover:bg-[#F2F7F4]"
                     >
-                      <span className="size-2.5 shrink-0 rounded-full" style={{ background: c.dot ?? "#7C95A8" }} />
+                      <span className="size-2.5 shrink-0 rounded-full" style={{ background: c.dot ?? "#556A7C" }} />
                       <span className="truncate">{c.label}</span>
                     </button>
                   ))}
                   <button
                     onClick={() => applyCategoryToSelection(null)}
-                    className="mt-1 flex w-full items-center gap-2 border-t border-[#F0F2F7] px-3.5 py-2 text-left text-[13.5px] font-bold text-[#7C95A8] hover:bg-[#F2F7F4]"
+                    className="mt-1 flex w-full items-center gap-2 border-t border-[#F0F2F7] px-3.5 py-2 text-left text-[13.5px] font-bold text-[#556A7C] hover:bg-[#F2F7F4]"
                   >
-                    <span className="size-2.5 shrink-0 rounded-full bg-[#9aa8bd]" />
+                    <span className="size-2.5 shrink-0 rounded-full bg-[#5E6E7E]" />
                     <span>Sin categoría</span>
                   </button>
                 </div>

@@ -94,9 +94,9 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
 
       <div className="min-h-0 flex-1 overflow-auto px-5 py-1.5">
         {!hasCart && (
-          <div className="flex h-full flex-col items-center justify-center px-5 py-10 text-center text-[#9aa8bd]">
-            <div className="text-[15px] font-bold text-[#7C95A8]">Carrito vacío</div>
-            <div className="text-[13px] text-[#9aa8bd]">Seleccione un producto para sumarlo a la venta.</div>
+          <div className="flex h-full flex-col items-center justify-center px-5 py-10 text-center text-[#5E6E7E]">
+            <div className="text-[15px] font-bold text-[#556A7C]">Carrito vacío</div>
+            <div className="text-[13px] text-[#5E6E7E]">Seleccione un producto para sumarlo a la venta.</div>
           </div>
         )}
         {lines.map(({ product, qty, disc_kind, disc_value }) => {
@@ -110,7 +110,7 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
                   <span className="shrink-0 rounded-full bg-[#E6F7EE] px-1.5 py-0.5 text-[9.5px] font-black uppercase text-[#0a6e36]">-{product.discount_pct}%</span>
                 )}
               </div>
-              <div className="text-xs text-[#7C95A8]">
+              <div className="text-xs text-[#556A7C]">
                 {(product.discount_pct ?? 0) > 0 ? (
                   <><span className="line-through">{fmtCLP(product.price)}</span> <span className="font-bold text-[#0a6e36]">{fmtCLP(discountedPrice(product.price, product.discount_pct))}</span> c/u</>
                 ) : (
@@ -122,7 +122,7 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => onDec(product.id)}
-                className="flex size-[26px] items-center justify-center rounded-lg border border-[#E1E5EE] bg-white text-base text-[#7C95A8]"
+                className="flex size-[26px] items-center justify-center rounded-lg border border-[#E1E5EE] bg-white text-base text-[#556A7C]"
               >
                 –
               </button>
@@ -138,7 +138,7 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
             </div>
             {canDiscount && (
               <div className="flex w-full items-center gap-2">
-                <span className="text-[11px] font-semibold text-[#9aa8bd]">Desc.</span>
+                <span className="text-[11px] font-semibold text-[#5E6E7E]">Desc.</span>
                 <DiscountControl kind={disc_kind ?? null} value={disc_value ?? 0} onChange={(k, v) => onSetLineDisc(product.id, k, v)} />
               </div>
             )}
@@ -149,7 +149,7 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
 
       <div className="border-t border-[#E1E5EE] p-5">
         {canDiscount && (
-          <div className="mb-2 flex items-center justify-between gap-2 text-[13px] text-[#7C95A8]">
+          <div className="mb-2 flex items-center justify-between gap-2 text-[13px] text-[#556A7C]">
             <span className="inline-flex items-center gap-2">
               Descuento
               <DiscountControl kind={totalDisc?.kind ?? null} value={totalDisc?.value ?? 0} onChange={(k, v) => onSetTotalDisc(k ? { kind: k, value: v } : null)} />
@@ -157,11 +157,11 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
             <span className="font-bold text-[#D02E2E]">{totals.discount > 0 ? `-${fmtCLP(totals.discount)}` : ""}</span>
           </div>
         )}
-        <div className="mb-1.5 flex justify-between text-[13px] text-[#7C95A8]">
+        <div className="mb-1.5 flex justify-between text-[13px] text-[#556A7C]">
           <span>Subtotal</span>
           <span>{fmtCLP(totals.neto)}</span>
         </div>
-        <div className="mb-2.5 flex justify-between text-[13px] text-[#7C95A8]">
+        <div className="mb-2.5 flex justify-between text-[13px] text-[#556A7C]">
           <span>IVA 19%</span>
           <span>{fmtCLP(totals.iva)}</span>
         </div>
@@ -172,7 +172,7 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
         <button
           onClick={onPay}
           disabled={!hasCart}
-          className="w-full rounded-[14px] py-3.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-[#EEF1F6] disabled:text-[#9aa8bd]"
+          className="w-full rounded-[14px] py-3.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:bg-[#EEF1F6] disabled:text-[#5E6E7E]"
           style={hasCart ? { background: "var(--brand)" } : undefined}
         >
           Cobrar
@@ -183,7 +183,7 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={() => setConfirmClear(false)}>
           <div className="w-[380px] max-w-full rounded-[20px] bg-white p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-1.5 text-[15px] font-extrabold text-[#0F2A1B]">¿Vaciar el carrito?</div>
-            <div className="mb-4 text-[13px] text-[#7C95A8]">Se quitarán todos los productos de la venta actual.</div>
+            <div className="mb-4 text-[13px] text-[#556A7C]">Se quitarán todos los productos de la venta actual.</div>
             <div className="flex justify-end gap-2.5">
               <button
                 onClick={() => setConfirmClear(false)}

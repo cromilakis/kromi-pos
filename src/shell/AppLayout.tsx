@@ -85,7 +85,7 @@ export function AppLayout() {
           {!collapsed && (
             <div className="min-w-0 flex-1 leading-[1.1]">
               <div className="font-black text-[16px] text-[#0F2A1B] truncate">{brandName}</div>
-              <div className="text-[11px] font-medium text-[#7C95A8]">Punto de venta</div>
+              <div className="text-[11px] font-medium text-[#556A7C]">Punto de venta</div>
             </div>
           )}
         </div>
@@ -95,7 +95,7 @@ export function AppLayout() {
             type="button"
             onClick={() => setSidebarOpen((o) => !o)}
             title={collapsed ? "Expandir menú" : "Contraer menú"}
-            className={`mb-2 flex items-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#7C95A8] hover:bg-[#F7F8FA] ${collapsed ? "size-[38px] self-center justify-center" : "gap-2 px-3 py-2 text-[13px] font-bold"}`}
+            className={`mb-2 flex items-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#556A7C] hover:bg-[#F7F8FA] ${collapsed ? "size-[38px] self-center justify-center" : "gap-2 px-3 py-2 text-[13px] font-bold"}`}
           >
             <Menu className="size-[17px] shrink-0" strokeWidth={1.9} />
             {!collapsed && <span>Contraer menú</span>}
@@ -111,7 +111,7 @@ export function AppLayout() {
         {adminItem && (
           <>
             {!collapsed && (
-              <div className="text-[11px] font-bold tracking-[.13em] uppercase text-[#94A3B5] px-3 pt-5 pb-2">
+              <div className="text-[11px] font-bold tracking-[.13em] uppercase text-[#5E6E7E] px-3 pt-5 pb-2">
                 Administración
               </div>
             )}
@@ -141,14 +141,14 @@ export function AppLayout() {
           {!collapsed && (
             <div className="min-w-0 flex-1 leading-[1.15]">
               <div className="text-[13px] font-bold text-[#0F2A1B] truncate">{profile.name}</div>
-              <div className="text-[11px] text-[#7C95A8]">{ROLE_LABEL[profile.role]}</div>
+              <div className="text-[11px] text-[#556A7C]">{ROLE_LABEL[profile.role]}</div>
             </div>
           )}
           <button
             type="button"
             title="Cerrar sesión"
             onClick={signOut}
-            className="size-[34px] shrink-0 rounded-[10px] border border-[#E1E5EE] bg-white text-[#7C95A8] flex items-center justify-center hover:bg-[#F7F8FA]"
+            className="size-[34px] shrink-0 rounded-[10px] border border-[#E1E5EE] bg-white text-[#556A7C] flex items-center justify-center hover:bg-[#F7F8FA]"
           >
             <LogOut className="size-[17px]" strokeWidth={1.7} />
           </button>

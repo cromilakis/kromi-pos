@@ -54,9 +54,9 @@ function AbrirCajaGate() {
     <div className="grid min-h-full place-items-center p-6">
       <Card className="w-full max-w-sm space-y-3 p-6 text-center">
         <h2 className="text-lg font-black text-[#0F2A1B]">La caja está cerrada</h2>
-        <p className="text-sm text-[#7C95A8]">Abre la caja para comenzar a registrar ventas de este turno.</p>
+        <p className="text-sm text-[#556A7C]">Abre la caja para comenzar a registrar ventas de este turno.</p>
         <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-[#7C95A8]">$</span>
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-[#556A7C]">$</span>
           <Input value={floatAmount} inputMode="numeric" onChange={(e) => setFloatAmount(e.target.value)} className="pl-7" disabled={!register || busy} />
         </div>
         <Button className="w-full" style={{ background: "var(--brand)" }} onClick={abrir} disabled={!register || busy}>
@@ -123,10 +123,10 @@ export function VentaScreen() {
     const out: { key: string; label: string; dot: string; items: ProductRow[] }[] = [];
     for (const id of sortedCatIds) {
       const items = byCat.get(id);
-      if (items && items.length) out.push({ key: id, label: catById.get(id)?.label ?? "—", dot: catById.get(id)?.dot ?? "#7C95A8", items });
+      if (items && items.length) out.push({ key: id, label: catById.get(id)?.label ?? "—", dot: catById.get(id)?.dot ?? "#556A7C", items });
     }
     const none = byCat.get("__none__");
-    if (none && none.length) out.push({ key: "__none__", label: "Sin categoría", dot: "#9aa8bd", items: none });
+    if (none && none.length) out.push({ key: "__none__", label: "Sin categoría", dot: "#5E6E7E", items: none });
     return out;
   }, [filtered, allCategories, catById]);
 
@@ -445,7 +445,7 @@ export function VentaScreen() {
           <div className="flex min-h-0 flex-1 flex-col pb-4">
             <div className="mb-3 flex items-center gap-3">
               <div className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5">
-                <span className="text-[12.5px] font-bold text-[#7C95A8]">Cantidad</span>
+                <span className="text-[12.5px] font-bold text-[#556A7C]">Cantidad</span>
                 <input value={scanQty || ""} onChange={(e) => setScanQty(Number(e.target.value.replace(/[^\d]/g, "")) || 0)} inputMode="numeric" className="w-16 border-0 bg-transparent text-center text-lg font-black text-[#0F2A1B] outline-none" />
               </div>
               <div className="flex flex-1 items-center gap-2.5 rounded-xl border-2 bg-white px-4 py-2.5" style={{ borderColor: "var(--brand)" }}>
@@ -456,7 +456,7 @@ export function VentaScreen() {
             <div className="min-h-0 flex-1 overflow-auto rounded-2xl border border-[#E1E5EE] bg-white">
               <table className="w-full border-collapse text-[15px]">
                 <thead>
-                  <tr className="bg-[#F7FAF8] text-left text-[11.5px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">
+                  <tr className="bg-[#F7FAF8] text-left text-[11.5px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">
                     <th className="px-4 py-3">Producto</th>
                     <th className="px-4 py-3 text-right">P. unit</th>
                     <th className="px-4 py-3 text-center">Cantidad</th>
@@ -466,7 +466,7 @@ export function VentaScreen() {
                 </thead>
                 <tbody>
                   {cartLines.length === 0 && (
-                    <tr><td colSpan={5} className="px-4 py-12 text-center text-[14px] text-[#9aa8bd]">Escanea productos para agregarlos a la venta.</td></tr>
+                    <tr><td colSpan={5} className="px-4 py-12 text-center text-[14px] text-[#5E6E7E]">Escanea productos para agregarlos a la venta.</td></tr>
                   )}
                   {cartLines.map(({ product, qty }) => {
                     const unit = discountedPrice(product.price, product.discount_pct ?? 0);
@@ -478,17 +478,17 @@ export function VentaScreen() {
                           <span className="ml-2 rounded-full bg-[#E6F7EE] px-2 py-0.5 text-[10px] font-black uppercase text-[#0a6e36]">-{product.discount_pct}% · con descuento</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-[#7C95A8]">
+                      <td className="px-4 py-3 text-right text-[#556A7C]">
                         {product.discount_pct > 0 ? (
                           <span className="inline-flex flex-col items-end leading-none">
-                            <span className="text-[11px] text-[#9aa8bd] line-through">{fmtCLP(product.price)}</span>
+                            <span className="text-[11px] text-[#5E6E7E] line-through">{fmtCLP(product.price)}</span>
                             <span className="font-bold text-[#0a6e36]">{fmtCLP(unit)}</span>
                           </span>
                         ) : fmtCLP(product.price)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
-                          <button onClick={() => decCart(product.id)} className="flex size-7 items-center justify-center rounded-lg border border-[#E1E5EE] bg-white text-[#7C95A8]">–</button>
+                          <button onClick={() => decCart(product.id)} className="flex size-7 items-center justify-center rounded-lg border border-[#E1E5EE] bg-white text-[#556A7C]">–</button>
                           <span className="min-w-6 text-center font-black text-[#0F2A1B]">{qty}</span>
                           <button onClick={() => incCart(product.id)} disabled={qty >= product.stock} className="flex size-7 items-center justify-center rounded-lg bg-[#D3F4E0] disabled:opacity-40" style={{ color: "var(--brand)" }}>+</button>
                         </div>
@@ -503,10 +503,10 @@ export function VentaScreen() {
             </div>
             <div className="mt-3 flex items-center justify-between rounded-2xl border border-[#E1E5EE] bg-white px-5 py-4">
               <div className="flex items-baseline gap-2">
-                <span className="text-[15px] font-bold text-[#7C95A8]">Total</span>
+                <span className="text-[15px] font-bold text-[#556A7C]">Total</span>
                 <span className="text-[32px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(totals.total)}</span>
               </div>
-              <button onClick={() => setPayOpen(true)} disabled={cartLines.length === 0} className="rounded-[14px] px-8 py-4 text-base font-bold text-white disabled:cursor-not-allowed disabled:bg-[#EEF1F6] disabled:text-[#9aa8bd]" style={cartLines.length > 0 ? { background: "var(--brand)" } : undefined}>
+              <button onClick={() => setPayOpen(true)} disabled={cartLines.length === 0} className="rounded-[14px] px-8 py-4 text-base font-bold text-white disabled:cursor-not-allowed disabled:bg-[#EEF1F6] disabled:text-[#5E6E7E]" style={cartLines.length > 0 ? { background: "var(--brand)" } : undefined}>
                 Cobrar
               </button>
             </div>
@@ -531,11 +531,11 @@ export function VentaScreen() {
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto pb-5">
-          {isLoading && <div className="py-10 text-center text-[13.5px] text-[#9aa8bd]">Cargando catálogo…</div>}
+          {isLoading && <div className="py-10 text-center text-[13.5px] text-[#5E6E7E]">Cargando catálogo…</div>}
           {!isLoading && filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-[60px] text-center text-[#9aa8bd]">
-              <div className="text-[16px] font-bold text-[#7C95A8]">Sin resultados</div>
-              <div className="mt-[3px] text-[13.5px] text-[#9aa8bd]">Ningún producto coincide con la búsqueda o el filtro.</div>
+            <div className="flex flex-col items-center justify-center py-[60px] text-center text-[#5E6E7E]">
+              <div className="text-[16px] font-bold text-[#556A7C]">Sin resultados</div>
+              <div className="mt-[3px] text-[13.5px] text-[#5E6E7E]">Ningún producto coincide con la búsqueda o el filtro.</div>
             </div>
           )}
           {groups.map((g) => (
@@ -571,12 +571,12 @@ export function VentaScreen() {
                       <div className="w-full px-3 pt-2.5 pb-2.5">
                         <div className="mb-1.5 truncate text-sm font-bold text-[#0F2A1B]">{p.name}</div>
                         <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-xs font-bold" style={{ color: disabled ? "#D02E2E" : "#7C95A8" }}>
+                          <span className="text-xs font-bold" style={{ color: disabled ? "#D02E2E" : "#556A7C" }}>
                             {disabled ? "Sin stock" : `${available} disp.`}
                           </span>
                           {p.discount_pct > 0 ? (
                             <span className="flex flex-col items-end leading-none">
-                              <span className="text-[10px] font-bold text-[#9aa8bd] line-through">{fmtCLP(p.price)}</span>
+                              <span className="text-[10px] font-bold text-[#5E6E7E] line-through">{fmtCLP(p.price)}</span>
                               <span className="whitespace-nowrap text-base font-black text-[#0a6e36]">{fmtCLP(discountedPrice(p.price, p.discount_pct))}</span>
                             </span>
                           ) : (
@@ -622,7 +622,7 @@ export function VentaScreen() {
               <button onClick={() => setHeldOpen(false)} className="rounded-lg border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] font-bold text-[#5a6b7e]">Cerrar</button>
             </div>
             {(!heldSales || heldSales.length === 0) ? (
-              <div className="py-10 text-center text-[13.5px] text-[#9aa8bd]">No hay ventas guardadas.</div>
+              <div className="py-10 text-center text-[13.5px] text-[#5E6E7E]">No hay ventas guardadas.</div>
             ) : (
               heldSales.map((h) => {
                 const cliente = h.customer_id ? (allCustomers.find((c) => c.id === h.customer_id)?.name ?? "Cliente") : "Sin cliente";
@@ -632,7 +632,7 @@ export function VentaScreen() {
                   <div key={h.id} className="flex items-center gap-3 border-b border-[#F0F2F7] py-3 last:border-0">
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-bold text-[#0F2A1B]">{cliente}</div>
-                      <div className="text-xs text-[#7C95A8]">{hora} · {items} {items === 1 ? "ítem" : "ítems"} · {fmtCLP(h.total_snapshot)}</div>
+                      <div className="text-xs text-[#556A7C]">{hora} · {items} {items === 1 ? "ítem" : "ítems"} · {fmtCLP(h.total_snapshot)}</div>
                     </div>
                     <button
                       onClick={() => resumeHeld(h)}

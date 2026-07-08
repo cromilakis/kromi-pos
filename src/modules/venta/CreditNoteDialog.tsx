@@ -237,7 +237,7 @@ export function CreditNoteDialog({ open, branchId, sessionId, products, business
                   ) : (
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13.5px] font-bold text-[#0F2A1B]">{l.name}</div>
-                      <div className="text-xs text-[#7C95A8]">
+                      <div className="text-xs text-[#556A7C]">
                         {fmtCLP(l.price)} c/u · {fmtCLP(l.price * l.qty)}
                       </div>
                     </div>

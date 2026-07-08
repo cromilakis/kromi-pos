@@ -80,12 +80,12 @@ export function ClientesScreen() {
         </div>
       </div>
 
-      {isLoading && <div className="py-10 text-center text-[13.5px] text-[#9aa8bd]">Cargando clientes…</div>}
+      {isLoading && <div className="py-10 text-center text-[13.5px] text-[#5E6E7E]">Cargando clientes…</div>}
 
       {!isLoading && filtered.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-[60px] text-center text-[#9aa8bd]">
-          <div className="text-[16px] font-bold text-[#7C95A8]">Sin resultados</div>
-          <div className="mt-[3px] text-[13.5px] text-[#9aa8bd]">
+        <div className="flex flex-col items-center justify-center py-[60px] text-center text-[#5E6E7E]">
+          <div className="text-[16px] font-bold text-[#556A7C]">Sin resultados</div>
+          <div className="mt-[3px] text-[13.5px] text-[#5E6E7E]">
             {allCustomers.length === 0 ? "Aún no hay clientes registrados." : "Ningún cliente coincide con la búsqueda."}
           </div>
         </div>
@@ -93,7 +93,7 @@ export function ClientesScreen() {
 
       {filtered.length > 0 && (
         <div className="rounded-2xl border border-[#E1E5EE] bg-white overflow-hidden">
-          <div className="grid grid-cols-[2.2fr_1.4fr_1.8fr_1fr_1fr_0.9fr] items-center gap-2 border-b border-[#E1E5EE] bg-[#F6F7FB] px-[18px] py-3 text-[11px] font-bold uppercase tracking-[.05em] text-[#94A3B5]">
+          <div className="grid grid-cols-[2.2fr_1.4fr_1.8fr_1fr_1fr_0.9fr] items-center gap-2 border-b border-[#E1E5EE] bg-[#F6F7FB] px-[18px] py-3 text-[11px] font-bold uppercase tracking-[.05em] text-[#5E6E7E]">
             <span>Cliente</span>
             <span>Teléfono</span>
             <span>Correo</span>
@@ -115,7 +115,7 @@ export function ClientesScreen() {
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-sm font-bold text-[#0F2A1B]">{c.name}</div>
-                  <div className="text-[11.5px] text-[#9aa8bd]">{c.visits} {c.visits === 1 ? "visita" : "visitas"}</div>
+                  <div className="text-[11.5px] text-[#5E6E7E]">{c.visits} {c.visits === 1 ? "visita" : "visitas"}</div>
                 </div>
               </div>
               <span className="truncate text-[13.5px] text-[#5a6b7e]">{c.phone || "—"}</span>
@@ -129,7 +129,7 @@ export function ClientesScreen() {
                     setFormOpen(true);
                   }}
                   title="Editar cliente"
-                  className="flex size-[30px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#7C95A8]"
+                  className="flex size-[30px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#556A7C]"
                 >
                   ✎
                 </button>

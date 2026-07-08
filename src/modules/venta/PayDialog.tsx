@@ -50,7 +50,7 @@ export function PayDialog({ open, total, busy, onClose, onConfirm }: PayDialogPr
             <div className="text-[19px] font-black text-[#0F2A1B]">Cobro de la venta</div>
           </div>
           <div className="flex items-baseline justify-between rounded-2xl border border-[#E1E5EE] bg-[#F6F7FB] px-4 py-3">
-            <span className="text-sm font-semibold text-[#7C95A8]">Total a cobrar</span>
+            <span className="text-sm font-semibold text-[#556A7C]">Total a cobrar</span>
             <span className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(total)}</span>
           </div>
         </div>
@@ -85,7 +85,7 @@ export function PayDialog({ open, total, busy, onClose, onConfirm }: PayDialogPr
             <div className="px-6">
               <div className="mb-3.5 flex gap-2.5">
                 <div className="flex-1 rounded-2xl border border-[#E1E5EE] bg-[#F6F7FB] px-3.5 py-2.5">
-                  <div className="mb-0.5 text-[11px] font-semibold text-[#7C95A8]">Recibido</div>
+                  <div className="mb-0.5 text-[11px] font-semibold text-[#556A7C]">Recibido</div>
                   <div className="text-[22px] font-black text-[#0F2A1B]">{fmtCLP(recv)}</div>
                 </div>
                 <div
@@ -111,7 +111,7 @@ export function PayDialog({ open, total, busy, onClose, onConfirm }: PayDialogPr
           ) : (
             <div className="mx-6 mb-[18px] rounded-2xl border border-dashed border-[#cdd5e3] bg-[#F6F7FB] px-5 py-7 text-center">
               <div className="text-[15px] font-bold text-[#0F2A1B]">Inserta o acerca la tarjeta</div>
-              <div className="mt-1 text-[13px] text-[#7C95A8]">Esperando confirmación del terminal…</div>
+              <div className="mt-1 text-[13px] text-[#556A7C]">Esperando confirmación del terminal…</div>
             </div>
           )}
 

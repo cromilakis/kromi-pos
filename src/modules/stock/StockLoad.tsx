@@ -113,13 +113,13 @@ export function StockLoad({ onClose, onDone }: StockLoadProps) {
     return (
       <div className="w-full rounded-[20px] border border-[#E1E5EE] bg-white p-6">
         <div className="mb-1 text-[17px] font-black text-[#0F2A1B]">Confirmar carga de stock</div>
-        <div className="mb-4 text-[13px] text-[#7C95A8]">{csv.fileName}</div>
+        <div className="mb-4 text-[13px] text-[#556A7C]">{csv.fileName}</div>
         {csv.error && <div className="mb-3 rounded-xl bg-[#FDECEC] px-3.5 py-2.5 text-[13.5px] font-semibold text-[#9a2533]">{csv.error}</div>}
         {csv.result.rows.length > 0 && (
           <div className="overflow-x-auto rounded-2xl border border-[#E1E5EE]">
             <table className="w-full border-collapse text-[13px]">
               <thead>
-                <tr className="bg-[#F7FAF8] text-left text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">
+                <tr className="bg-[#F7FAF8] text-left text-[11px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">
                   <th className="px-3 py-2">Código interno</th>
                   <th className="px-3 py-2">Producto</th>
                   <th className="px-3 py-2 text-right">Actual</th>
@@ -130,9 +130,9 @@ export function StockLoad({ onClose, onDone }: StockLoadProps) {
               <tbody>
                 {csv.result.rows.map((r) => (
                   <tr key={r.id} className="border-t border-[#EEF1F6]">
-                    <td className="px-3 py-1.5 font-semibold text-[#7C95A8]">{r.internal_code}</td>
+                    <td className="px-3 py-1.5 font-semibold text-[#556A7C]">{r.internal_code}</td>
                     <td className="px-3 py-1.5 font-bold text-[#0F2A1B]">{r.name}</td>
-                    <td className="px-3 py-1.5 text-right text-[#7C95A8]">{r.current}</td>
+                    <td className="px-3 py-1.5 text-right text-[#556A7C]">{r.current}</td>
                     <td className="px-3 py-1.5 text-right font-bold" style={{ color: "var(--brand)" }}>+{r.add}</td>
                     <td className="px-3 py-1.5 text-right font-black text-[#0F2A1B]">{r.next}</td>
                   </tr>
@@ -174,7 +174,7 @@ export function StockLoad({ onClose, onDone }: StockLoadProps) {
           <div className="flex flex-col items-center gap-3 py-7">
             <span className="inline-block h-9 w-9 animate-spin rounded-full" style={{ border: "3px solid #E7EFE8", borderTopColor: "var(--brand)" }} />
             <div className="text-[14px] font-bold text-[#0F2A1B]">Procesando Factura</div>
-            <div className="text-[12px] font-normal text-[#9aa8bd]">Puede tardar unos segundos. Puedes cancelar.</div>
+            <div className="text-[12px] font-normal text-[#5E6E7E]">Puede tardar unos segundos. Puedes cancelar.</div>
           </div>
           <button onClick={() => { cancelledRef.current = true; setBusy(false); }}
             className="mt-1 w-full rounded-[13px] border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]">
@@ -198,7 +198,7 @@ export function StockLoad({ onClose, onDone }: StockLoadProps) {
           style={{ borderColor: dragOver ? "var(--brand)" : "#CBD5E1", background: dragOver ? "color-mix(in srgb, var(--brand) 6%, #fff)" : "#fff" }}
         >
           <div className="text-[17px] font-black text-[#0F2A1B]">Arrastra un archivo aquí</div>
-          <div className="text-[13px] text-[#7C95A8]">o haz clic para seleccionar. Acepta <b>CSV</b> (suma stock por código interno) o <b>PDF</b> de factura (extrae con IA).</div>
+          <div className="text-[13px] text-[#556A7C]">o haz clic para seleccionar. Acepta <b>CSV</b> (suma stock por código interno) o <b>PDF</b> de factura (extrae con IA).</div>
           <div className="mt-2 inline-flex rounded-[12px] px-[18px] py-2.5 text-sm font-bold text-white" style={{ background: "var(--brand)" }}>
             Seleccionar archivo
           </div>

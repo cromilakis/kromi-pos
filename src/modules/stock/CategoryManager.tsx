@@ -168,7 +168,7 @@ export function CategoryManager({ categories, productCountByCategory, businessId
       <div className="overflow-x-auto rounded-2xl border border-[#E1E5EE] bg-white">
         <table className="w-full border-collapse text-[13.5px]">
           <thead>
-            <tr className="bg-[#F7FAF8] text-left text-[11.5px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">
+            <tr className="bg-[#F7FAF8] text-left text-[11.5px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">
               <th className="w-[64px] px-4 py-2.5">Color</th>
               <th className="px-4 py-2.5">Nombre</th>
               <th className="px-4 py-2.5 text-right">Productos</th>
@@ -178,7 +178,7 @@ export function CategoryManager({ categories, productCountByCategory, businessId
           <tbody>
             {categories.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-[13.5px] text-[#9aa8bd]">
+                <td colSpan={4} className="px-4 py-8 text-center text-[13.5px] text-[#5E6E7E]">
                   Sin categorías todavía.
                 </td>
               </tr>
@@ -190,17 +190,17 @@ export function CategoryManager({ categories, productCountByCategory, businessId
                     className="flex size-9 items-center justify-center rounded-[10px]"
                     style={{ background: c.tile ?? "#F0F2F7" }}
                   >
-                    <span className="size-2.5 rounded-full" style={{ background: c.dot ?? "#7C95A8" }} />
+                    <span className="size-2.5 rounded-full" style={{ background: c.dot ?? "#556A7C" }} />
                   </span>
                 </td>
                 <td className="px-4 py-2.5 font-bold text-[#0F2A1B]">{c.label}</td>
-                <td className="px-4 py-2.5 text-right text-[#7C95A8]">{productCountByCategory[c.id] ?? 0}</td>
+                <td className="px-4 py-2.5 text-right text-[#556A7C]">{productCountByCategory[c.id] ?? 0}</td>
                 <td className="px-4 py-2.5">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       onClick={() => openEdit(c)}
                       title="Editar categoría"
-                      className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#7C95A8]"
+                      className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#556A7C]"
                     >
                       ✎
                     </button>
@@ -223,7 +223,7 @@ export function CategoryManager({ categories, productCountByCategory, businessId
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={() => setConfirm(null)}>
           <div className="w-[400px] max-w-full rounded-[20px] bg-white p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-1.5 text-[15px] font-extrabold text-[#0F2A1B]">¿Eliminar la categoría “{confirm.label}”?</div>
-            <div className="mb-4 text-[13px] text-[#7C95A8]">Esta acción no se puede deshacer.</div>
+            <div className="mb-4 text-[13px] text-[#556A7C]">Esta acción no se puede deshacer.</div>
             <div className="flex justify-end gap-2.5">
               <button
                 onClick={() => setConfirm(null)}

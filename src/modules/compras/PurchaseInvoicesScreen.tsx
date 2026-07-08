@@ -70,27 +70,27 @@ export function PurchaseInvoicesScreen({ businessId }: Props) {
         </div>
       </div>
       {anyFilter && (
-        <button onClick={() => setF(EMPTY_FILTERS)} className="mb-3 text-[12.5px] font-bold text-[#7C95A8] underline">Limpiar filtros</button>
+        <button onClick={() => setF(EMPTY_FILTERS)} className="mb-3 text-[12.5px] font-bold text-[#556A7C] underline">Limpiar filtros</button>
       )}
 
-      {isLoading && <div className="py-10 text-center text-[13.5px] text-[#9aa8bd]">Cargando facturas…</div>}
+      {isLoading && <div className="py-10 text-center text-[13.5px] text-[#5E6E7E]">Cargando facturas…</div>}
 
       {!isLoading && (invoices ?? []).length === 0 && (
-        <div className="flex flex-col items-center justify-center py-[50px] text-center text-[#9aa8bd]">
-          <div className="text-[16px] font-bold text-[#7C95A8]">Sin facturas archivadas</div>
-          <div className="mt-[3px] text-[13.5px] text-[#9aa8bd]">Las facturas recepcionadas desde Stock aparecerán aquí.</div>
+        <div className="flex flex-col items-center justify-center py-[50px] text-center text-[#5E6E7E]">
+          <div className="text-[16px] font-bold text-[#556A7C]">Sin facturas archivadas</div>
+          <div className="mt-[3px] text-[13.5px] text-[#5E6E7E]">Las facturas recepcionadas desde Stock aparecerán aquí.</div>
         </div>
       )}
 
       {!isLoading && (invoices ?? []).length > 0 && rows.length === 0 && (
-        <div className="py-10 text-center text-[13.5px] text-[#9aa8bd]">Sin resultados para los filtros aplicados.</div>
+        <div className="py-10 text-center text-[13.5px] text-[#5E6E7E]">Sin resultados para los filtros aplicados.</div>
       )}
 
       {!isLoading && rows.length > 0 && (
         <div className="overflow-x-auto rounded-2xl border border-[#E1E5EE]">
           <table className="w-full border-collapse text-[13.5px]">
             <thead>
-              <tr className="bg-[#F7FAF8] text-left text-[11.5px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">
+              <tr className="bg-[#F7FAF8] text-left text-[11.5px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">
                 <th className="px-4 py-2.5">Proveedor</th>
                 <th className="px-4 py-2.5">Folio</th>
                 <th className="px-4 py-2.5">Fecha</th>

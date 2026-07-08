@@ -34,7 +34,7 @@ export function ImageUploader({ value, onChange, onUpload, maxSize, label }: Pro
   return (
     <div className="flex items-center gap-3">
       <div className="flex size-[72px] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#E1E5EE] bg-[#F6F7FB]">
-        {value ? <img src={value} alt={label ?? "imagen"} className="size-full object-cover" /> : <span className="text-[11px] text-[#9aa8bd]">Sin imagen</span>}
+        {value ? <img src={value} alt={label ?? "imagen"} className="size-full object-cover" /> : <span className="text-[11px] text-[#5E6E7E]">Sin imagen</span>}
       </div>
       <div className="flex flex-col gap-1.5">
         <input
@@ -53,7 +53,7 @@ export function ImageUploader({ value, onChange, onUpload, maxSize, label }: Pro
           {busy ? "Subiendo…" : value ? "Cambiar imagen" : "Subir imagen"}
         </button>
         {value && !busy && (
-          <button type="button" onClick={() => onChange(null)} className="text-left text-[12px] font-bold text-[#7C95A8] hover:text-[#D02E2E]">
+          <button type="button" onClick={() => onChange(null)} className="text-left text-[12px] font-bold text-[#556A7C] hover:text-[#D02E2E]">
             Quitar
           </button>
         )}

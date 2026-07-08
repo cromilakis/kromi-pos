@@ -20,7 +20,7 @@ export function PrinterSettings() {
         type="button"
         title="Impresora de boletas"
         onClick={() => { setName(getPrinterName()); setOpen(true); }}
-        className="flex size-[34px] shrink-0 items-center justify-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#7C95A8] hover:bg-[#F7F8FA]"
+        className="flex size-[34px] shrink-0 items-center justify-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#556A7C] hover:bg-[#F7F8FA]"
       >
         <Printer className="size-[17px]" strokeWidth={1.7} />
       </button>
@@ -28,7 +28,7 @@ export function PrinterSettings() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={() => setOpen(false)}>
           <div className="w-[460px] max-w-full rounded-[20px] bg-white p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mb-1 text-[17px] font-black text-[#0F2A1B]">Impresora de boletas</div>
-            <div className="mb-4 text-[13px] leading-relaxed text-[#7C95A8]">
+            <div className="mb-4 text-[13px] leading-relaxed text-[#556A7C]">
               Escribe el nombre exacto de la impresora térmica, tal como aparece en Windows → Configuración → Bluetooth y dispositivos → Impresoras y escáneres. Déjalo vacío para usar la impresora predeterminada del sistema.
             </div>
             <input

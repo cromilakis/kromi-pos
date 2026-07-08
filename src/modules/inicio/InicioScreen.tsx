@@ -40,10 +40,10 @@ function AbrirCajaCard() {
   return (
     <div className="rounded-[18px] border border-[#E1E5EE] bg-white p-5">
       <div className="mb-1 text-[15px] font-extrabold text-[#0F2A1B]">Abrir caja{register ? ` — ${register.name}` : ""}</div>
-      <div className="mb-3 text-[12.5px] text-[#9aa8bd]">Ingresa el fondo inicial para comenzar a vender.</div>
+      <div className="mb-3 text-[12.5px] text-[#5E6E7E]">Ingresa el fondo inicial para comenzar a vender.</div>
       <div className="flex items-center gap-2">
         <div className="relative max-w-[160px]">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-[#7C95A8]">$</span>
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-[#556A7C]">$</span>
           <Input
             value={floatAmount}
             inputMode="numeric"
@@ -97,19 +97,19 @@ export function InicioScreen() {
             <div className="relative mt-[3px] text-xs text-white/70">operaciones cobradas</div>
           </div>
           <div className="rounded-[18px] border border-[#E1E5EE] bg-white p-5">
-            <div className="mb-2 text-[12.5px] font-bold text-[#7C95A8]">Total vendido</div>
+            <div className="mb-2 text-[12.5px] font-bold text-[#556A7C]">Total vendido</div>
             <div className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(total)}</div>
-            <div className="mt-[3px] text-xs text-[#9aa8bd]">IVA incluido</div>
+            <div className="mt-[3px] text-xs text-[#5E6E7E]">IVA incluido</div>
           </div>
           <div className="rounded-[18px] border border-[#E1E5EE] bg-white p-5">
-            <div className="mb-2 text-[12.5px] font-bold text-[#7C95A8]">Ticket promedio</div>
+            <div className="mb-2 text-[12.5px] font-bold text-[#556A7C]">Ticket promedio</div>
             <div className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(avg)}</div>
-            <div className="mt-[3px] text-xs text-[#9aa8bd]">por venta</div>
+            <div className="mt-[3px] text-xs text-[#5E6E7E]">por venta</div>
           </div>
           <div className="rounded-[18px] border border-[#E1E5EE] bg-white p-5">
-            <div className="mb-2 text-[12.5px] font-bold text-[#7C95A8]">Nuevos clientes</div>
+            <div className="mb-2 text-[12.5px] font-bold text-[#556A7C]">Nuevos clientes</div>
             <div className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">0</div>
-            <div className="mt-[3px] text-xs text-[#9aa8bd]">registrados hoy</div>
+            <div className="mt-[3px] text-xs text-[#5E6E7E]">registrados hoy</div>
           </div>
         </div>
 
@@ -139,14 +139,14 @@ export function InicioScreen() {
           <div className="min-w-[280px] flex-[1.4] basis-[420px] rounded-[18px] border border-[#E1E5EE] bg-white p-5">
             <div className="mb-2 text-[16px] font-black text-[#0F2A1B]">Actividad reciente</div>
             {!recent || recent.length === 0 ? (
-              <div className="py-[18px] text-[13.5px] text-[#9aa8bd]">Todavía no hay ventas hoy.</div>
+              <div className="py-[18px] text-[13.5px] text-[#5E6E7E]">Todavía no hay ventas hoy.</div>
             ) : (
               <div>
                 {recent.map((s) => (
                   <div key={s.id} className="flex items-center gap-[13px] border-b border-[#F0F2F7] py-[11px] last:border-0">
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[14px] font-bold text-[#0F2A1B]">Venta #{s.folio ?? "—"}</div>
-                      <div className="text-xs text-[#9aa8bd]">
+                      <div className="text-xs text-[#5E6E7E]">
                         {s.method ? METHOD_LABEL[s.method] ?? s.method : ""} · {fmtHora(s.sold_at)}
                       </div>
                     </div>
@@ -188,12 +188,12 @@ export function InicioScreen() {
               </Link>
             </div>
             {!critical || critical.length === 0 ? (
-              <div className="py-[18px] text-[13.5px] text-[#9aa8bd]">Sin productos bajo el mínimo. 👍</div>
+              <div className="py-[18px] text-[13.5px] text-[#5E6E7E]">Sin productos bajo el mínimo. 👍</div>
             ) : (
               <div>
                 {critical.map((r, i) => (
                   <div key={`${r.name}-${i}`} className="flex items-center gap-[13px] border-b border-[#F0F2F7] py-[11px] last:border-0">
-                    <span className="flex size-[36px] shrink-0 items-center justify-center rounded-[10px] bg-[#F0F2F7] text-[#7C95A8]">
+                    <span className="flex size-[36px] shrink-0 items-center justify-center rounded-[10px] bg-[#F0F2F7] text-[#556A7C]">
                       <PackageSearch className="size-[18px]" strokeWidth={1.8} />
                     </span>
                     <div className="min-w-0 flex-1">

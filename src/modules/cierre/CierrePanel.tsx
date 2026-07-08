@@ -50,13 +50,13 @@ function SinCaja() {
     <div className="flex min-h-full items-center justify-center p-6">
       <Card className="flex w-full max-w-sm flex-col items-center gap-4 p-10 text-center">
         <div className="flex size-[78px] items-center justify-center rounded-[22px] bg-[#F0F2F7]">
-          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#7C95A8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#556A7C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
         </div>
         <div className="text-lg font-black text-[#0F2A1B]">No hay una caja abierta</div>
-        <p className="max-w-[320px] text-sm leading-relaxed text-[#7C95A8]">
+        <p className="max-w-[320px] text-sm leading-relaxed text-[#556A7C]">
           Abre la caja desde Venta para iniciar un turno y poder registrar el arqueo al cerrar.
         </p>
       </Card>
@@ -67,14 +67,14 @@ function SinCaja() {
 function HistorialCierres({ cierres }: { cierres: CierreRow[] }) {
   return (
     <div className="overflow-hidden rounded-[18px] border border-[#E1E5EE] bg-white">
-      <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr] gap-3.5 border-b border-[#E1E5EE] bg-[#F8FAFC] px-5 py-3 text-[11.5px] font-bold uppercase tracking-[.04em] text-[#94A3B5]">
+      <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr] gap-3.5 border-b border-[#E1E5EE] bg-[#F8FAFC] px-5 py-3 text-[11.5px] font-bold uppercase tracking-[.04em] text-[#5E6E7E]">
         <span>Apertura</span>
         <span>Cierre</span>
         <span className="text-right">Fondo</span>
         <span className="text-right">Contado</span>
       </div>
       {cierres.length === 0 && (
-        <div className="px-5 py-8 text-center text-[13.5px] text-[#9aa8bd]">Aún no hay cierres registrados en esta sucursal.</div>
+        <div className="px-5 py-8 text-center text-[13.5px] text-[#5E6E7E]">Aún no hay cierres registrados en esta sucursal.</div>
       )}
       {cierres.map((c) => (
         <div key={c.id} className="grid grid-cols-[1.2fr_1fr_1fr_1fr] items-center gap-3.5 border-b border-[#F0F2F7] px-5 py-3 last:border-b-0">
@@ -168,20 +168,20 @@ export function CierrePanel({ onClosed }: CierrePanelProps) {
           Arqueo
         </div>
         <h2 className="mb-1 text-[26px] font-black tracking-[-.01em] text-[#0F2A1B]">Cierre de caja</h2>
-        <p className="mb-5 text-sm text-[#7C95A8]">Turno de {profile?.name ?? "—"} · {register?.name ?? "caja"}</p>
+        <p className="mb-5 text-sm text-[#556A7C]">Turno de {profile?.name ?? "—"} · {register?.name ?? "caja"}</p>
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
           <Card className="flex-1 p-6">
             <div className="mb-1 text-base font-black text-[#0F2A1B]">Arqueo de efectivo</div>
-            <div className="mb-4 text-[13px] text-[#7C95A8]">Cuente el efectivo en caja e ingrese el monto contado.</div>
+            <div className="mb-4 text-[13px] text-[#556A7C]">Cuente el efectivo en caja e ingrese el monto contado.</div>
 
             {resumen ? (
               <>
-                <div className="flex justify-between border-b border-[#F0F2F7] py-1.5 text-[13px] text-[#7C95A8]">
+                <div className="flex justify-between border-b border-[#F0F2F7] py-1.5 text-[13px] text-[#556A7C]">
                   <span>Fondo de apertura</span>
                   <span>{fmtCLP(resumen.float)}</span>
                 </div>
-                <div className="flex justify-between border-b border-[#F0F2F7] py-1.5 text-[13px] text-[#7C95A8]">
+                <div className="flex justify-between border-b border-[#F0F2F7] py-1.5 text-[13px] text-[#556A7C]">
                   <span>Ventas en efectivo</span>
                   <span>{fmtCLP(resumen.cash)}</span>
                 </div>
@@ -209,7 +209,7 @@ export function CierrePanel({ onClosed }: CierrePanelProps) {
               </>
             ) : (
               <>
-                <label className="mb-1.5 mt-4 block text-xs font-bold text-[#7C95A8]">Efectivo contado</label>
+                <label className="mb-1.5 mt-4 block text-xs font-bold text-[#556A7C]">Efectivo contado</label>
                 <Input
                   autoFocus
                   inputMode="numeric"
@@ -225,7 +225,7 @@ export function CierrePanel({ onClosed }: CierrePanelProps) {
           <Card className="w-full p-6 lg:w-[300px] lg:shrink-0">
             <div className="mb-3.5 text-base font-black text-[#0F2A1B]">Resumen del turno</div>
             {!resumen ? (
-              <p className="mb-4 text-[13px] leading-relaxed text-[#7C95A8]">
+              <p className="mb-4 text-[13px] leading-relaxed text-[#556A7C]">
                 El resumen (efectivo, tarjeta y descuadre) se calcula al confirmar el cierre.
               </p>
             ) : (

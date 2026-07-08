@@ -176,7 +176,7 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-2.5">
           <span className="text-[17px] font-black text-[#0F2A1B]">Confirmar recepción de factura</span>
-          <span className="text-[13px] text-[#7C95A8]">{extraction.documento.fecha || "sin fecha"}</span>
+          <span className="text-[13px] text-[#556A7C]">{extraction.documento.fecha || "sin fecha"}</span>
         </div>
         {extraction.documento.folio && (
           <span className="shrink-0 text-[15px] font-semibold" style={{ color: "var(--brand)" }}>
@@ -187,53 +187,53 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
 
         <div className="mb-4">
           <div className="mb-1.5 flex items-center gap-2">
-            <span className="text-[12px] font-bold uppercase tracking-[.08em] text-[#9aa8bd]">Proveedor</span>
+            <span className="text-[12px] font-bold uppercase tracking-[.08em] text-[#5E6E7E]">Proveedor</span>
             {!loadingSupplier && !existingSupplier && (
               <span className="rounded-full bg-[#FEF6DD] px-2 py-0.5 text-[10.5px] font-black uppercase tracking-[.04em] text-[#8A6D12]">Nuevo</span>
             )}
           </div>
           {loadingSupplier ? (
-            <div className="text-[13.5px] text-[#9aa8bd]">Buscando proveedor…</div>
+            <div className="text-[13.5px] text-[#5E6E7E]">Buscando proveedor…</div>
           ) : existingSupplier ? (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-[#E1E5EE] bg-[#F7FAF8] px-4 py-2.5 text-[13px]">
               <span className="rounded-full bg-[#0F2A1B] px-2 py-0.5 text-[12px] font-black text-white">
                 {existingSupplier.seq != null ? String(existingSupplier.seq).padStart(3, "0") : "—"}
               </span>
               <span className="font-black text-[#0F2A1B]">{existingSupplier.razon_social}</span>
-              <span className="text-[#7C95A8]">RUT {existingSupplier.rut || "—"}</span>
-              {existingSupplier.giro && <span className="text-[#7C95A8]">· {existingSupplier.giro}</span>}
-              {existingSupplier.address && <span className="text-[#7C95A8]">· {existingSupplier.address}</span>}
+              <span className="text-[#556A7C]">RUT {existingSupplier.rut || "—"}</span>
+              {existingSupplier.giro && <span className="text-[#556A7C]">· {existingSupplier.giro}</span>}
+              {existingSupplier.address && <span className="text-[#556A7C]">· {existingSupplier.address}</span>}
             </div>
           ) : (
             <div className="rounded-2xl border border-[#E1E5EE] bg-white p-4">
               <div className="grid grid-cols-2 gap-3">
                 <label className="col-span-2 flex flex-col gap-1">
-                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Razón social</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">Razón social</span>
                   <input value={newSupplier.razon_social} onChange={(e) => setNewSupplier((s) => ({ ...s, razon_social: e.target.value }))}
                     className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[var(--brand)]" />
                 </label>
                 <label className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">RUT</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">RUT</span>
                   <input value={newSupplier.rut} onChange={(e) => setNewSupplier((s) => ({ ...s, rut: e.target.value }))}
                     className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13.5px] font-bold text-[#0F2A1B] outline-none focus:border-[var(--brand)]" />
                 </label>
                 <label className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Giro</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">Giro</span>
                   <input value={newSupplier.giro} onChange={(e) => setNewSupplier((s) => ({ ...s, giro: e.target.value }))}
                     className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[var(--brand)]" />
                 </label>
                 <label className="col-span-2 flex flex-col gap-1">
-                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Dirección</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">Dirección</span>
                   <input value={newSupplier.direccion} onChange={(e) => setNewSupplier((s) => ({ ...s, direccion: e.target.value }))}
                     className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[var(--brand)]" />
                 </label>
                 <label className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Email (opcional)</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">Email (opcional)</span>
                   <input value={newSupplier.email} onChange={(e) => setNewSupplier((s) => ({ ...s, email: e.target.value }))}
                     className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[var(--brand)]" />
                 </label>
                 <label className="flex flex-col gap-1">
-                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Teléfono (opcional)</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">Teléfono (opcional)</span>
                   <input value={newSupplier.phone} onChange={(e) => setNewSupplier((s) => ({ ...s, phone: e.target.value }))}
                     className="rounded-[10px] border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] outline-none focus:border-[var(--brand)]" />
                 </label>
@@ -243,11 +243,11 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
         </div>
 
         <div className="mb-4">
-          <div className="mb-1.5 text-[12px] font-bold uppercase tracking-[.08em] text-[#9aa8bd]">Líneas ({lines.length})</div>
+          <div className="mb-1.5 text-[12px] font-bold uppercase tracking-[.08em] text-[#5E6E7E]">Líneas ({lines.length})</div>
           <div className="overflow-x-auto rounded-2xl border border-[#E1E5EE]">
             <table className="w-full border-collapse text-[13px]">
               <thead>
-                <tr className="bg-[#F7FAF8] text-left text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">
+                <tr className="bg-[#F7FAF8] text-left text-[11px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">
                   <th className="px-3 py-2">Cód. prov</th>
                   <th className="px-3 py-2">Descripción</th>
                   <th className="px-3 py-2">Producto interno</th>
@@ -264,7 +264,7 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
                   const linked = l.product_id ? productById.get(l.product_id) : undefined;
                   return (
                     <tr key={idx} className="border-t border-[#EEF1F6] align-top" style={{ background: ok ? undefined : "#FDECEC" }}>
-                      <td className="px-3 py-1.5 font-semibold text-[#7C95A8]">{l.supplier_code || "—"}</td>
+                      <td className="px-3 py-1.5 font-semibold text-[#556A7C]">{l.supplier_code || "—"}</td>
                       <td className="px-3 py-1.5 font-semibold text-[#0F2A1B]">{l.description || "Sin descripción"}</td>
                       <td className="px-3 py-1.5">
                         <select value={l.product_id} onChange={(e) => updateLine(idx, { product_id: e.target.value })}
@@ -285,7 +285,7 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
                       </td>
                       <td className="px-3 py-1.5">
                         {l.product_id ? (
-                          <span className="text-[12.5px] text-[#9aa8bd]">{linked?.category_id ? (categoryById.get(linked.category_id) ?? "—") : "—"}</span>
+                          <span className="text-[12.5px] text-[#5E6E7E]">{linked?.category_id ? (categoryById.get(linked.category_id) ?? "—") : "—"}</span>
                         ) : (
                           <select value={l.newCategoryId} onChange={(e) => updateLine(idx, { newCategoryId: e.target.value })}
                             className="rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
