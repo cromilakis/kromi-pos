@@ -43,7 +43,14 @@ completo se define aquí de una vez.
 - **Retener/recuperar venta**: persistidas en **base de datos** (recuperables
   desde cualquier caja).
 - **Datos del negocio**: **leer + editar** desde la app (pantalla de ajustes en
-  Administración). El **logo se edita por URL** (sin subida de archivos).
+  Administración). El logo y las imágenes de producto se **suben como archivo**
+  (ver sub-proyecto 8; reemplaza la decisión inicial de "logo por URL").
+- **Imágenes (producto y logo)**: se **suben como archivo** a Supabase Storage
+  (bucket público), redimensionadas y comprimidas **en el cliente** a **WebP**
+  (producto máx 200px, logo máx 400px del lado mayor) para evitar archivos pesados.
+- **Experiencia de caja (modos de venta)**: en Venta se oculta el menú lateral;
+  botones con icono; y un **modo lectura (pistola)** tipo supermercado (lista sin
+  imágenes, cantidad-antes-de-marcar) además del **modo catálogo** manual.
 - **Código de barras**: **campo `barcode` dedicado** en `product` (distinto de
   `internal_code`).
 - **Atajos de teclado**: **ninguno por ahora**. El lector de código de barras
@@ -65,6 +72,14 @@ completo se define aquí de una vez.
 7. Pulido UX transversal (sub-proyecto 6)
 
 Cada sub-proyecto es entregable y verificable de forma independiente.
+
+### Sub-proyectos añadidos durante la ejecución
+
+- **Sub-proyecto 8 — Subida de imágenes** (aprobado): reemplaza los inputs de URL
+  por subida de archivo con procesamiento en cliente. Estado del avance real (2026-07-08):
+  ya se completaron los sub-proyectos 1, 2, 3, 5 y 7; el orden restante acordado es
+  **4 (descuentos) → 8 (imágenes) → 9 (experiencia de caja) → 6 (pulido)**.
+- **Sub-proyecto 9 — Experiencia de caja / modos de venta** (nuevo).
 
 ---
 
@@ -244,11 +259,58 @@ carrito de venta. El plan de este sub-proyecto detallará si se generaliza
 y ver cotizaciones; al convertir sin caja se le pide abrir caja; con caja abierta
 la conversión genera la venta correctamente.
 
+## Sub-proyecto 8 — Subida de imágenes (aprobado)
+
+**Objetivo:** que las imágenes de producto y el logo del negocio se suban como
+archivo (no URL), quedando siempre livianas.
+
+**Almacenamiento:** bucket **público** nuevo `media` (patrón del bucket
+`purchase-invoices`): lectura pública (`getPublicUrl`, para mostrar directo y en
+boletas), escritura restringida por negocio (carpeta = `business_id`) vía policies
+en `storage.objects`. Rutas: `{business_id}/products/{uuid}.webp`,
+`{business_id}/logo-{uuid}.webp`. Migración aplicada al remoto.
+
+**Procesamiento en cliente:** helper `processImage(file, maxSize)` que carga la
+imagen en un `<canvas>`, la redimensiona al lado mayor (**200px** producto, **400px**
+logo) y exporta **WebP** (~0.8 de calidad). Función pura de cálculo de dimensiones
+con test. Acepta `image/png,image/jpeg,image/webp`; rechaza lo que no sea imagen.
+
+**Componente `ImageUploader`:** input de archivo + preview + "Quitar". Al elegir →
+procesa → sube → guarda la URL pública en `img_url`/`logo_url`. Reemplaza los inputs
+de URL en `ProductForm` y `BusinessSettings`.
+
+**Popup de producto más amplio:** ensanchar el modal (~560px, 2 columnas donde
+aplique) y eliminar el scroll interno (`maxHeight`) para que quepan todos los campos.
+
+**Fuera de alcance del 8:** borrar del storage la imagen anterior al reemplazarla
+(quedan huérfanas); recorte/encuadre manual.
+
+## Sub-proyecto 9 — Experiencia de caja / modos de venta
+
+**Objetivo:** enfocar la pantalla de Venta en la operación de caja y ofrecer un modo
+de lectura por pistola tipo supermercado.
+
+**Requisitos:**
+- Al entrar a **Venta**, ocultar el menú lateral (sidebar) para maximizar el foco;
+  restaurarlo al salir del módulo.
+- Iconos (lucide) en los botones "Guardadas", "Nota de crédito" y "Cerrar caja".
+- **Dos modos de venta**:
+  - **Catálogo** (actual): grid de productos por categoría, uso manual.
+  - **Lectura (pistola)**: vista a pantalla completa tipo caja de supermercado,
+    **lista de ítems sin imágenes**, orientada al lector de código de barras.
+    Control **"Cantidad: N → Marcar"** para agregar varias unidades de una vez
+    (ej. 30 unidades de un producto). Uso intuitivo.
+- El modo lectura se apoya en el código de barras ya implementado (sub-proyecto 3).
+
+**Nota:** las decisiones finas de diseño del modo lectura (layout exacto, dónde va
+el control de cantidad, cómo se alterna entre modos) se detallan en el plan de este
+sub-proyecto cuando se aborde.
+
 ## Fuera de alcance (YAGNI)
 
 - Pago mixto (varios métodos por venta).
 - Precio libre / producto genérico.
 - Notas por ítem.
 - Atajos de teclado.
-- Subida de logo a storage (se usa URL).
 - Nuevos métodos de pago más allá de efectivo/tarjeta.
+- Borrado de imágenes huérfanas del storage; recorte manual de imágenes.
