@@ -475,7 +475,7 @@ export function VentaScreen() {
                       <td className="px-4 py-3 font-bold text-[#0F2A1B]">
                         {product.name}
                         {product.discount_pct > 0 && (
-                          <span className="ml-2 rounded-full bg-[#E6F7EE] px-2 py-0.5 text-[10px] font-black uppercase text-[#0a6e36]">-{product.discount_pct}% · con descuento</span>
+                          <span className="ml-2 rounded-full bg-[#E6F7EE] px-2 py-0.5 text-[11px] font-black text-[#0a6e36]">-{product.discount_pct}%</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right text-[#556A7C]">
@@ -557,8 +557,8 @@ export function VentaScreen() {
                       className="relative flex flex-col overflow-hidden rounded-2xl border border-[#E1E5EE] bg-white text-left disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {p.discount_pct > 0 && (
-                        <span className="absolute left-2 top-2 z-10 rounded-full bg-[#0a6e36] px-2 py-0.5 text-[10px] font-black uppercase tracking-[.04em] text-white">
-                          -{p.discount_pct}% · con descuento
+                        <span className="absolute left-2 top-2 z-10 rounded-full bg-[#0a6e36] px-2 py-0.5 text-[11px] font-black text-white">
+                          -{p.discount_pct}%
                         </span>
                       )}
                       <div className="flex h-[110px] w-full items-center justify-center bg-[#EEF1F6]">

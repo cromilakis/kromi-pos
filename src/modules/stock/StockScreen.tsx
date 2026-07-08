@@ -48,6 +48,7 @@ export function StockScreen() {
 
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string>("todas");
+  const [onlyDiscount, setOnlyDiscount] = useState(false);
   const [criticalOpen, setCriticalOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ProductRow | null>(null);
@@ -87,11 +88,12 @@ export function StockScreen() {
     const q = query.trim().toLowerCase();
     return allProducts.filter((p) => {
       if (q && !p.name.toLowerCase().includes(q)) return false;
-      if (catFilter === "sin-categoria") return !p.category_id;
-      if (catFilter !== "todas" && p.category_id !== catFilter) return false;
+      if (onlyDiscount && !(p.discount_pct > 0)) return false;
+      if (catFilter === "sin-categoria") { if (p.category_id) return false; }
+      else if (catFilter !== "todas" && p.category_id !== catFilter) return false;
       return true;
     });
-  }, [allProducts, query, catFilter]);
+  }, [allProducts, query, catFilter, onlyDiscount]);
 
   const groups = useMemo(() => {
     const byCat = new Map<string, ProductRow[]>();
@@ -116,7 +118,7 @@ export function StockScreen() {
     setSelectedIds(new Set());
     setAnchorId(null);
     setCtxMenu(null);
-  }, [query, catFilter, stockView, view]);
+  }, [query, catFilter, onlyDiscount, stockView, view]);
 
   // Cierra el menú contextual con Escape.
   useEffect(() => {
@@ -405,6 +407,19 @@ export function StockScreen() {
             {c.label}
           </button>
         ))}
+        <span className="mx-1 h-5 w-px bg-[#E1E5EE]" />
+        <button
+          onClick={() => setOnlyDiscount((v) => !v)}
+          title="Mostrar solo productos con descuento"
+          className="rounded-full border px-[13px] py-[7px] text-[12.5px] font-bold"
+          style={
+            onlyDiscount
+              ? { background: "#0a6e36", borderColor: "#0a6e36", color: "#fff" }
+              : { background: "#fff", borderColor: "#A7E3C0", color: "#0a6e36" }
+          }
+        >
+          Con descuento
+        </button>
       </div>
 
       {loadingProducts && <div className="py-10 text-center text-[13.5px] text-[#5E6E7E]">Cargando inventario…</div>}
@@ -467,6 +482,7 @@ export function StockScreen() {
                       <span className="flex items-center gap-2">
                         <span className="truncate">{p.name}</span>
                         {p.critical && <span className="whitespace-nowrap rounded-full bg-[#FBF1E0] px-2 py-0.5 text-[11px] font-bold text-[#9A6F12]">★ Crítico</span>}
+                        {p.discount_pct > 0 && <span className="whitespace-nowrap rounded-full bg-[#E6F7EE] px-2 py-0.5 text-[11px] font-bold text-[#0a6e36]">-{p.discount_pct}%</span>}
                       </span>
                     </td>
                     <td className="px-4 py-2 text-[#556A7C]">
@@ -513,6 +529,9 @@ export function StockScreen() {
                       <div className="min-w-0 flex-1 truncate text-[15px] font-bold text-[#0F2A1B]">{p.name}</div>
                       {p.critical && (
                         <span className="whitespace-nowrap rounded-full bg-[#FBF1E0] px-2 py-0.5 text-[11px] font-bold text-[#9A6F12]">★ Crítico</span>
+                      )}
+                      {p.discount_pct > 0 && (
+                        <span className="whitespace-nowrap rounded-full bg-[#E6F7EE] px-2 py-0.5 text-[11px] font-bold text-[#0a6e36]">-{p.discount_pct}%</span>
                       )}
                     </div>
                     <div className="mt-[3px] flex items-baseline justify-between gap-2">
