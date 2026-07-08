@@ -11,6 +11,7 @@ import { useBusiness, businessToNegocio } from "@/data/business";
 import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data/heldSales";
 import { cobrarVenta, cartToLines } from "@/data/sales";
 import { computeTotals, fmtCLP } from "@/lib/money";
+import { errMsg } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
 import { Button } from "@/components/ui/button";
@@ -194,7 +195,7 @@ export function VentaScreen() {
       toast.success("Venta guardada.");
       qc.invalidateQueries({ queryKey: ["held-sales", branchId] });
     } catch (e) {
-      toast.error(`No se pudo guardar la venta: ${e instanceof Error ? e.message : e}`);
+      toast.error(`No se pudo guardar la venta: ${errMsg(e)}`);
     }
   }
 
@@ -217,7 +218,7 @@ export function VentaScreen() {
       await deleteHeldSale(h.id);
       qc.invalidateQueries({ queryKey: ["held-sales", branchId] });
     } catch (e) {
-      toast.error(`No se pudo quitar la venta guardada: ${e instanceof Error ? e.message : e}`);
+      toast.error(`No se pudo quitar la venta guardada: ${errMsg(e)}`);
     }
     if (ajustes > 0) toast.warning("Algunas líneas se ajustaron por stock o productos no disponibles.");
   }
@@ -227,7 +228,7 @@ export function VentaScreen() {
       await deleteHeldSale(id);
       qc.invalidateQueries({ queryKey: ["held-sales", branchId] });
     } catch (e) {
-      toast.error(`No se pudo descartar: ${e instanceof Error ? e.message : e}`);
+      toast.error(`No se pudo descartar: ${errMsg(e)}`);
     }
   }
 
