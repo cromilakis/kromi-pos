@@ -140,7 +140,20 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
       qc.invalidateQueries({ queryKey: ["supplier-product-map"] });
       onDone();
     } catch (e) {
-      toast.error(`No se pudo recepcionar la factura: ${e instanceof Error ? e.message : e}`);
+      // El error de Supabase es un PostgrestError (objeto plano con code/message/details/hint),
+      // no un Error: sin esto se mostraba "[object Object]".
+      const err = (e ?? {}) as { code?: string; message?: string; details?: string; hint?: string };
+      let msg: string;
+      if (err.code === "23505") {
+        msg = "Ya existe una factura con ese folio para este proveedor, o un producto con ese código interno (puede que ya se haya recepcionado, o que la factura repita un código de producto).";
+      } else if (err.code === "23503") {
+        msg = `Referencia inválida (sucursal, categoría o usuario no encontrado). ${err.details ?? ""}`.trim();
+      } else {
+        msg = err.message || (e instanceof Error ? e.message : String(e));
+        if (err.code) msg = `[${err.code}] ${msg}`;
+        if (err.details) msg += ` — ${err.details}`;
+      }
+      toast.error(`No se pudo recepcionar la factura: ${msg}`);
     } finally {
       setSubmitting(false);
     }
