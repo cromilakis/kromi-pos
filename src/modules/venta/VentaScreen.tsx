@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
 import { useOpenSession, rpcAbrirCaja } from "@/data/work";
-import { useProductsWithStock, useCategories } from "@/data/stock";
+import { useProductsWithStock, useCategories, findByBarcode } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
 import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
@@ -149,6 +149,15 @@ export function VentaScreen() {
       }
       return [...c, { id: p.id, qty: 1 }];
     });
+  }
+
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter") return;
+    const match = findByBarcode(allProducts, query);
+    if (match) {
+      addToCart(match);
+      setQuery("");
+    }
   }
 
   function incCart(id: string) {
@@ -328,6 +337,7 @@ export function VentaScreen() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               placeholder="Buscar planta, maceta, accesorio…"
               className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#0F2A1B] outline-none"
             />
