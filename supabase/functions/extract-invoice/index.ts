@@ -61,25 +61,26 @@ Deno.serve(async (req) => {
     const oaForm = new FormData();
     oaForm.append("purpose", "user_data");
     oaForm.append("file", new Blob([bytes], { type: "application/pdf" }), "factura.pdf");
-    const upf = await fetch("https://api.openai.com/v1/files", {
-      method: "POST", headers: { Authorization: `Bearer ${OPENAI_API_KEY}` }, body: oaForm });
+    const upf = await fetchWithTimeout("https://api.openai.com/v1/files", {
+      method: "POST", headers: { Authorization: `Bearer ${OPENAI_API_KEY}` }, body: oaForm }, 60000);
     const upfJson = await upf.json();
     if (!upf.ok) return json({ error: "OpenAI files: " + JSON.stringify(upfJson) }, 502);
     const fileId = upfJson.id;
 
     // Responses API con input_file + structured outputs
-    const resp = await fetch("https://api.openai.com/v1/responses", {
+    const resp = await fetchWithTimeout("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "gpt-5-nano",
+        reasoning: { effort: "minimal" },
         input: [{ role: "user", content: [
           { type: "input_text", text: "Extrae los datos de esta factura de compra chilena en el formato indicado. Montos en pesos (enteros, sin separadores). El proveedor es el emisor. La fecha del documento suele venir impresa como dd/mm/yyyy: conviértela y devuélvela SIEMPRE en formato ISO 8601 YYYY-MM-DD (ej: 02/07/2026 -> 2026-07-02)." },
           { type: "input_file", file_id: fileId },
         ] }],
         text: { format: { type: "json_schema", ...schema } },
       }),
-    });
+    }, 120000);
     const respJson = await resp.json();
     if (!resp.ok) return json({ error: "OpenAI responses: " + JSON.stringify(respJson) }, 502);
 
@@ -96,4 +97,16 @@ Deno.serve(async (req) => {
 
 function json(body: unknown, status: number) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...corsHeaders } });
+}
+
+// fetch con timeout: si OpenAI no responde a tiempo, aborta y la función
+// devuelve error en vez de quedarse colgada indefinidamente.
+async function fetchWithTimeout(url: string, opts: RequestInit, ms: number): Promise<Response> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...opts, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
+  }
 }
