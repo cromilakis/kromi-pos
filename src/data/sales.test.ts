@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { summarizeSales, cartToLines } from "./sales";
+import { summarizeSales, cartToLines, isQuoteVigente } from "./sales";
 
 describe("summarizeSales", () => {
   it("total, conteo y promedio de ventas del día", () => {
@@ -12,7 +12,23 @@ describe("summarizeSales", () => {
 });
 
 describe("cartToLines", () => {
-  it("mapea id→product_id y conserva qty", () => {
-    expect(cartToLines([{ id: "p1", qty: 2 }])).toEqual([{ product_id: "p1", qty: 2 }]);
+  it("mapea id→product_id, conserva qty y normaliza el descuento", () => {
+    expect(cartToLines([{ id: "p1", qty: 2 }])).toEqual([{ product_id: "p1", qty: 2, disc_kind: null, disc_value: 0 }]);
+    expect(cartToLines([{ id: "p2", qty: 1, disc_kind: "pct", disc_value: 10 }])).toEqual([
+      { product_id: "p2", qty: 1, disc_kind: "pct", disc_value: 10 },
+    ]);
+  });
+});
+
+describe("isQuoteVigente", () => {
+  const today = new Date("2026-07-07T10:00:00");
+  it("fecha futura es vigente", () => {
+    expect(isQuoteVigente("2026-07-14", today)).toBe(true);
+  });
+  it("hoy mismo (fin del día) es vigente", () => {
+    expect(isQuoteVigente("2026-07-07", today)).toBe(true);
+  });
+  it("fecha pasada está vencida", () => {
+    expect(isQuoteVigente("2026-07-01", today)).toBe(false);
   });
 });

@@ -10,7 +10,7 @@ import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
 import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data/heldSales";
 import { cobrarVenta, cartToLines } from "@/data/sales";
-import { computeTotals, fmtCLP } from "@/lib/money";
+import { computeTotals, resolveDiscount, fmtCLP } from "@/lib/money";
 import { errMsg } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
@@ -25,6 +25,8 @@ import { CierrePanel } from "@/modules/cierre/CierrePanel";
 interface CartItem {
   id: string;
   qty: number;
+  disc_kind?: "pct" | "amount" | null;
+  disc_value?: number;
 }
 
 /** Gate local de caja: si no hay sesión abierta en esta caja, ofrece abrirla en vez de mostrar el carrito. */
@@ -87,6 +89,8 @@ export function VentaScreen() {
   const [cierreOpen, setCierreOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [heldOpen, setHeldOpen] = useState(false);
+  const [totalDisc, setTotalDisc] = useState<{ kind: "pct" | "amount"; value: number } | null>(null);
+  const canDiscount = profile?.role === "admin" || profile?.role === "kromi";
 
   const allCustomers = customers ?? [];
 
@@ -123,10 +127,19 @@ export function VentaScreen() {
   }, [filtered, allCategories, catById]);
 
   const cartLines: CartLine[] = useMemo(
-    () => cart.map((c) => ({ product: productById.get(c.id)!, qty: c.qty })).filter((l) => l.product),
+    () => cart.map((c) => ({ product: productById.get(c.id)!, qty: c.qty, disc_kind: c.disc_kind ?? null, disc_value: c.disc_value ?? 0 })).filter((l) => l.product),
     [cart, productById],
   );
-  const totals = useMemo(() => computeTotals(cartLines.map((l) => ({ qty: l.qty, price: l.product.price }))), [cartLines]);
+  const totals = useMemo(() => {
+    const lines = cartLines.map((l) => ({
+      qty: l.qty,
+      price: l.product.price,
+      discount: resolveDiscount(l.qty * l.product.price, l.disc_kind ?? null, l.disc_value ?? 0),
+    }));
+    const sub = lines.reduce((s, l) => s + l.qty * l.price - (l.discount ?? 0), 0);
+    const totalDiscMonto = totalDisc ? resolveDiscount(sub, totalDisc.kind, totalDisc.value) : 0;
+    return computeTotals(lines, totalDiscMonto);
+  }, [cartLines, totalDisc]);
 
   function inCart(id: string): number {
     return cart.find((c) => c.id === id)?.qty ?? 0;
@@ -184,6 +197,11 @@ export function VentaScreen() {
   }
   function clearCart() {
     setCart([]);
+    setTotalDisc(null);
+  }
+
+  function setLineDiscount(id: string, kind: "pct" | "amount" | null, value: number) {
+    setCart((c) => c.map((x) => (x.id === id ? { ...x, disc_kind: kind, disc_value: value } : x)));
   }
 
   async function handleHold() {
@@ -254,11 +272,13 @@ export function VentaScreen() {
         p_method: method,
         p_recv: recv,
         p_customer: customerId,
+        p_total_disc: totalDisc,
       });
 
       // Venta confirmada en BD: limpiar carrito, refrescar datos e imprimir la boleta.
       const soldLines = cartLines;
       setCart([]);
+      setTotalDisc(null);
       setPayOpen(false);
       toast.success(`Venta #${sale.folio} cobrada.`);
       qc.invalidateQueries({ queryKey: ["sales-today"] });
@@ -443,7 +463,7 @@ export function VentaScreen() {
         </div>
       </div>
 
-      <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} />
+      <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} canDiscount={canDiscount} totalDisc={totalDisc} onSetTotalDisc={setTotalDisc} onSetLineDisc={setLineDiscount} />
 
       <PayDialog open={payOpen} total={totals.total} busy={busy} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />
 
