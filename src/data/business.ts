@@ -40,7 +40,7 @@ interface NegocioSocial { red: string; url: string; etiqueta: string; }
  *  (ver src-tauri/src/escpos.rs). `printerName` se inyecta aparte (config local). */
 export function businessToNegocio(b: BusinessRow | undefined, printerName: string) {
   const social: NegocioSocial | null =
-    b?.social_red && b?.social_url ? { red: b.social_red, url: b.social_url, etiqueta: b.social_red } : null;
+    b?.social_red && b?.social_url ? { red: b.social_red, url: b.social_url, etiqueta: `@${b.social_red}` } : null;
   return {
     tagline: b?.tagline ?? "",
     razon_social: b?.name ?? "",

@@ -24,7 +24,7 @@ describe("businessToNegocio", () => {
     expect(n.tagline).toBe("Tu jardín, nuestro oficio");
     expect(n.footer).toBe("¡Gracias por su compra!");
     expect(n.printer_name).toBe("GEZHI 80mm");
-    expect(n.social).toEqual({ red: "Instagram", url: "https://instagram.com/kromi", etiqueta: "Instagram" });
+    expect(n.social).toEqual({ red: "Instagram", url: "https://instagram.com/kromi", etiqueta: "@Instagram" });
   });
 
   it("usa social null cuando falta red o url", () => {

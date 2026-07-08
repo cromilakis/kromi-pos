@@ -71,7 +71,22 @@ fn money(n: i64) -> String {
         if i > 0 && (bytes.len() - i) % 3 == 0 { out.push('.'); }
         out.push(*c as char);
     }
-    if n < 0 { format!("-{}", out) } else { out }
+    if n < 0 { format!("-${}", out) } else { format!("${}", out) }
+}
+
+/** Etiqueta de la forma de pago con mayúscula inicial (Efectivo / Tarjeta). */
+fn metodo_label(m: &str) -> String {
+    match m {
+        "efectivo" => "Efectivo".to_string(),
+        "tarjeta" => "Tarjeta".to_string(),
+        other => {
+            let mut c = other.chars();
+            match c.next() {
+                Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                None => String::new(),
+            }
+        }
+    }
 }
 
 fn push_text(buf: &mut Vec<u8>, s: &str) {
@@ -212,13 +227,13 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     line_lr(&mut b, "TOTAL", &money(p.total), 24);
     b.extend_from_slice(&[0x1D, 0x21, 0x00]);
     nl(&mut b);
-    line_lr(&mut b, "Forma de pago", &p.metodo, COL);
+    line_lr(&mut b, "Forma de pago", &metodo_label(&p.metodo), COL);
     rule(&mut b, b'-');
 
     // red social (QR) — solo si esta configurada
     if let Some(s) = &p.negocio.social {
         b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-        push_text(&mut b, &format!("Siguenos en {}", s.red)); nl(&mut b);
+        push_text(&mut b, "Siguenos en redes sociales"); nl(&mut b);
         qr_native(&mut b, &s.url);
         nl(&mut b);
         push_text(&mut b, &s.etiqueta); nl(&mut b);
@@ -451,7 +466,7 @@ pub fn build_credit_note(p: &CreditNotePayload) -> Vec<u8> {
     line_lr(&mut b, "DEVOLUCION", &money(p.total), 24);
     b.extend_from_slice(&[0x1D, 0x21, 0x00]);
     nl(&mut b);
-    line_lr(&mut b, "Medio de devolucion", &p.metodo, COL);
+    line_lr(&mut b, "Medio de devolucion", &metodo_label(&p.metodo), COL);
     rule(&mut b, b'-');
 
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
