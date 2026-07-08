@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
-import { useSupplierByRut, useSupplierProductMap, recepcionarFactura } from "@/data/purchases";
+import { useSupplierByRut, useSupplierProductMap, useNextSupplierSeq, recepcionarFactura } from "@/data/purchases";
 import { useCategories, useProductsWithStock } from "@/data/stock";
 import { normalizeExtraction, checkLineTotal, sumLineTotals, totalsMatch, type Extraction, type ExtractedLine } from "@/lib/invoice";
 import { fmtCLP } from "@/lib/money";
@@ -44,11 +44,14 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
   const { data: supplierMap } = useSupplierProductMap(supplierId);
   const { data: products } = useProductsWithStock(businessId, branchId);
   const { data: categories } = useCategories(businessId);
+  const { data: nextSeq } = useNextSupplierSeq(businessId);
+  const supplierSeq = existingSupplier?.seq ?? nextSeq; // number | undefined
 
   const [newSupplier, setNewSupplier] = useState({
     razon_social: extraction.proveedor.razon_social,
     rut: extraction.proveedor.rut,
-    giro: "",
+    giro: extraction.proveedor.giro,
+    direccion: extraction.proveedor.direccion,
     email: "",
     phone: "",
   });
@@ -97,6 +100,7 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
         razon_social: newSupplier.razon_social.trim(),
         rut: newSupplier.rut.trim(),
         giro: newSupplier.giro.trim() || null,
+        address: newSupplier.direccion.trim() || null,
         email: newSupplier.email.trim() || null,
         phone: newSupplier.phone.trim() || null,
       };
@@ -156,43 +160,33 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
           {loadingSupplier ? (
             <div className="text-[13.5px] text-[#9aa8bd]">Buscando proveedor…</div>
           ) : existingSupplier ? (
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#E7EFE8] px-3.5 py-2 text-[13.5px] font-bold text-[#0F2A1B]">
-              Proveedor: {existingSupplier.razon_social}
-            </span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-[#E1E5EE] bg-[#F7FAF8] px-4 py-2.5 text-[13px]">
+              <span className="rounded-full bg-[#0F2A1B] px-2 py-0.5 text-[12px] font-black text-white">
+                {existingSupplier.seq != null ? String(existingSupplier.seq).padStart(3, "0") : "—"}
+              </span>
+              <span className="font-black text-[#0F2A1B]">{existingSupplier.razon_social}</span>
+              <span className="text-[#7C95A8]">RUT {existingSupplier.rut || "—"}</span>
+              {existingSupplier.giro && <span className="text-[#7C95A8]">· {existingSupplier.giro}</span>}
+              {existingSupplier.address && <span className="text-[#7C95A8]">· {existingSupplier.address}</span>}
+            </div>
           ) : (
-            <div className="rounded-2xl border border-[#F2E2A8] bg-[#FEF6DD] p-3.5">
-              <div className="mb-2.5 text-[12.5px] font-bold text-[#8A6D12]">Proveedor nuevo — se creará al confirmar</div>
-              <div className="grid grid-cols-2 gap-2.5">
-                <input
-                  value={newSupplier.razon_social}
-                  onChange={(e) => setNewSupplier((s) => ({ ...s, razon_social: e.target.value }))}
-                  placeholder="Razón social"
-                  className="col-span-2 rounded-[10px] border border-[#E1E5EE] px-3 py-2 text-[13.5px] outline-none"
-                />
-                <input
-                  value={newSupplier.rut}
-                  onChange={(e) => setNewSupplier((s) => ({ ...s, rut: e.target.value }))}
-                  placeholder="RUT"
-                  className="rounded-[10px] border border-[#E1E5EE] px-3 py-2 text-[13.5px] outline-none"
-                />
-                <input
-                  value={newSupplier.giro}
-                  onChange={(e) => setNewSupplier((s) => ({ ...s, giro: e.target.value }))}
-                  placeholder="Giro (opcional)"
-                  className="rounded-[10px] border border-[#E1E5EE] px-3 py-2 text-[13.5px] outline-none"
-                />
-                <input
-                  value={newSupplier.email}
-                  onChange={(e) => setNewSupplier((s) => ({ ...s, email: e.target.value }))}
-                  placeholder="Email (opcional)"
-                  className="rounded-[10px] border border-[#E1E5EE] px-3 py-2 text-[13.5px] outline-none"
-                />
-                <input
-                  value={newSupplier.phone}
-                  onChange={(e) => setNewSupplier((s) => ({ ...s, phone: e.target.value }))}
-                  placeholder="Teléfono (opcional)"
-                  className="rounded-[10px] border border-[#E1E5EE] px-3 py-2 text-[13.5px] outline-none"
-                />
+            <div className="rounded-2xl border border-[#F2E2A8] bg-[#FEF6DD] p-3">
+              <div className="mb-2 text-[12.5px] font-bold text-[#8A6D12]">
+                Proveedor nuevo — se creará como {supplierSeq != null ? String(supplierSeq).padStart(3, "0") : "…"}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input value={newSupplier.razon_social} onChange={(e) => setNewSupplier((s) => ({ ...s, razon_social: e.target.value }))}
+                  placeholder="Razón social" className="col-span-2 rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
+                <input value={newSupplier.rut} onChange={(e) => setNewSupplier((s) => ({ ...s, rut: e.target.value }))}
+                  placeholder="RUT" className="rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
+                <input value={newSupplier.giro} onChange={(e) => setNewSupplier((s) => ({ ...s, giro: e.target.value }))}
+                  placeholder="Giro" className="rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
+                <input value={newSupplier.direccion} onChange={(e) => setNewSupplier((s) => ({ ...s, direccion: e.target.value }))}
+                  placeholder="Dirección" className="col-span-2 rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
+                <input value={newSupplier.email} onChange={(e) => setNewSupplier((s) => ({ ...s, email: e.target.value }))}
+                  placeholder="Email (opcional)" className="rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
+                <input value={newSupplier.phone} onChange={(e) => setNewSupplier((s) => ({ ...s, phone: e.target.value }))}
+                  placeholder="Teléfono (opcional)" className="rounded-[10px] border border-[#E1E5EE] px-3 py-1.5 text-[13px] outline-none" />
               </div>
             </div>
           )}
@@ -200,90 +194,70 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
 
         <div className="mb-4">
           <div className="mb-1.5 text-[12px] font-bold uppercase tracking-[.08em] text-[#9aa8bd]">Líneas ({lines.length})</div>
-          <div className="flex flex-col gap-2">
-            {lines.map((l, idx) => {
-              const ok = checkLineTotal(l);
-              return (
-                <div
-                  key={idx}
-                  className="rounded-2xl border p-3.5"
-                  style={{ borderColor: ok ? "#E1E5EE" : "#F5C2C2", background: ok ? "#fff" : "#FDECEC" }}
-                >
-                  <div className="grid grid-cols-[60px_120px_1fr_120px_120px] items-baseline gap-3">
-                    <div className="text-[13.5px] font-bold text-[#0F2A1B]">{l.qty} u.</div>
-                    <div className="truncate text-[13px] font-semibold text-[#7C95A8]">{l.supplier_code || "—"}</div>
-                    <div className="truncate text-[13.5px] font-bold text-[#0F2A1B]">{l.description || "Sin descripción"}</div>
-                    <div className="text-right text-[13px] font-bold" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>
-                      {fmtCLP(l.unit_cost)} c/u
-                    </div>
-                    <div className="text-right text-[13.5px] font-black" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>
-                      {fmtCLP(l.line_total)}
-                    </div>
-                  </div>
-                  {!ok && <div className="mt-1 text-[11.5px] font-bold text-[#9a2533]">Cantidad × costo no coincide con el total de la línea.</div>}
-
-                  <div className="mt-2.5">
-                    {l.product_id ? (
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-[#E7EFE8] px-2.5 py-1 text-[12.5px] font-bold text-[#0F2A1B]">
-                          → {productById.get(l.product_id)?.name ?? "Producto vinculado"}
-                        </span>
-                        <button onClick={() => updateLine(idx, { product_id: "" })} className="text-[11.5px] font-bold text-[#7C95A8] underline">
-                          Cambiar
-                        </button>
-                      </div>
-                    ) : l.newProduct ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <input
-                          value={l.newName}
-                          onChange={(e) => updateLine(idx, { newName: e.target.value })}
-                          placeholder="Nombre del producto nuevo"
-                          className="min-w-[180px] flex-1 rounded-[9px] border border-[#E1E5EE] px-2.5 py-1.5 text-[13px] outline-none"
-                        />
-                        <select
-                          value={l.newCategoryId}
-                          onChange={(e) => updateLine(idx, { newCategoryId: e.target.value })}
-                          className="rounded-[9px] border border-[#E1E5EE] px-2.5 py-1.5 text-[13px] outline-none"
-                        >
-                          <option value="">Sin categoría</option>
-                          {(categories ?? []).map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.label}
-                            </option>
-                          ))}
-                        </select>
-                        <button onClick={() => updateLine(idx, { newProduct: false })} className="text-[11.5px] font-bold text-[#7C95A8] underline">
-                          Cancelar
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <select
-                          value=""
-                          onChange={(e) => updateLine(idx, { product_id: e.target.value })}
-                          className="min-w-[200px] rounded-[9px] border border-[#E1E5EE] px-2.5 py-1.5 text-[13px] outline-none"
-                        >
-                          <option value="" disabled>
-                            Elegir producto existente…
-                          </option>
-                          {(products ?? []).map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          onClick={() => updateLine(idx, { newProduct: true })}
-                          className="rounded-[9px] border border-[#A7E3C0] bg-[#E6F7EE] px-2.5 py-1.5 text-[12.5px] font-bold text-[#0a6e36]"
-                        >
-                          + Crear nuevo
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="overflow-x-auto rounded-2xl border border-[#E1E5EE]">
+            <table className="w-full border-collapse text-[13px]">
+              <thead>
+                <tr className="bg-[#F7FAF8] text-left text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">
+                  <th className="px-3 py-2 text-right">Cant</th>
+                  <th className="px-3 py-2">Cód. prov</th>
+                  <th className="px-3 py-2">Descripción</th>
+                  <th className="px-3 py-2 text-right">Costo unit</th>
+                  <th className="px-3 py-2 text-right">Total</th>
+                  <th className="px-3 py-2">Producto interno</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lines.map((l, idx) => {
+                  const ok = checkLineTotal(l);
+                  const linked = l.product_id ? productById.get(l.product_id) : undefined;
+                  return (
+                    <tr key={idx} className="border-t border-[#EEF1F6]" style={{ background: ok ? undefined : "#FDECEC" }}>
+                      <td className="px-3 py-1.5 text-right font-bold text-[#0F2A1B]">{l.qty}</td>
+                      <td className="px-3 py-1.5 font-semibold text-[#7C95A8]">{l.supplier_code || "—"}</td>
+                      <td className="px-3 py-1.5 font-semibold text-[#0F2A1B]">{l.description || "Sin descripción"}</td>
+                      <td className="px-3 py-1.5 text-right" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>{fmtCLP(l.unit_cost)}</td>
+                      <td className="px-3 py-1.5 text-right font-black" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>{fmtCLP(l.line_total)}</td>
+                      <td className="px-3 py-1.5">
+                        {l.product_id ? (
+                          <div className="flex items-center gap-2">
+                            <span className="rounded-full bg-[#E7EFE8] px-2 py-0.5 text-[12px] font-bold text-[#0F2A1B]">
+                              {linked?.internal_code ? `${linked.internal_code} · ` : "→ "}{linked?.name ?? "Producto vinculado"}
+                            </span>
+                            <button onClick={() => updateLine(idx, { product_id: "" })} className="text-[11px] font-bold text-[#7C95A8] underline">Cambiar</button>
+                          </div>
+                        ) : l.newProduct ? (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="rounded bg-[#EEF1F6] px-1.5 py-0.5 text-[11px] font-bold text-[#7C95A8]">
+                              {supplierSeq != null ? String(supplierSeq).padStart(3, "0") : "…"}-{l.supplier_code || (idx + 1)}
+                            </span>
+                            <input value={l.newName} onChange={(e) => updateLine(idx, { newName: e.target.value })}
+                              placeholder="Nombre del producto" className="min-w-[150px] flex-1 rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none" />
+                            <select value={l.newCategoryId} onChange={(e) => updateLine(idx, { newCategoryId: e.target.value })}
+                              className="rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
+                              <option value="">Sin categoría</option>
+                              {(categories ?? []).map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
+                            </select>
+                            <button onClick={() => updateLine(idx, { newProduct: false })} className="text-[11px] font-bold text-[#7C95A8] underline">Cancelar</button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <select value="" onChange={(e) => updateLine(idx, { product_id: e.target.value })}
+                              className="min-w-[170px] rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
+                              <option value="" disabled>Elegir producto…</option>
+                              {(products ?? []).map((p) => (
+                                <option key={p.id} value={p.id}>{p.internal_code ? `${p.internal_code} · ${p.name}` : p.name}</option>
+                              ))}
+                            </select>
+                            <button onClick={() => updateLine(idx, { newProduct: true })}
+                              className="rounded-[8px] border border-[#A7E3C0] bg-[#E6F7EE] px-2 py-1 text-[12px] font-bold text-[#0a6e36]">+ Crear</button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
