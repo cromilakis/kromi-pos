@@ -42,7 +42,6 @@ export function businessToNegocio(b: BusinessRow | undefined, printerName: strin
   const social: NegocioSocial | null =
     b?.social_red && b?.social_url ? { red: b.social_red, url: b.social_url, etiqueta: `@${b.social_red}` } : null;
   return {
-    tagline: b?.tagline ?? "",
     razon_social: b?.name ?? "",
     rut: b?.rut ?? "",
     giro: b?.giro ?? "",

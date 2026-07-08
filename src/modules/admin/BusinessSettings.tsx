@@ -19,7 +19,6 @@ const FIELDS: { key: keyof FormState; label: string; placeholder?: string }[] = 
   { key: "rut", label: "RUT" },
   { key: "giro", label: "Giro" },
   { key: "direccion", label: "Dirección" },
-  { key: "tagline", label: "Lema (tagline)" },
   { key: "footer", label: "Pie de boleta" },
   { key: "social_red", label: "Red social (nombre)", placeholder: "Instagram" },
   { key: "social_url", label: "Red social (URL)", placeholder: "https://…" },

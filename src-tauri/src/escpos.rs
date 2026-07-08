@@ -5,7 +5,6 @@ pub struct Social { pub red: String, pub url: String, pub etiqueta: String }
 
 #[derive(Deserialize, Clone)]
 pub struct Negocio {
-    pub tagline: String,
     pub razon_social: String,
     pub rut: String,
     pub giro: String,
@@ -187,7 +186,6 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
 
     // tagline + emisor (centrado)
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    push_text(&mut b, &format!("* {} *", p.negocio.tagline)); nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
     nl(&mut b);
     line_center(&mut b, &p.negocio.razon_social);
@@ -308,7 +306,6 @@ pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
 
     // tagline + emisor (centrado)
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    push_text(&mut b, &format!("* {} *", p.negocio.tagline)); nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
     nl(&mut b);
     line_center(&mut b, &p.negocio.razon_social);
@@ -380,7 +377,6 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
     nl(&mut b);
 
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    push_text(&mut b, &format!("* {} *", p.negocio.tagline)); nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
     nl(&mut b);
     line_center(&mut b, &p.negocio.razon_social);
@@ -433,7 +429,6 @@ pub fn build_credit_note(p: &CreditNotePayload) -> Vec<u8> {
     b.extend_from_slice(include_bytes!("../assets/logo.escpos"));
     nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    push_text(&mut b, &format!("* {} *", p.negocio.tagline)); nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
     nl(&mut b);
     line_center(&mut b, &p.negocio.razon_social);
@@ -490,7 +485,6 @@ mod tests {
     fn sample(metodo: &str, drawer: bool) -> ReceiptPayload {
         ReceiptPayload {
             negocio: Negocio {
-                tagline: "Vivero & Jardineria".into(),
                 razon_social: "Planta con Mati SpA".into(),
                 rut: "78.123.456-7".into(),
                 giro: "Venta de plantas".into(),

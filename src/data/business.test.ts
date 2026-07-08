@@ -21,7 +21,6 @@ describe("businessToNegocio", () => {
     expect(n.rut).toBe("76.123.456-7");
     expect(n.giro).toBe("Venta de plantas");
     expect(n.direccion).toBe("Av. Siempreviva 742");
-    expect(n.tagline).toBe("Tu jardín, nuestro oficio");
     expect(n.footer).toBe("¡Gracias por su compra!");
     expect(n.printer_name).toBe("GEZHI 80mm");
     expect(n.social).toEqual({ red: "Instagram", url: "https://instagram.com/kromi", etiqueta: "@Instagram" });
@@ -36,7 +35,6 @@ describe("businessToNegocio", () => {
     const n = businessToNegocio({ ...base, giro: null, direccion: null, tagline: null, footer: null }, "");
     expect(n.giro).toBe("");
     expect(n.direccion).toBe("");
-    expect(n.tagline).toBe("");
     expect(n.footer).toBe("");
 
     const empty = businessToNegocio(undefined, "P1");
