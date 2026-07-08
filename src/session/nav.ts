@@ -4,6 +4,7 @@ export interface NavItem { to: string; label: string; }
 const BASE: NavItem[] = [
   { to: "/", label: "Inicio" },
   { to: "/venta", label: "Venta" },
+  { to: "/cotizaciones", label: "Cotizaciones" },
   { to: "/stock", label: "Stock" },
   { to: "/clientes", label: "Clientes" },
 ];

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Home, ShoppingCart, Package, Users, Settings, LogOut, type LucideIcon } from "lucide-react";
+import { Home, ShoppingCart, Package, Users, Settings, LogOut, FileText, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
@@ -16,6 +16,7 @@ const ROLE_LABEL: Record<Role, string> = {
 const NAV_ICON: Record<string, LucideIcon> = {
   Inicio: Home,
   Venta: ShoppingCart,
+  Cotizaciones: FileText,
   Stock: Package,
   Clientes: Users,
   Administración: Settings,

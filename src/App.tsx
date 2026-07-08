@@ -6,6 +6,7 @@ import { AppLayout } from "@/shell/AppLayout";
 import { InicioScreen } from "@/modules/inicio/InicioScreen";
 import { StockScreen } from "@/modules/stock/StockScreen";
 import { VentaScreen } from "@/modules/venta/VentaScreen";
+import { CotizacionesScreen } from "@/modules/cotizaciones/CotizacionesScreen";
 import { ClientesScreen } from "@/modules/clientes/ClientesScreen";
 import { BusinessSettings } from "@/modules/admin/BusinessSettings";
 
@@ -24,6 +25,7 @@ export default function App() {
       <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
         <Route index element={<InicioScreen />} />
         <Route path="venta" element={<VentaScreen />} />
+        <Route path="cotizaciones" element={<CotizacionesScreen />} />
         <Route path="stock" element={<StockScreen />} />
         <Route path="clientes" element={<ClientesScreen />} />
         <Route path="admin" element={<AdminRoute />} />
