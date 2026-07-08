@@ -147,13 +147,13 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
 
   return (
     <div className="mx-auto w-full max-w-[1100px] rounded-[20px] border border-[#E1E5EE] bg-white p-6">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[17px] font-black text-[#0F2A1B]">Confirmar recepción de factura</div>
-          <div className="text-[13px] text-[#7C95A8]">{extraction.documento.fecha || "sin fecha"}</div>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-baseline gap-2.5">
+          <span className="text-[17px] font-black text-[#0F2A1B]">Confirmar recepción de factura</span>
+          <span className="text-[13px] text-[#7C95A8]">{extraction.documento.fecha || "sin fecha"}</span>
         </div>
         {extraction.documento.folio && (
-          <span className="shrink-0 text-[19px] font-black leading-none" style={{ color: "var(--brand)" }}>
+          <span className="shrink-0 text-[15px] font-semibold" style={{ color: "var(--brand)" }}>
             #{extraction.documento.folio}
           </span>
         )}
