@@ -53,4 +53,9 @@ html, body, #root { height: 100%; margin: 0; }
   body {
     @apply bg-background text-foreground; }
   html {
-    @apply font-sans; } }
+    @apply font-sans; }
+  /* Tailwind v4 no pone cursor:pointer en botones por defecto; los botones
+     habilitados deben mostrar la mano. Los deshabilitados mantienen la flecha. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer; } }
