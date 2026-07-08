@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
-import { useSupplierByRut, useSupplierProductMap, useNextSupplierSeq, recepcionarFactura } from "@/data/purchases";
+import { useSupplierByRut, useSupplierProductMap, recepcionarFactura } from "@/data/purchases";
 import { useCategories, useProductsWithStock } from "@/data/stock";
 import { normalizeExtraction, checkLineTotal, sumLineTotals, totalsMatch, type Extraction, type ExtractedLine } from "@/lib/invoice";
 import { fmtCLP } from "@/lib/money";
@@ -45,8 +45,6 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
   const { data: supplierMap } = useSupplierProductMap(supplierId);
   const { data: products } = useProductsWithStock(businessId, branchId);
   const { data: categories } = useCategories(businessId);
-  const { data: nextSeq } = useNextSupplierSeq(businessId);
-  const supplierSeq = existingSupplier?.seq ?? nextSeq; // number | undefined
 
   const [newSupplier, setNewSupplier] = useState({
     razon_social: extraction.proveedor.razon_social,
@@ -73,6 +71,9 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
   }, [supplierMap]);
 
   const [submitting, setSubmitting] = useState(false);
+
+  const productById = useMemo(() => new Map((products ?? []).map((p) => [p.id, p])), [products]);
+  const categoryById = useMemo(() => new Map((categories ?? []).map((c) => [c.id, c.label])), [categories]);
 
   const computedTotal = useMemo(() => sumLineTotals(lines), [lines]);
   const amountsOk = totalsMatch(computedTotal, extraction.documento.neto);
@@ -222,49 +223,55 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
             <table className="w-full border-collapse text-[13px]">
               <thead>
                 <tr className="bg-[#F7FAF8] text-left text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">
-                  <th className="px-3 py-2 text-right">Cant</th>
                   <th className="px-3 py-2">Cód. prov</th>
                   <th className="px-3 py-2">Descripción</th>
-                  <th className="px-3 py-2 text-right">Costo unit</th>
-                  <th className="px-3 py-2 text-right">Total</th>
                   <th className="px-3 py-2">Producto interno</th>
+                  <th className="px-3 py-2">Nombre interno</th>
+                  <th className="px-3 py-2">Categoría</th>
+                  <th className="px-3 py-2 text-right">Costo unit</th>
+                  <th className="px-3 py-2 text-right">Cantidad</th>
+                  <th className="px-3 py-2 text-right">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {lines.map((l, idx) => {
                   const ok = checkLineTotal(l);
+                  const linked = l.product_id ? productById.get(l.product_id) : undefined;
                   return (
-                    <tr key={idx} className="border-t border-[#EEF1F6]" style={{ background: ok ? undefined : "#FDECEC" }}>
-                      <td className="px-3 py-1.5 text-right font-bold text-[#0F2A1B]">{l.qty}</td>
+                    <tr key={idx} className="border-t border-[#EEF1F6] align-top" style={{ background: ok ? undefined : "#FDECEC" }}>
                       <td className="px-3 py-1.5 font-semibold text-[#7C95A8]">{l.supplier_code || "—"}</td>
                       <td className="px-3 py-1.5 font-semibold text-[#0F2A1B]">{l.description || "Sin descripción"}</td>
-                      <td className="px-3 py-1.5 text-right" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>{fmtCLP(l.unit_cost)}</td>
-                      <td className="px-3 py-1.5 text-right font-black" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>{fmtCLP(l.line_total)}</td>
                       <td className="px-3 py-1.5">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <select value={l.product_id} onChange={(e) => updateLine(idx, { product_id: e.target.value })}
-                            className="min-w-[190px] rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
-                            <option value="">Ninguno (Crear nuevo)</option>
-                            {(products ?? []).map((p) => (
-                              <option key={p.id} value={p.id}>{p.internal_code ? `${p.internal_code} · ${p.name}` : p.name}</option>
-                            ))}
-                          </select>
-                          {!l.product_id && (
-                            <>
-                              <span className="rounded bg-[#EEF1F6] px-1.5 py-0.5 text-[11px] font-bold text-[#7C95A8]">
-                                {supplierSeq != null ? String(supplierSeq).padStart(3, "0") : "…"}-{l.supplier_code || (idx + 1)}
-                              </span>
-                              <input value={l.newName} onChange={(e) => updateLine(idx, { newName: e.target.value })}
-                                placeholder="Nombre del producto nuevo" className="min-w-[150px] flex-1 rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none" />
-                              <select value={l.newCategoryId} onChange={(e) => updateLine(idx, { newCategoryId: e.target.value })}
-                                className="rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
-                                <option value="">Sin categoría</option>
-                                {(categories ?? []).map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
-                              </select>
-                            </>
-                          )}
-                        </div>
+                        <select value={l.product_id} onChange={(e) => updateLine(idx, { product_id: e.target.value })}
+                          className="min-w-[180px] rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
+                          <option value="">Ninguno (Crear nuevo)</option>
+                          {(products ?? []).map((p) => (
+                            <option key={p.id} value={p.id}>{p.internal_code ? `${p.internal_code} · ${p.name}` : p.name}</option>
+                          ))}
+                        </select>
                       </td>
+                      <td className="px-3 py-1.5">
+                        {l.product_id ? (
+                          <span className="text-[12.5px] font-semibold text-[#0F2A1B]">{linked?.name ?? "—"}</span>
+                        ) : (
+                          <input value={l.newName} onChange={(e) => updateLine(idx, { newName: e.target.value })}
+                            placeholder="Nombre del producto nuevo" className="min-w-[150px] w-full rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none" />
+                        )}
+                      </td>
+                      <td className="px-3 py-1.5">
+                        {l.product_id ? (
+                          <span className="text-[12.5px] text-[#9aa8bd]">{linked?.category_id ? (categoryById.get(linked.category_id) ?? "—") : "—"}</span>
+                        ) : (
+                          <select value={l.newCategoryId} onChange={(e) => updateLine(idx, { newCategoryId: e.target.value })}
+                            className="rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
+                            <option value="">Sin categoría</option>
+                            {(categories ?? []).map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
+                          </select>
+                        )}
+                      </td>
+                      <td className="px-3 py-1.5 text-right" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>{fmtCLP(l.unit_cost)}</td>
+                      <td className="px-3 py-1.5 text-right font-bold text-[#0F2A1B]">{l.qty}</td>
+                      <td className="px-3 py-1.5 text-right font-black" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>{fmtCLP(l.line_total)}</td>
                     </tr>
                   );
                 })}

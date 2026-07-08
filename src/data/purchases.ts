@@ -60,16 +60,3 @@ export async function invoiceDownloadUrl(pdfPath: string): Promise<string> {
   const { data, error } = await supabase.storage.from("purchase-invoices").createSignedUrl(pdfPath, 60);
   if (error) throw error; return data.signedUrl;
 }
-
-export function useNextSupplierSeq(businessId: string | undefined) {
-  return useQuery({
-    queryKey: ["next-supplier-seq", businessId], enabled: !!businessId,
-    queryFn: async () => {
-      const { data, error } = await supabase.from("supplier")
-        .select("seq").eq("business_id", businessId!).not("seq", "is", null)
-        .order("seq", { ascending: false }).limit(1);
-      if (error) throw error;
-      return ((data?.[0]?.seq as number | null) ?? 0) + 1;
-    },
-  });
-}
