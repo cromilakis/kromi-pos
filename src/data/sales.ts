@@ -37,7 +37,9 @@ export function useRecentSales(branchId: string | undefined, limit = 8) {
   });
 }
 
-export interface CartItem { product_id: string; qty: number; }
+export interface CartItem { product_id: string; qty: number; disc_kind?: "pct" | "amount" | null; disc_value?: number; }
+
+export type DiscountInput = { kind: "pct" | "amount"; value: number } | null;
 
 export interface Sale {
   id: string;
@@ -49,9 +51,11 @@ export interface Sale {
   recv: number;
   change: number;
   sold_at: string;
+  discount_amount: number;
 }
 
-/** Cobra la venta de forma atómica vía RPC (descuenta stock, registra la venta y sus líneas). */
+/** Cobra la venta de forma atómica vía RPC. Descuentos (línea y total) los recalcula
+ *  y valida el servidor (solo admin); el cliente solo envía kind/value. */
 export async function cobrarVenta(args: {
   p_branch: string;
   p_session: string;
@@ -59,6 +63,7 @@ export async function cobrarVenta(args: {
   p_method: "efectivo" | "tarjeta";
   p_recv: number;
   p_customer?: string | null;
+  p_total_disc?: DiscountInput;
 }): Promise<Sale> {
   const { data, error } = await supabase.rpc("cobrar_venta", {
     p_branch: args.p_branch,
@@ -67,14 +72,15 @@ export async function cobrarVenta(args: {
     p_method: args.p_method,
     p_recv: args.p_recv,
     p_customer: args.p_customer ?? null,
+    p_total_disc: args.p_total_disc ?? null,
   });
   if (error) throw error;
   return data;
 }
 
-/** Convierte el carrito (con qty) a las líneas que espera la RPC. */
-export function cartToLines(cart: { id: string; qty: number }[]): CartItem[] {
-  return cart.map((c) => ({ product_id: c.id, qty: c.qty }));
+/** Convierte el carrito (con qty y descuento) a las líneas que espera la RPC. */
+export function cartToLines(cart: { id: string; qty: number; disc_kind?: "pct" | "amount" | null; disc_value?: number }[]): CartItem[] {
+  return cart.map((c) => ({ product_id: c.id, qty: c.qty, disc_kind: c.disc_kind ?? null, disc_value: c.disc_value ?? 0 }));
 }
 
 // ----------------------------------------------------------------------------
