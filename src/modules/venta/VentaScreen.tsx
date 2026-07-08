@@ -11,6 +11,7 @@ import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
 import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data/heldSales";
 import { cobrarVenta, cartToLines } from "@/data/sales";
+import { emitirBoleta } from "@/data/sii";
 import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "@/lib/money";
 import { errMsg } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
@@ -307,6 +308,17 @@ export function VentaScreen() {
       qc.invalidateQueries({ queryKey: ["customers", businessId] });
       setCustomerId(null);
 
+      // Emitir la boleta electrónica (best-effort; NO bloquea la venta ya cobrada).
+      let dteFolio: number | undefined;
+      let timbrePng: string | null | undefined;
+      try {
+        const em = await emitirBoleta(sale.id);
+        if (em.status === "emitida") { dteFolio = em.folio; timbrePng = em.timbre_png ?? null; }
+        else toast.warning(`Venta cobrada. Boleta pendiente de emisión (${em.message ?? em.status}).`);
+      } catch {
+        toast.warning("Venta cobrada. Boleta pendiente de emisión (sin conexión con el SII).");
+      }
+
       const soldAt = new Date(sale.sold_at);
       // Forma esperada por `print_receipt` (struct ReceiptPayload en src-tauri/src/escpos.rs).
       const payload = {
@@ -319,6 +331,9 @@ export function VentaScreen() {
         iva: sale.iva,
         total: sale.total,
         descuento: soldLines.reduce((s, l) => s + resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0), 0),
+        dte_folio: dteFolio,
+        timbre_png: timbrePng ?? null,
+        reimpresion: false,
         metodo: sale.method,
         open_drawer: sale.method === "efectivo",
       };
