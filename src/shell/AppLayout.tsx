@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Home, ShoppingCart, Package, Users, Settings, LogOut, FileText, type LucideIcon } from "lucide-react";
+import { Home, ShoppingCart, Package, Users, Settings, LogOut, FileText, Menu, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
@@ -49,6 +50,9 @@ function SidebarLink({ item }: { item: NavItem }) {
 export function AppLayout() {
   const { profile, profileLoading, profileError, signOut } = useAuth();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isVenta = location.pathname === "/venta";
+  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
 
   if (profileError) {
     return (
@@ -71,6 +75,17 @@ export function AppLayout() {
 
   return (
     <div className="h-full flex">
+      {isVenta && (
+        <button
+          type="button"
+          onClick={() => setSidebarOpen((o) => !o)}
+          title="Menú"
+          className="fixed left-3 top-3 z-[60] flex size-[38px] items-center justify-center rounded-xl border border-[#E1E5EE] bg-white text-[#2A3A2E] shadow-sm"
+        >
+          <Menu className="size-[18px]" strokeWidth={1.9} />
+        </button>
+      )}
+      {(!isVenta || sidebarOpen) && (
       <aside className="w-[236px] shrink-0 bg-white border-r border-[#E1E5EE] flex flex-col p-3.5">
         <div className="flex items-center gap-[11px] px-2 pb-4">
           <div className="size-[38px] rounded-xl shrink-0 overflow-hidden shadow-[0_3px_10px_rgba(34,196,99,.28)]">
@@ -131,6 +146,7 @@ export function AppLayout() {
           </button>
         </div>
       </aside>
+      )}
       <div className="flex-1 flex flex-col overflow-hidden bg-[#F7F8FA]">
         <main className="flex-1 overflow-auto">
           <BranchGate businessId={profile.business_id}>
