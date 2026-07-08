@@ -153,7 +153,7 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
           <div className="text-[13px] text-[#7C95A8]">{extraction.documento.fecha || "sin fecha"}</div>
         </div>
         {extraction.documento.folio && (
-          <span className="shrink-0 rounded-full px-3 py-1 text-[14px] font-black text-white" style={{ background: "var(--brand)" }}>
+          <span className="shrink-0 text-[19px] font-black leading-none" style={{ color: "var(--brand)" }}>
             #{extraction.documento.folio}
           </span>
         )}
