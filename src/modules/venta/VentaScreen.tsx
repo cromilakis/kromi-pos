@@ -561,15 +561,15 @@ export function VentaScreen() {
                           -{p.discount_pct}%
                         </span>
                       )}
-                      <div className="flex h-[110px] w-full items-center justify-center bg-[#EEF1F6]">
+                      <div className="flex h-[140px] w-full items-center justify-center bg-[#EEF1F6]">
                         {p.img_url ? (
                           <img src={p.img_url} alt={p.name} className="size-full object-cover" />
                         ) : (
                           <span className="size-3 rounded-full" style={{ background: g.dot }} />
                         )}
                       </div>
-                      <div className="w-full px-3 pt-2.5 pb-2.5">
-                        <div className="mb-1.5 truncate text-sm font-bold text-[#0F2A1B]">{p.name}</div>
+                      <div className="w-full px-3 py-2">
+                        <div className="mb-0.5 truncate text-sm font-bold text-[#0F2A1B]">{p.name}</div>
                         <div className="flex items-baseline justify-between gap-2">
                           <span className="text-xs font-bold" style={{ color: disabled ? "#D02E2E" : "#556A7C" }}>
                             {disabled ? "Sin stock" : `${available} disp.`}
