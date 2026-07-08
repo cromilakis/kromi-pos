@@ -26,8 +26,6 @@ import { CierrePanel } from "@/modules/cierre/CierrePanel";
 interface CartItem {
   id: string;
   qty: number;
-  disc_kind?: "pct" | "amount" | null;
-  disc_value?: number;
 }
 
 /** Gate local de caja: si no hay sesión abierta en esta caja, ofrece abrirla en vez de mostrar el carrito. */
@@ -90,8 +88,6 @@ export function VentaScreen() {
   const [cierreOpen, setCierreOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [heldOpen, setHeldOpen] = useState(false);
-  const [totalDisc, setTotalDisc] = useState<{ kind: "pct" | "amount"; value: number } | null>(null);
-  const canDiscount = profile?.role === "admin" || profile?.role === "kromi";
   const [mode, setMode] = useState<"catalogo" | "lectura">("catalogo");
   const [scanQty, setScanQty] = useState(1);
   const scanRef = useRef<HTMLInputElement>(null);
@@ -131,20 +127,16 @@ export function VentaScreen() {
   }, [filtered, allCategories, catById]);
 
   const cartLines: CartLine[] = useMemo(
-    () => cart.map((c) => ({ product: productById.get(c.id)!, qty: c.qty, disc_kind: c.disc_kind ?? null, disc_value: c.disc_value ?? 0 })).filter((l) => l.product),
+    () => cart.map((c) => ({ product: productById.get(c.id)!, qty: c.qty })).filter((l) => l.product),
     [cart, productById],
   );
   const totals = useMemo(() => {
     const lines = cartLines.map((l) => {
       const base = l.qty * l.product.price;
-      const discProd = resolveDiscount(base, "pct", l.product.discount_pct ?? 0);
-      const discAdhoc = resolveDiscount(base, l.disc_kind ?? null, l.disc_value ?? 0);
-      return { qty: l.qty, price: l.product.price, discount: Math.min(base, discProd + discAdhoc) };
+      return { qty: l.qty, price: l.product.price, discount: resolveDiscount(base, "pct", l.product.discount_pct ?? 0) };
     });
-    const sub = lines.reduce((s, l) => s + l.qty * l.price - (l.discount ?? 0), 0);
-    const totalDiscMonto = totalDisc ? resolveDiscount(sub, totalDisc.kind, totalDisc.value) : 0;
-    return computeTotals(lines, totalDiscMonto);
-  }, [cartLines, totalDisc]);
+    return computeTotals(lines);
+  }, [cartLines]);
 
   function inCart(id: string): number {
     return cart.find((c) => c.id === id)?.qty ?? 0;
@@ -202,11 +194,6 @@ export function VentaScreen() {
   }
   function clearCart() {
     setCart([]);
-    setTotalDisc(null);
-  }
-
-  function setLineDiscount(id: string, kind: "pct" | "amount" | null, value: number) {
-    setCart((c) => c.map((x) => (x.id === id ? { ...x, disc_kind: kind, disc_value: value } : x)));
   }
 
   function decCartAll(id: string) {
@@ -306,13 +293,11 @@ export function VentaScreen() {
         p_method: method,
         p_recv: recv,
         p_customer: customerId,
-        p_total_disc: totalDisc,
       });
 
       // Venta confirmada en BD: limpiar carrito, refrescar datos e imprimir la boleta.
       const soldLines = cartLines;
       setCart([]);
-      setTotalDisc(null);
       setPayOpen(false);
       toast.success(`Venta #${sale.folio} cobrada.`);
       qc.invalidateQueries({ queryKey: ["sales-today"] });
@@ -329,14 +314,11 @@ export function VentaScreen() {
         folio: sale.folio,
         fecha: `${pad2(soldAt.getDate())}/${pad2(soldAt.getMonth() + 1)}/${soldAt.getFullYear()}`,
         hora: `${pad2(soldAt.getHours())}:${pad2(soldAt.getMinutes())}`,
-        items: soldLines.map((l) => ({ nombre: l.product.name, qty: l.qty, precio: l.product.price })),
+        items: soldLines.map((l) => ({ nombre: l.product.name, qty: l.qty, precio: l.product.price, descuento: resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0) })),
         neto: sale.neto,
         iva: sale.iva,
         total: sale.total,
-        descuento: sale.discount_amount + soldLines.reduce((s, l) => {
-          const base = l.qty * l.product.price;
-          return s + Math.min(base, resolveDiscount(base, "pct", l.product.discount_pct ?? 0) + resolveDiscount(base, l.disc_kind ?? null, l.disc_value ?? 0));
-        }, 0),
+        descuento: soldLines.reduce((s, l) => s + resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0), 0),
         metodo: sale.method,
         open_drawer: sale.method === "efectivo",
       };
@@ -484,8 +466,8 @@ export function VentaScreen() {
                       </td>
                       <td className="px-4 py-3 text-right text-[#556A7C]">
                         {product.discount_pct > 0 ? (
-                          <span className="inline-flex flex-col items-end leading-none">
-                            <span className="text-[11px] text-[#5E6E7E] line-through">{fmtCLP(product.price)}</span>
+                          <span className="inline-flex items-baseline justify-end gap-1.5">
+                            <span className="text-[12px] text-[#5E6E7E] line-through">{fmtCLP(product.price)}</span>
                             <span className="font-bold text-[#0a6e36]">{fmtCLP(unit)}</span>
                           </span>
                         ) : fmtCLP(product.price)}
@@ -610,7 +592,7 @@ export function VentaScreen() {
       </div>
 
       {mode === "catalogo" && (
-        <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} canDiscount={canDiscount} totalDisc={totalDisc} onSetTotalDisc={setTotalDisc} onSetLineDisc={setLineDiscount} />
+        <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} />
       )}
 
       <PayDialog open={payOpen} total={totals.total} busy={busy} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />

@@ -1,13 +1,11 @@
 import { useState } from "react";
 import type { ProductRow } from "@/data/stock";
-import { fmtCLP, resolveDiscount, discountedPrice } from "@/lib/money";
+import { fmtCLP, discountedPrice } from "@/lib/money";
 import type { Totals } from "@/lib/money";
 
 export interface CartLine {
   product: ProductRow;
   qty: number;
-  disc_kind?: "pct" | "amount" | null;
-  disc_value?: number;
 }
 
 interface CartProps {
@@ -18,44 +16,12 @@ interface CartProps {
   onClear: () => void;
   onHold: () => void;
   onPay: () => void;
-  canDiscount: boolean;
-  totalDisc: { kind: "pct" | "amount"; value: number } | null;
-  onSetTotalDisc: (d: { kind: "pct" | "amount"; value: number } | null) => void;
-  onSetLineDisc: (id: string, kind: "pct" | "amount" | null, value: number) => void;
-}
-
-/** Control compacto de descuento: tipo (— / % / $) + valor. */
-function DiscountControl({ kind, value, onChange }: {
-  kind: "pct" | "amount" | null;
-  value: number;
-  onChange: (k: "pct" | "amount" | null, v: number) => void;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1">
-      <select
-        value={kind ?? ""}
-        onChange={(e) => onChange((e.target.value || null) as "pct" | "amount" | null, value)}
-        className="rounded-md border border-[#E1E5EE] bg-white px-1.5 py-1 text-xs font-bold text-[#5a6b7e]"
-      >
-        <option value="">—</option>
-        <option value="pct">%</option>
-        <option value="amount">$</option>
-      </select>
-      <input
-        value={value || ""}
-        onChange={(e) => onChange(kind, Number(e.target.value.replace(/[^\d]/g, "")) || 0)}
-        inputMode="numeric"
-        placeholder="0"
-        disabled={!kind}
-        className="w-16 rounded-md border border-[#E1E5EE] bg-white px-2 py-1 text-xs text-[#0F2A1B] outline-none disabled:opacity-50"
-      />
-    </span>
-  );
 }
 
 /** Panel del carrito de la venta actual: líneas, totales (neto/IVA) y acciones.
- *  En el encabezado: escoba (vaciar, con confirmación) y diskette (guardar/retener). */
-export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canDiscount, totalDisc, onSetTotalDisc, onSetLineDisc }: CartProps) {
+ *  En el encabezado: escoba (vaciar, con confirmación) y diskette (guardar/retener).
+ *  El descuento se configura a nivel de producto (Stock) y se muestra por línea. */
+export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay }: CartProps) {
   const hasCart = lines.length > 0;
   const [confirmClear, setConfirmClear] = useState(false);
 
@@ -99,15 +65,13 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
             <div className="text-[13px] text-[#5E6E7E]">Seleccione un producto para sumarlo a la venta.</div>
           </div>
         )}
-        {lines.map(({ product, qty, disc_kind, disc_value }) => {
-          const lineDisc = resolveDiscount(product.price * qty, disc_kind ?? null, disc_value ?? 0);
-          return (
-          <div key={product.id} className="flex flex-wrap items-center gap-3 border-b border-[#F0F2F7] py-3 last:border-0">
+        {lines.map(({ product, qty }) => (
+          <div key={product.id} className="flex items-center gap-3 border-b border-[#F0F2F7] py-3 last:border-0">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="truncate text-sm font-bold text-[#0F2A1B]">{product.name}</span>
                 {(product.discount_pct ?? 0) > 0 && (
-                  <span className="shrink-0 rounded-full bg-[#E6F7EE] px-1.5 py-0.5 text-[9.5px] font-black uppercase text-[#0a6e36]">-{product.discount_pct}%</span>
+                  <span className="shrink-0 rounded-full bg-[#E6F7EE] px-1.5 py-0.5 text-[9.5px] font-black text-[#0a6e36]">-{product.discount_pct}%</span>
                 )}
               </div>
               <div className="text-xs text-[#556A7C]">
@@ -116,7 +80,6 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
                 ) : (
                   <>{fmtCLP(product.price)} c/u</>
                 )}
-                {lineDisc > 0 && <span className="ml-1.5 font-bold text-[#D02E2E]">-{fmtCLP(lineDisc)}</span>}
               </div>
             </div>
             <div className="flex items-center gap-1.5">
@@ -136,27 +99,11 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
                 +
               </button>
             </div>
-            {canDiscount && (
-              <div className="flex w-full items-center gap-2">
-                <span className="text-[11px] font-semibold text-[#5E6E7E]">Desc.</span>
-                <DiscountControl kind={disc_kind ?? null} value={disc_value ?? 0} onChange={(k, v) => onSetLineDisc(product.id, k, v)} />
-              </div>
-            )}
           </div>
-          );
-        })}
+        ))}
       </div>
 
       <div className="border-t border-[#E1E5EE] p-5">
-        {canDiscount && (
-          <div className="mb-2 flex items-center justify-between gap-2 text-[13px] text-[#556A7C]">
-            <span className="inline-flex items-center gap-2">
-              Descuento
-              <DiscountControl kind={totalDisc?.kind ?? null} value={totalDisc?.value ?? 0} onChange={(k, v) => onSetTotalDisc(k ? { kind: k, value: v } : null)} />
-            </span>
-            <span className="font-bold text-[#D02E2E]">{totals.discount > 0 ? `-${fmtCLP(totals.discount)}` : ""}</span>
-          </div>
-        )}
         <div className="mb-1.5 flex justify-between text-[13px] text-[#556A7C]">
           <span>Subtotal</span>
           <span>{fmtCLP(totals.neto)}</span>

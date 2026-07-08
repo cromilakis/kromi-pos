@@ -3,6 +3,28 @@
 /// macOS/Linux: vía CUPS `lp -d <printer> -o raw`.
 
 #[cfg(windows)]
+fn default_printer() -> Result<String, String> {
+    use windows::core::PWSTR;
+    use windows::Win32::Graphics::Printing::GetDefaultPrinterW;
+
+    unsafe {
+        // Primera llamada con buffer nulo: devuelve el tamaño requerido (en chars).
+        let mut needed: u32 = 0;
+        let _ = GetDefaultPrinterW(None, &mut needed);
+        if needed == 0 {
+            return Err("No hay impresora predeterminada configurada en el sistema.".into());
+        }
+        let mut buf = vec![0u16; needed as usize];
+        if !GetDefaultPrinterW(Some(PWSTR(buf.as_mut_ptr())), &mut needed).as_bool() {
+            return Err("No se pudo obtener la impresora predeterminada.".into());
+        }
+        // `needed` incluye el terminador null.
+        let end = needed.saturating_sub(1) as usize;
+        Ok(String::from_utf16_lossy(&buf[..end]))
+    }
+}
+
+#[cfg(windows)]
 pub fn send_raw(printer: &str, data: &[u8]) -> Result<(), String> {
     use windows::core::PCWSTR;
     use windows::Win32::Graphics::Printing::{
@@ -15,10 +37,17 @@ pub fn send_raw(printer: &str, data: &[u8]) -> Result<(), String> {
         s.encode_utf16().chain(std::iter::once(0)).collect()
     }
 
+    // Sin nombre configurado: usa la impresora predeterminada del sistema.
+    let printer = if printer.trim().is_empty() {
+        default_printer()?
+    } else {
+        printer.to_string()
+    };
+
     unsafe {
         // Abre el handle de la impresora.
         let mut hprinter = PRINTER_HANDLE::default();
-        let name_wide = to_wide(printer);
+        let name_wide = to_wide(&printer);
         OpenPrinterW(PCWSTR(name_wide.as_ptr()), &mut hprinter, None)
             .map_err(|e| format!("OpenPrinter: {e}"))?;
 
@@ -73,8 +102,14 @@ pub fn send_raw(printer: &str, data: &[u8]) -> Result<(), String> {
     use std::io::Write;
     use std::process::{Command, Stdio};
 
-    let mut child = Command::new("lp")
-        .args(["-d", printer, "-o", "raw"])
+    let mut cmd = Command::new("lp");
+    // Sin nombre configurado: usa el destino predeterminado de CUPS (sin `-d`).
+    if printer.trim().is_empty() {
+        cmd.args(["-o", "raw"]);
+    } else {
+        cmd.args(["-d", printer, "-o", "raw"]);
+    }
+    let mut child = cmd
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
         .stderr(Stdio::piped())

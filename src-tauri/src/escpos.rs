@@ -15,7 +15,7 @@ pub struct Negocio {
 }
 
 #[derive(Deserialize, Clone)]
-pub struct Item { pub nombre: String, pub qty: u32, pub precio: i64 }
+pub struct Item { pub nombre: String, pub qty: u32, pub precio: i64, #[serde(default)] pub descuento: i64 }
 
 #[derive(Deserialize, Clone)]
 pub struct ReceiptPayload {
@@ -215,6 +215,9 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     for it in &p.items {
         line_lr(&mut b, &it.nombre, &money(it.precio * it.qty as i64), COL);
         push_text(&mut b, &format!("   {} x {}", it.qty, money(it.precio))); nl(&mut b);
+        if it.descuento > 0 {
+            line_lr(&mut b, "   Descuento", &format!("-{}", money(it.descuento)), COL);
+        }
     }
     rule(&mut b, b'=');
 
@@ -495,7 +498,7 @@ mod tests {
             },
             folio: 1234,
             fecha: "27/06/2026".into(), hora: "14:32".into(),
-            items: vec![Item { nombre: "Echeveria".into(), qty: 1, precio: 3990 }],
+            items: vec![Item { nombre: "Echeveria".into(), qty: 1, precio: 3990, descuento: 0 }],
             neto: 3353, iva: 637, total: 3990, descuento: 0,
             metodo: metodo.into(), open_drawer: drawer,
         }
@@ -609,7 +612,7 @@ mod tests {
             fecha: "06/07/2026".into(),
             valido_hasta: "13/07/2026".into(),
             cliente: "Juan Pérez".into(),
-            items: vec![Item { nombre: "Monstera".into(), qty: 2, precio: 14990 }],
+            items: vec![Item { nombre: "Monstera".into(), qty: 2, precio: 14990, descuento: 0 }],
             neto: 25193, iva: 4787, total: 29980,
         }
     }
@@ -642,7 +645,7 @@ mod tests {
             sale_folio: Some(438),
             metodo: "efectivo".into(),
             motivo: "Producto defectuoso".into(),
-            items: vec![Item { nombre: "Sansevieria".into(), qty: 1, precio: 9990 }],
+            items: vec![Item { nombre: "Sansevieria".into(), qty: 1, precio: 9990, descuento: 0 }],
             neto: 8395, iva: 1595, total: 9990,
         }
     }
