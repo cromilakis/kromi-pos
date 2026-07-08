@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { CategoryRow, ProductRow, SupplierRow } from "@/data/stock";
 import { createProduct, updateProduct, upsertInventory } from "@/data/stock";
+import { ImageUploader } from "@/components/ImageUploader";
+import { uploadProductImage } from "@/lib/image";
 
 interface ProductFormProps {
   open: boolean;
@@ -122,7 +124,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
       onClick={onClose}
     >
       <div
-        style={{ width: 440, maxWidth: "100%", background: "#fff", borderRadius: 22, overflow: "hidden", boxShadow: "0 24px 70px rgba(0,0,64,.35)" }}
+        style={{ width: 620, maxWidth: "100%", background: "#fff", borderRadius: 22, overflow: "hidden", boxShadow: "0 24px 70px rgba(0,0,64,.35)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #E1E5EE", display: "flex", alignItems: "center", gap: 15 }}>
@@ -134,8 +136,8 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
             ✕
           </button>
         </div>
-        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 14, maxHeight: "60vh", overflow: "auto" }}>
-          <div>
+        <div style={{ padding: "20px 24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div style={{ gridColumn: "1 / -1" }}>
             <label style={labelStyle}>Nombre del producto</label>
             <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Monstera Deliciosa" />
           </div>
@@ -150,7 +152,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
               ))}
             </select>
           </div>
-          <div style={{ display: "flex", gap: 12 }}>
+          <div style={{ display: "flex", gap: 12, gridColumn: "1 / -1" }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>Precio (CLP)</label>
               <input style={inputStyle} value={price} onChange={(e) => setPrice(onlyDigits(e.target.value))} inputMode="numeric" placeholder="0" />
@@ -169,7 +171,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           </div>
           <div
             onClick={() => setCritical((c) => !c)}
-            style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", border: "1px solid #E1E5EE", borderRadius: 12, padding: "11px 14px" }}
+            style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", border: "1px solid #E1E5EE", borderRadius: 12, padding: "11px 14px", gridColumn: "1 / -1" }}
           >
             <span
               style={{
@@ -204,13 +206,19 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
               ))}
             </select>
           </div>
-          <div>
-            <label style={labelStyle}>Imagen (URL, opcional)</label>
-            <input style={inputStyle} value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} placeholder="https://…" />
-          </div>
-          <div>
+          <div style={{ gridColumn: "1 / -1" }}>
             <label style={labelStyle}>Código de barras (opcional)</label>
             <input style={inputStyle} value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Escanea o escribe el código" />
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <label style={labelStyle}>Imagen del producto (opcional)</label>
+            <ImageUploader
+              value={imgUrl || null}
+              onChange={(url) => setImgUrl(url ?? "")}
+              onUpload={(blob) => uploadProductImage(businessId, blob)}
+              maxSize={200}
+              label="producto"
+            />
           </div>
         </div>
         <div style={{ padding: "16px 24px", borderTop: "1px solid #E1E5EE", background: "#FAFBFD", display: "flex", justifyContent: "flex-end", gap: 10 }}>
