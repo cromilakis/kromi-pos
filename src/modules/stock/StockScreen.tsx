@@ -9,6 +9,7 @@ import { fmtCLP } from "@/lib/money";
 import { ProductForm } from "./ProductForm";
 import { CategoryManager } from "./CategoryManager";
 import { InvoiceUpload } from "./InvoiceUpload";
+import { PurchaseInvoicesList } from "@/modules/compras/PurchaseInvoicesList";
 
 /** Bajo mínimo: mismo criterio que la alerta de Inicio (min_stock configurado y stock en o bajo el mínimo). */
 function isLowStock(p: ProductRow): boolean {
@@ -69,6 +70,7 @@ export function StockScreen() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [invoiceListOpen, setInvoiceListOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const allProducts = products ?? [];
@@ -246,6 +248,13 @@ export function StockScreen() {
               className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
             >
               Cargar desde factura
+            </button>
+            <button
+              onClick={() => setInvoiceListOpen(true)}
+              title="Ver y descargar las facturas de compra archivadas"
+              className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
+            >
+              Facturas de compra
             </button>
             <button
               onClick={() => {
@@ -453,6 +462,8 @@ export function StockScreen() {
           }}
         />
       )}
+
+      {invoiceListOpen && <PurchaseInvoicesList businessId={businessId} onClose={() => setInvoiceListOpen(false)} />}
 
       {categoriesOpen && (
         <CategoryManager
