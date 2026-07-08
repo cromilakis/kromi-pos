@@ -5,6 +5,7 @@ pub struct Social { #[allow(dead_code)] pub red: String, pub url: String, pub et
 
 #[derive(Deserialize, Clone)]
 pub struct Negocio {
+    #[serde(default)] pub nombre_comercial: String,
     pub razon_social: String,
     pub rut: String,
     pub giro: String,
@@ -224,6 +225,7 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
     nl(&mut b);
+    if !p.negocio.nombre_comercial.is_empty() { line_center(&mut b, &format!("* {} *", p.negocio.nombre_comercial)); }
     line_center(&mut b, &p.negocio.razon_social);
     line_center(&mut b, &p.negocio.giro);
     line_center(&mut b, &p.negocio.direccion);
@@ -261,7 +263,9 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
         line_lr(&mut b, &it.nombre, &money(it.precio * it.qty as i64), COL);
         push_text(&mut b, &format!("   {} x {}", it.qty, money(it.precio))); nl(&mut b);
         if it.descuento > 0 {
-            line_lr(&mut b, "   Descuento", &format!("-{}", money(it.descuento)), COL);
+            let base = it.precio * it.qty as i64;
+            let pct = if base > 0 { ((it.descuento as f64 * 100.0) / base as f64).round() as i64 } else { 0 };
+            line_lr(&mut b, &format!("   Descuento {}%", pct), &format!("-{}", money(it.descuento)), COL);
         }
     }
     rule(&mut b, b'=');
@@ -364,6 +368,7 @@ pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
     nl(&mut b);
+    if !p.negocio.nombre_comercial.is_empty() { line_center(&mut b, &format!("* {} *", p.negocio.nombre_comercial)); }
     line_center(&mut b, &p.negocio.razon_social);
     nl(&mut b);
 
@@ -435,6 +440,7 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
     nl(&mut b);
+    if !p.negocio.nombre_comercial.is_empty() { line_center(&mut b, &format!("* {} *", p.negocio.nombre_comercial)); }
     line_center(&mut b, &p.negocio.razon_social);
     line_center(&mut b, &p.negocio.giro);
     nl(&mut b);
@@ -487,6 +493,7 @@ pub fn build_credit_note(p: &CreditNotePayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
     nl(&mut b);
+    if !p.negocio.nombre_comercial.is_empty() { line_center(&mut b, &format!("* {} *", p.negocio.nombre_comercial)); }
     line_center(&mut b, &p.negocio.razon_social);
     nl(&mut b);
 
@@ -541,6 +548,7 @@ mod tests {
     fn sample(metodo: &str, drawer: bool) -> ReceiptPayload {
         ReceiptPayload {
             negocio: Negocio {
+                nombre_comercial: "Planta con Mati".into(),
                 razon_social: "Planta con Mati SpA".into(),
                 rut: "78.123.456-7".into(),
                 giro: "Venta de plantas".into(),

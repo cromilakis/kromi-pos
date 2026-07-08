@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 export interface BusinessRow {
   id: string;
   name: string;
+  nombre_comercial: string | null;
   rut: string;
   giro: string | null;
   direccion: string | null;
@@ -14,7 +15,7 @@ export interface BusinessRow {
   social_url: string | null;
 }
 
-const COLS = "id,name,rut,giro,direccion,tagline,footer,logo_url,social_red,social_url";
+const COLS = "id,name,nombre_comercial,rut,giro,direccion,tagline,footer,logo_url,social_red,social_url";
 
 export function useBusiness(businessId?: string) {
   return useQuery({
@@ -42,6 +43,7 @@ export function businessToNegocio(b: BusinessRow | undefined, printerName: strin
   const social: NegocioSocial | null =
     b?.social_red && b?.social_url ? { red: b.social_red, url: b.social_url, etiqueta: `@${b.social_red}` } : null;
   return {
+    nombre_comercial: b?.nombre_comercial ?? "",
     razon_social: b?.name ?? "",
     rut: b?.rut ?? "",
     giro: b?.giro ?? "",

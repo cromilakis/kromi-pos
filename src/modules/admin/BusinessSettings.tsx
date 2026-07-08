@@ -10,11 +10,12 @@ import { PrinterSettings } from "@/shell/PrinterSettings";
 type FormState = Omit<BusinessRow, "id">;
 
 const EMPTY: FormState = {
-  name: "", rut: "", giro: "", direccion: "", tagline: "", footer: "",
+  name: "", nombre_comercial: "", rut: "", giro: "", direccion: "", tagline: "", footer: "",
   logo_url: "", social_red: "", social_url: "",
 };
 
 const FIELDS: { key: keyof FormState; label: string; placeholder?: string }[] = [
+  { key: "nombre_comercial", label: "Nombre comercial", placeholder: "Ej. Planta con Mati" },
   { key: "name", label: "Razón social" },
   { key: "rut", label: "RUT" },
   { key: "giro", label: "Giro" },
@@ -36,6 +37,7 @@ export function BusinessSettings() {
     if (business) {
       setForm({
         name: business.name ?? "",
+        nombre_comercial: business.nombre_comercial ?? "",
         rut: business.rut ?? "",
         giro: business.giro ?? "",
         direccion: business.direccion ?? "",
@@ -58,6 +60,7 @@ export function BusinessSettings() {
     try {
       await updateBusiness(businessId, {
         name: form.name.trim(),
+        nombre_comercial: form.nombre_comercial?.trim() || null,
         rut: form.rut.trim(),
         giro: form.giro?.trim() || null,
         direccion: form.direccion?.trim() || null,
