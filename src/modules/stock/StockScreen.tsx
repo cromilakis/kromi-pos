@@ -8,6 +8,7 @@ import type { ProductRow } from "@/data/stock";
 import { fmtCLP } from "@/lib/money";
 import { ProductForm } from "./ProductForm";
 import { CategoryManager } from "./CategoryManager";
+import { InvoiceUpload } from "./InvoiceUpload";
 
 /** Bajo mínimo: mismo criterio que la alerta de Inicio (min_stock configurado y stock en o bajo el mínimo). */
 function isLowStock(p: ProductRow): boolean {
@@ -67,6 +68,7 @@ export function StockScreen() {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const allProducts = products ?? [];
@@ -238,6 +240,13 @@ export function StockScreen() {
               Cargar stock
             </button>
             <input ref={fileRef} type="file" accept=".csv" onChange={onFile} className="hidden" />
+            <button
+              onClick={() => setInvoiceOpen(true)}
+              title="Recepcionar una compra a partir del PDF de la factura"
+              className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
+            >
+              Cargar desde factura
+            </button>
             <button
               onClick={() => {
                 setEditing(null);
@@ -432,6 +441,16 @@ export function StockScreen() {
           businessId={businessId ?? ""}
           branchId={branchId ?? ""}
           onSaved={refetchAll}
+        />
+      )}
+
+      {invoiceOpen && (
+        <InvoiceUpload
+          onClose={() => setInvoiceOpen(false)}
+          onDone={() => {
+            setInvoiceOpen(false);
+            refetchAll();
+          }}
         />
       )}
 
