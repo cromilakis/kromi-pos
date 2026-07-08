@@ -344,7 +344,6 @@ export function VentaScreen() {
       const soldLines = cartLines;
       setCart([]);
       setPayOpen(false);
-      toast.success(`Venta #${sale.folio} cobrada.`);
       qc.invalidateQueries({ queryKey: ["sales-today"] });
       qc.invalidateQueries({ queryKey: ["recent-sales"] });
       qc.invalidateQueries({ queryKey: ["products-with-stock"] });

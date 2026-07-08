@@ -11,6 +11,17 @@ export interface EmitirResult {
  *  la Edge Function `emitir-boleta`. No lanza: devuelve el estado para decidir la impresión. */
 export async function emitirBoleta(saleId: string): Promise<EmitirResult> {
   const { data, error } = await supabase.functions.invoke("emitir-boleta", { body: { sale_id: saleId } });
-  if (error) return { status: "error", message: error.message };
+  if (error) {
+    // FunctionsHttpError: el mensaje útil viene en el body de la respuesta (no en error.message).
+    let message = error.message;
+    try {
+      const ctx = (error as { context?: Response }).context;
+      if (ctx && typeof ctx.text === "function") {
+        const raw = await ctx.text();
+        try { message = JSON.parse(raw)?.message ?? raw; } catch { message = raw || message; }
+      }
+    } catch { /* noop */ }
+    return { status: "error", message };
+  }
   return data as EmitirResult;
 }

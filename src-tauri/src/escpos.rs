@@ -1,7 +1,7 @@
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone)]
-pub struct Social { pub red: String, pub url: String, pub etiqueta: String }
+pub struct Social { #[allow(dead_code)] pub red: String, pub url: String, pub etiqueta: String }
 
 #[derive(Deserialize, Clone)]
 pub struct Negocio {
@@ -20,7 +20,7 @@ pub struct Item { pub nombre: String, pub qty: u32, pub precio: i64, #[serde(def
 #[derive(Deserialize, Clone)]
 pub struct ReceiptPayload {
     pub negocio: Negocio,
-    pub folio: u32,
+    #[allow(dead_code)] pub folio: u32,
     pub fecha: String,
     pub hora: String,
     pub items: Vec<Item>,

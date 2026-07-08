@@ -6,7 +6,7 @@ const SF_PASSWORD = Deno.env.get("SIMPLEFACTURA_PASSWORD")!;
 const SF_AMBIENTE = Number(Deno.env.get("SIMPLEFACTURA_AMBIENTE") ?? "0");
 // Emisor: en demo se usa un RUT autorizado por la cuenta demo (no el del negocio real).
 const EMISOR = {
-  RUTEmisor: Deno.env.get("SIMPLEFACTURA_RUT_EMISOR") ?? "76269769-6",
+  RUTEmisor: Deno.env.get("SIMPLEFACTURA_RUT_EMISOR") ?? "78181331-1",
   RznSocEmisor: Deno.env.get("SIMPLEFACTURA_RZN") ?? "CHILESYSTEMS SPA",
   GiroEmisor: Deno.env.get("SIMPLEFACTURA_GIRO") ?? "Desarrollo de software",
   DirOrigen: Deno.env.get("SIMPLEFACTURA_DIR") ?? "Calle 7 numero 3",
@@ -31,8 +31,8 @@ async function sfToken(): Promise<string> {
   });
   if (!r.ok) throw new Error(`token ${r.status}: ${await r.text()}`);
   const raw = (await r.text()).trim();
-  // El token puede venir como string JSON ("...") o como objeto { token: "..." }.
-  if (raw.startsWith("{")) { try { const o = JSON.parse(raw); return o.token ?? o.data ?? raw; } catch { /* noop */ } }
+  // La API devuelve { "accessToken": "..." }. Tolerar también string plano u otras claves.
+  if (raw.startsWith("{")) { try { const o = JSON.parse(raw); return o.accessToken ?? o.token ?? o.data ?? raw; } catch { /* noop */ } }
   return raw.replace(/^"|"$/g, "");
 }
 
@@ -74,8 +74,10 @@ Deno.serve(async (req) => {
     const body = {
       Documento: {
         Encabezado: {
-          IdDoc: { TipoDTE: 39, FchEmis: isoDate(new Date()), IndServicioBoleta: 3 },
+          IdDoc: { TipoDTE: 39, FchEmis: isoDate(new Date()), FchVenc: isoDate(new Date()), IndServicioBoleta: 3 },
           Emisor: EMISOR,
+          // Boleta al público: receptor "consumidor final" (RUT 66666666-6).
+          Receptor: { RUTRecep: "66666666-6", RznSocRecep: "Consumidor Final", DirRecep: "Ciudad", CmnaRecep: "Santiago", CiudadRecep: "Santiago" },
           Totales: { MntNeto: String(sale.neto), IVA: String(sale.iva), MntTotal: String(sale.total) },
         },
         Detalle: detalle,
