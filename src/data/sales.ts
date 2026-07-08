@@ -37,6 +37,37 @@ export function useRecentSales(branchId: string | undefined, limit = 8) {
   });
 }
 
+export interface SaleDteRow {
+  id: string; folio: number; total: number; sold_at: string; method: string;
+  dte_status: string; dte_folio: number | null; dte_timbre: string | null;
+  lines: { name_snapshot: string; price_snapshot: number; qty: number; discount_amount: number }[];
+}
+
+/** Ventas de HOY de la sucursal con su estado de emisión (DTE) y líneas, para
+ *  reintentar/reimprimir la boleta electrónica. */
+export function useSalesTodayDte(branchId: string | undefined) {
+  return useQuery({
+    queryKey: ["sales-today-dte", branchId],
+    enabled: !!branchId,
+    queryFn: async (): Promise<SaleDteRow[]> => {
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const { data, error } = await supabase
+        .from("sale")
+        .select("id,folio,total,sold_at,method,dte_status,dte_folio,dte_timbre,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
+        .eq("branch_id", branchId!)
+        .gte("sold_at", start.toISOString())
+        .order("sold_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []).map((s: any) => ({
+        id: s.id, folio: s.folio, total: s.total, sold_at: s.sold_at, method: s.method,
+        dte_status: s.dte_status, dte_folio: s.dte_folio, dte_timbre: s.dte_timbre,
+        lines: s.sale_line ?? [],
+      }));
+    },
+  });
+}
+
 export interface CartItem { product_id: string; qty: number; disc_kind?: "pct" | "amount" | null; disc_value?: number; }
 
 export type DiscountInput = { kind: "pct" | "amount"; value: number } | null;

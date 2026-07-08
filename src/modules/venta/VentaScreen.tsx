@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Bookmark, Undo2, Lock, Grid3x3, ScanLine, Trash2 } from "lucide-react";
+import { Bookmark, Undo2, Lock, Grid3x3, ScanLine, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -10,7 +10,7 @@ import type { ProductRow } from "@/data/stock";
 import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
 import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data/heldSales";
-import { cobrarVenta, cartToLines } from "@/data/sales";
+import { cobrarVenta, cartToLines, useSalesTodayDte, type SaleDteRow } from "@/data/sales";
 import { emitirBoleta } from "@/data/sii";
 import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "@/lib/money";
 import { errMsg } from "@/lib/errors";
@@ -89,6 +89,9 @@ export function VentaScreen() {
   const [cierreOpen, setCierreOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [heldOpen, setHeldOpen] = useState(false);
+  const [boletasOpen, setBoletasOpen] = useState(false);
+  const { data: salesDte } = useSalesTodayDte(branchId);
+  const [dteBusy, setDteBusy] = useState<string | null>(null);
   const [mode, setMode] = useState<"catalogo" | "lectura">("catalogo");
   const [scanQty, setScanQty] = useState(1);
   const scanRef = useRef<HTMLInputElement>(null);
@@ -283,6 +286,47 @@ export function VentaScreen() {
     return String(n).padStart(2, "0");
   }
 
+  async function reintentarBoleta(h: SaleDteRow) {
+    setDteBusy(h.id);
+    try {
+      const em = await emitirBoleta(h.id);
+      if (em.status === "emitida") {
+        toast.success(`Boleta emitida (folio ${em.folio}).`);
+        qc.invalidateQueries({ queryKey: ["sales-today-dte", branchId] });
+      } else {
+        toast.error(`No se pudo emitir: ${em.message ?? em.status}`);
+      }
+    } finally {
+      setDteBusy(null);
+    }
+  }
+
+  async function reimprimirBoleta(h: SaleDteRow) {
+    const soldAt = new Date(h.sold_at);
+    const neto = Math.round(h.total / 1.19);
+    const payload = {
+      negocio: businessToNegocio(business, getPrinterName()),
+      folio: h.folio,
+      fecha: `${pad2(soldAt.getDate())}/${pad2(soldAt.getMonth() + 1)}/${soldAt.getFullYear()}`,
+      hora: `${pad2(soldAt.getHours())}:${pad2(soldAt.getMinutes())}`,
+      items: h.lines.map((l) => ({ nombre: l.name_snapshot, qty: l.qty, precio: l.price_snapshot, descuento: l.discount_amount ?? 0 })),
+      neto,
+      iva: h.total - neto,
+      total: h.total,
+      descuento: h.lines.reduce((s, l) => s + (l.discount_amount ?? 0), 0),
+      dte_folio: h.dte_folio ?? undefined,
+      timbre_png: h.dte_timbre ?? null,
+      reimpresion: true,
+      metodo: h.method,
+      open_drawer: false,
+    };
+    try {
+      await printReceipt(payload);
+    } catch (e) {
+      toast.error(`No se pudo imprimir: ${errMsg(e)}`);
+    }
+  }
+
   async function handleConfirmPay(method: PayMethod, recv: number) {
     if (!branchId || !openSession) return;
     setBusy(true);
@@ -427,6 +471,12 @@ export function VentaScreen() {
             className="inline-flex items-center gap-1.5 rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
           >
             <Bookmark className="size-4" strokeWidth={1.9} /> Guardadas{heldSales && heldSales.length > 0 ? ` (${heldSales.length})` : ""}
+          </button>
+          <button
+            onClick={() => setBoletasOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
+          >
+            <FileText className="size-4" strokeWidth={1.9} /> Boletas del día
           </button>
           <button
             onClick={() => setNcOpen(true)}
@@ -668,6 +718,48 @@ export function VentaScreen() {
                     >
                       🗑
                     </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+
+      {boletasOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) setBoletasOpen(false); }}>
+          <div className="max-h-[80vh] w-[560px] max-w-full overflow-auto rounded-[22px] bg-white p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-[18px] font-black text-[#0F2A1B]">Boletas del día</div>
+              <button onClick={() => setBoletasOpen(false)} className="rounded-lg border border-[#E1E5EE] bg-white px-3 py-1.5 text-[13px] font-bold text-[#5a6b7e]">Cerrar</button>
+            </div>
+            {(!salesDte || salesDte.length === 0) ? (
+              <div className="py-10 text-center text-[13.5px] text-[#5E6E7E]">No hay ventas hoy.</div>
+            ) : (
+              salesDte.map((h) => {
+                const hora = new Date(h.sold_at).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+                const emitida = h.dte_status === "emitida";
+                const badge = emitida
+                  ? { label: `SII ${h.dte_folio}`, bg: "#E6F7EE", fg: "#0a6e36" }
+                  : h.dte_status === "rechazada"
+                    ? { label: "Rechazada", bg: "#FCECEC", fg: "#c0392b" }
+                    : { label: "Pendiente", bg: "#FBF1E0", fg: "#9A6F12" };
+                return (
+                  <div key={h.id} className="flex items-center gap-3 border-b border-[#F0F2F7] py-3 last:border-0">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-bold text-[#0F2A1B]">Venta #{h.folio} · {fmtCLP(h.total)}</div>
+                      <div className="text-xs text-[#556A7C]">{hora} · {h.method}</div>
+                    </div>
+                    <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold" style={{ background: badge.bg, color: badge.fg }}>{badge.label}</span>
+                    {emitida ? (
+                      <button onClick={() => reimprimirBoleta(h)} className="rounded-[10px] border border-[#E1E5EE] bg-white px-3.5 py-2 text-[13px] font-bold text-[#5a6b7e]">
+                        Reimprimir
+                      </button>
+                    ) : (
+                      <button onClick={() => reintentarBoleta(h)} disabled={dteBusy === h.id} className="rounded-[10px] px-3.5 py-2 text-[13px] font-bold text-white disabled:opacity-60" style={{ background: "var(--brand)" }}>
+                        {dteBusy === h.id ? "Emitiendo…" : "Reintentar"}
+                      </button>
+                    )}
                   </div>
                 );
               })
