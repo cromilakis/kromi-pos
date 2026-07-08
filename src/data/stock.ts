@@ -11,6 +11,7 @@ export interface ProductRow {
   img_url: string | null;
   supplier_id: string | null;
   internal_code: string | null;
+  barcode: string | null;
   stock: number;
 }
 
@@ -47,7 +48,7 @@ export function useProductsWithStock(businessId?: string, branchId?: string) {
       const [{ data: products, error: e1 }, { data: inv, error: e2 }] = await Promise.all([
         supabase
           .from("product")
-          .select("id,name,category_id,price,min_stock,critical,img_url,supplier_id,internal_code")
+          .select("id,name,category_id,price,min_stock,critical,img_url,supplier_id,internal_code,barcode")
           .eq("business_id", businessId!)
           .is("deleted_at", null)
           .order("name"),
@@ -58,6 +59,13 @@ export function useProductsWithStock(businessId?: string, branchId?: string) {
       return mapProductsWithStock(products ?? [], inv ?? []);
     },
   });
+}
+
+/** Busca un producto por código de barras exacto (ignora espacios). Cadena vacía → undefined. */
+export function findByBarcode(products: ProductRow[], code: string): ProductRow | undefined {
+  const c = code.trim();
+  if (!c) return undefined;
+  return products.find((p) => p.barcode === c);
 }
 
 export function useCategories(businessId?: string) {
@@ -103,6 +111,7 @@ export async function createProduct(input: {
   critical: boolean;
   img_url: string | null;
   supplier_id: string | null;
+  barcode: string | null;
 }) {
   const { data, error } = await supabase.from("product").insert(input).select().single();
   if (error) throw error;
@@ -119,6 +128,7 @@ export async function updateProduct(
     critical: boolean;
     img_url: string | null;
     supplier_id: string | null;
+    barcode: string | null;
   }>,
 ) {
   const { error } = await supabase.from("product").update(input).eq("id", id);
