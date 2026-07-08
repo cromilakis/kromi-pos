@@ -39,6 +39,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
   const [supplierId, setSupplierId] = useState<string>("");
   const [imgUrl, setImgUrl] = useState("");
   const [barcode, setBarcode] = useState("");
+  const [discountPct, setDiscountPct] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -53,6 +54,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
       setSupplierId(product.supplier_id ?? "");
       setImgUrl(product.img_url ?? "");
       setBarcode(product.barcode ?? "");
+      setDiscountPct(product.discount_pct ? String(product.discount_pct) : "");
     } else {
       setName("");
       setCategoryId(categories[0]?.id ?? "");
@@ -63,6 +65,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
       setSupplierId("");
       setImgUrl("");
       setBarcode("");
+      setDiscountPct("");
     }
   }, [open, product, categories]);
 
@@ -79,6 +82,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
     const priceNum = parseInt(price || "0", 10) || 0;
     const stockNum = parseInt(stock || "0", 10) || 0;
     const minStockNum = parseInt(minStock || "0", 10) || 0;
+    const discountNum = Math.min(100, Math.max(0, parseInt(discountPct || "0", 10) || 0));
     setBusy(true);
     try {
       if (!product) {
@@ -92,6 +96,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           img_url: imgUrl.trim() || null,
           supplier_id: supplierId || null,
           barcode: barcode.trim() || null,
+          discount_pct: discountNum,
         });
         await upsertInventory(created.id, branchId, stockNum);
         toast.success("Producto creado.");
@@ -105,6 +110,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           img_url: imgUrl.trim() || null,
           supplier_id: supplierId || null,
           barcode: barcode.trim() || null,
+          discount_pct: discountNum,
         });
         await upsertInventory(product.id, branchId, stockNum);
         toast.success("Producto actualizado.");
@@ -206,9 +212,16 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
               ))}
             </select>
           </div>
-          <div style={{ gridColumn: "1 / -1" }}>
+          <div>
             <label style={labelStyle}>Código de barras (opcional)</label>
             <input style={inputStyle} value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Escanea o escribe el código" />
+          </div>
+          <div>
+            <label style={labelStyle}>Descuento (%)</label>
+            <input style={inputStyle} value={discountPct} onChange={(e) => setDiscountPct(onlyDigits(e.target.value).slice(0, 3))} inputMode="numeric" placeholder="0" />
+            <div style={{ fontSize: 11.5, color: "#94A3B5", marginTop: 5, lineHeight: 1.4 }}>
+              Si es mayor a 0, el producto se vende con ese % de descuento y se marca con una etiqueta <b style={{ color: "#0a6e36", fontWeight: 700 }}>CON DESCUENTO</b> en la venta.
+            </div>
           </div>
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={labelStyle}>Imagen del producto (opcional)</label>

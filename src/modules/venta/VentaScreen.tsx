@@ -11,7 +11,7 @@ import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
 import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data/heldSales";
 import { cobrarVenta, cartToLines } from "@/data/sales";
-import { computeTotals, resolveDiscount, fmtCLP } from "@/lib/money";
+import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "@/lib/money";
 import { errMsg } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
@@ -135,11 +135,12 @@ export function VentaScreen() {
     [cart, productById],
   );
   const totals = useMemo(() => {
-    const lines = cartLines.map((l) => ({
-      qty: l.qty,
-      price: l.product.price,
-      discount: resolveDiscount(l.qty * l.product.price, l.disc_kind ?? null, l.disc_value ?? 0),
-    }));
+    const lines = cartLines.map((l) => {
+      const base = l.qty * l.product.price;
+      const discProd = resolveDiscount(base, "pct", l.product.discount_pct ?? 0);
+      const discAdhoc = resolveDiscount(base, l.disc_kind ?? null, l.disc_value ?? 0);
+      return { qty: l.qty, price: l.product.price, discount: Math.min(base, discProd + discAdhoc) };
+    });
     const sub = lines.reduce((s, l) => s + l.qty * l.price - (l.discount ?? 0), 0);
     const totalDiscMonto = totalDisc ? resolveDiscount(sub, totalDisc.kind, totalDisc.value) : 0;
     return computeTotals(lines, totalDiscMonto);
@@ -332,7 +333,10 @@ export function VentaScreen() {
         neto: sale.neto,
         iva: sale.iva,
         total: sale.total,
-        descuento: sale.discount_amount + soldLines.reduce((s, l) => s + resolveDiscount(l.qty * l.product.price, l.disc_kind ?? null, l.disc_value ?? 0), 0),
+        descuento: sale.discount_amount + soldLines.reduce((s, l) => {
+          const base = l.qty * l.product.price;
+          return s + Math.min(base, resolveDiscount(base, "pct", l.product.discount_pct ?? 0) + resolveDiscount(base, l.disc_kind ?? null, l.disc_value ?? 0));
+        }, 0),
         metodo: sale.method,
         open_drawer: sale.method === "efectivo",
       };
@@ -464,10 +468,24 @@ export function VentaScreen() {
                   {cartLines.length === 0 && (
                     <tr><td colSpan={5} className="px-4 py-12 text-center text-[14px] text-[#9aa8bd]">Escanea productos para agregarlos a la venta.</td></tr>
                   )}
-                  {cartLines.map(({ product, qty }) => (
+                  {cartLines.map(({ product, qty }) => {
+                    const unit = discountedPrice(product.price, product.discount_pct ?? 0);
+                    return (
                     <tr key={product.id} className="border-t border-[#EEF1F6]">
-                      <td className="px-4 py-3 font-bold text-[#0F2A1B]">{product.name}</td>
-                      <td className="px-4 py-3 text-right text-[#7C95A8]">{fmtCLP(product.price)}</td>
+                      <td className="px-4 py-3 font-bold text-[#0F2A1B]">
+                        {product.name}
+                        {product.discount_pct > 0 && (
+                          <span className="ml-2 rounded-full bg-[#E6F7EE] px-2 py-0.5 text-[10px] font-black uppercase text-[#0a6e36]">-{product.discount_pct}% · con descuento</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right text-[#7C95A8]">
+                        {product.discount_pct > 0 ? (
+                          <span className="inline-flex flex-col items-end leading-none">
+                            <span className="text-[11px] text-[#9aa8bd] line-through">{fmtCLP(product.price)}</span>
+                            <span className="font-bold text-[#0a6e36]">{fmtCLP(unit)}</span>
+                          </span>
+                        ) : fmtCLP(product.price)}
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => decCart(product.id)} className="flex size-7 items-center justify-center rounded-lg border border-[#E1E5EE] bg-white text-[#7C95A8]">–</button>
@@ -475,10 +493,11 @@ export function VentaScreen() {
                           <button onClick={() => incCart(product.id)} disabled={qty >= product.stock} className="flex size-7 items-center justify-center rounded-lg bg-[#D3F4E0] disabled:opacity-40" style={{ color: "var(--brand)" }}>+</button>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right font-black text-[#0F2A1B]">{fmtCLP(product.price * qty)}</td>
+                      <td className="px-4 py-3 text-right font-black text-[#0F2A1B]">{fmtCLP(unit * qty)}</td>
                       <td className="px-4 py-3 text-right"><button onClick={() => decCartAll(product.id)} title="Quitar" className="text-[#D02E2E]">🗑</button></td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -535,8 +554,13 @@ export function VentaScreen() {
                       key={p.id}
                       onClick={() => addToCart(p)}
                       disabled={disabled}
-                      className="flex flex-col overflow-hidden rounded-2xl border border-[#E1E5EE] bg-white text-left disabled:cursor-not-allowed disabled:opacity-50"
+                      className="relative flex flex-col overflow-hidden rounded-2xl border border-[#E1E5EE] bg-white text-left disabled:cursor-not-allowed disabled:opacity-50"
                     >
+                      {p.discount_pct > 0 && (
+                        <span className="absolute left-2 top-2 z-10 rounded-full bg-[#0a6e36] px-2 py-0.5 text-[10px] font-black uppercase tracking-[.04em] text-white">
+                          -{p.discount_pct}% · con descuento
+                        </span>
+                      )}
                       <div className="flex h-[110px] w-full items-center justify-center bg-[#EEF1F6]">
                         {p.img_url ? (
                           <img src={p.img_url} alt={p.name} className="size-full object-cover" />
@@ -550,7 +574,14 @@ export function VentaScreen() {
                           <span className="text-xs font-bold" style={{ color: disabled ? "#D02E2E" : "#7C95A8" }}>
                             {disabled ? "Sin stock" : `${available} disp.`}
                           </span>
-                          <span className="whitespace-nowrap text-base font-black text-[#0F2A1B]">{fmtCLP(p.price)}</span>
+                          {p.discount_pct > 0 ? (
+                            <span className="flex flex-col items-end leading-none">
+                              <span className="text-[10px] font-bold text-[#9aa8bd] line-through">{fmtCLP(p.price)}</span>
+                              <span className="whitespace-nowrap text-base font-black text-[#0a6e36]">{fmtCLP(discountedPrice(p.price, p.discount_pct))}</span>
+                            </span>
+                          ) : (
+                            <span className="whitespace-nowrap text-base font-black text-[#0F2A1B]">{fmtCLP(p.price)}</span>
+                          )}
                         </div>
                       </div>
                     </button>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ProductRow } from "@/data/stock";
-import { fmtCLP, resolveDiscount } from "@/lib/money";
+import { fmtCLP, resolveDiscount, discountedPrice } from "@/lib/money";
 import type { Totals } from "@/lib/money";
 
 export interface CartLine {
@@ -104,9 +104,19 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, canD
           return (
           <div key={product.id} className="flex flex-wrap items-center gap-3 border-b border-[#F0F2F7] py-3 last:border-0">
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold text-[#0F2A1B]">{product.name}</div>
+              <div className="flex items-center gap-1.5">
+                <span className="truncate text-sm font-bold text-[#0F2A1B]">{product.name}</span>
+                {(product.discount_pct ?? 0) > 0 && (
+                  <span className="shrink-0 rounded-full bg-[#E6F7EE] px-1.5 py-0.5 text-[9.5px] font-black uppercase text-[#0a6e36]">-{product.discount_pct}%</span>
+                )}
+              </div>
               <div className="text-xs text-[#7C95A8]">
-                {fmtCLP(product.price)} c/u{lineDisc > 0 && <span className="ml-1.5 font-bold text-[#D02E2E]">-{fmtCLP(lineDisc)}</span>}
+                {(product.discount_pct ?? 0) > 0 ? (
+                  <><span className="line-through">{fmtCLP(product.price)}</span> <span className="font-bold text-[#0a6e36]">{fmtCLP(discountedPrice(product.price, product.discount_pct))}</span> c/u</>
+                ) : (
+                  <>{fmtCLP(product.price)} c/u</>
+                )}
+                {lineDisc > 0 && <span className="ml-1.5 font-bold text-[#D02E2E]">-{fmtCLP(lineDisc)}</span>}
               </div>
             </div>
             <div className="flex items-center gap-1.5">

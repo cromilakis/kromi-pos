@@ -11,7 +11,7 @@ describe("mapProductsWithStock", () => {
 });
 
 function p(id: string, barcode: string | null): ProductRow {
-  return { id, name: id, category_id: null, price: 0, min_stock: 0, critical: false, img_url: null, supplier_id: null, internal_code: null, barcode, stock: 0 };
+  return { id, name: id, category_id: null, price: 0, min_stock: 0, critical: false, img_url: null, supplier_id: null, internal_code: null, barcode, discount_pct: 0, stock: 0 };
 }
 
 describe("findByBarcode", () => {

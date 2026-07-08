@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { computeTotals, resolveDiscount, fmtCLP } from "./money";
+import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "./money";
+
+describe("discountedPrice", () => {
+  it("aplica el % de descuento al precio unitario", () => {
+    expect(discountedPrice(10000, 20)).toBe(8000);
+    expect(discountedPrice(10000, 0)).toBe(10000);
+    expect(discountedPrice(9990, 10)).toBe(9990 - Math.round(9990 * 0.1));
+  });
+});
 
 describe("computeTotals", () => {
   it("suma total, deriva neto/iva (IVA incluido) e items", () => {

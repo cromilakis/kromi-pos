@@ -8,6 +8,12 @@ export function resolveDiscount(base: number, kind: "pct" | "amount" | null, val
   return Math.max(0, Math.min(base, raw));
 }
 
+/** Precio unitario con el descuento de catálogo (%) aplicado. */
+export function discountedPrice(price: number, pct: number): number {
+  if (!pct || pct <= 0) return price;
+  return Math.max(0, price - resolveDiscount(price, "pct", pct));
+}
+
 export function computeTotals(lines: Line[], totalDiscount = 0): Totals {
   const bruto = lines.reduce((s, l) => s + l.qty * l.price, 0);
   const lineDisc = lines.reduce((s, l) => s + (l.discount ?? 0), 0);
