@@ -38,8 +38,8 @@ export function PayDialog({ open, total, busy, onClose, onConfirm }: PayDialogPr
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={onClose}>
-      <div className="w-[440px] max-w-full rounded-[24px] bg-white" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-[440px] max-w-full rounded-[24px] bg-white">
         <div className="border-b border-[#E1E5EE] p-5">
           <div className="mb-3.5 flex items-center gap-3">
             <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#E6F7EE]">

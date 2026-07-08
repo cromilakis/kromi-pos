@@ -340,7 +340,7 @@ export function VentaScreen() {
   const cierreDialog = cierreOpen && (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6"
-      onClick={() => setCierreOpen(false)}
+      onMouseDown={(e) => { if (e.target === e.currentTarget) setCierreOpen(false); }}
     >
       <div
         className="max-h-[90vh] w-[980px] max-w-full overflow-auto rounded-[24px] bg-white p-6"
@@ -620,7 +620,7 @@ export function VentaScreen() {
       />
 
       {heldOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={() => setHeldOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) setHeldOpen(false); }}>
           <div className="max-h-[80vh] w-[480px] max-w-full overflow-auto rounded-[22px] bg-white p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <div className="text-[18px] font-black text-[#0F2A1B]">Ventas guardadas</div>

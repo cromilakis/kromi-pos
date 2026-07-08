@@ -169,7 +169,7 @@ export function CreditNoteDialog({ open, branchId, sessionId, products, business
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,42,27,.35)] p-6" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,42,27,.35)] p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="max-h-[90%] w-[580px] max-w-full overflow-auto rounded-[20px] bg-white p-[26px_28px]" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center">
           <div className="flex-1 text-[19px] font-black text-[#0F2A1B]">

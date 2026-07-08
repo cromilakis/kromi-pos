@@ -127,7 +127,7 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay }: Ca
       </div>
 
       {confirmClear && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={() => setConfirmClear(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) setConfirmClear(false); }}>
           <div className="w-[380px] max-w-full rounded-[20px] bg-white p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-1.5 text-[15px] font-extrabold text-[#0F2A1B]">¿Vaciar el carrito?</div>
             <div className="mb-4 text-[13px] text-[#556A7C]">Se quitarán todos los productos de la venta actual.</div>

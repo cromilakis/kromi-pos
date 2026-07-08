@@ -660,7 +660,7 @@ export function StockScreen() {
       )}
 
       {confirmDeleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={() => setConfirmDeleteId(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) setConfirmDeleteId(null); }}>
           <div className="w-[380px] max-w-full rounded-[20px] bg-white p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 text-[15px] font-extrabold text-[#0F2A1B]">¿Eliminar este producto?</div>
             <div className="flex justify-end gap-2.5">

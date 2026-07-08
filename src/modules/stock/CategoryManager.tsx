@@ -220,7 +220,7 @@ export function CategoryManager({ categories, productCountByCategory, businessId
       </div>
 
       {confirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={() => setConfirm(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) setConfirm(null); }}>
           <div className="w-[400px] max-w-full rounded-[20px] bg-white p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-1.5 text-[15px] font-extrabold text-[#0F2A1B]">¿Eliminar la categoría “{confirm.label}”?</div>
             <div className="mb-4 text-[13px] text-[#556A7C]">Esta acción no se puede deshacer.</div>
