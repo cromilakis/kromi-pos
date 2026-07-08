@@ -7,6 +7,7 @@ import { useOpenSession, rpcAbrirCaja } from "@/data/work";
 import { useProductsWithStock, useCategories } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
 import { useCustomers } from "@/data/customers";
+import { useBusiness, businessToNegocio } from "@/data/business";
 import { cobrarVenta, cartToLines } from "@/data/sales";
 import { computeTotals, fmtCLP } from "@/lib/money";
 import { printReceipt } from "@/lib/print";
@@ -73,6 +74,7 @@ export function VentaScreen() {
   const { data: products, isLoading } = useProductsWithStock(businessId, branchId);
   const { data: categories } = useCategories(businessId);
   const { data: customers } = useCustomers(businessId);
+  const { data: business } = useBusiness(businessId);
 
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string>("todas");
@@ -204,19 +206,8 @@ export function VentaScreen() {
 
       const soldAt = new Date(sale.sold_at);
       // Forma esperada por `print_receipt` (struct ReceiptPayload en src-tauri/src/escpos.rs).
-      // "negocio" aún no tiene fuente de datos (razón social/RUT/impresora se configuran en
-      // un módulo de ajustes que todavía no existe): se usan placeholders razonables.
       const payload = {
-        negocio: {
-          tagline: "",
-          razon_social: profile?.name ?? "Kromi POS",
-          rut: "",
-          giro: "",
-          direccion: "",
-          footer: "¡Gracias por su compra!",
-          printer_name: getPrinterName(),
-          social: null,
-        },
+        negocio: businessToNegocio(business, getPrinterName()),
         folio: sale.folio,
         fecha: `${pad2(soldAt.getDate())}/${pad2(soldAt.getMonth() + 1)}/${soldAt.getFullYear()}`,
         hora: `${pad2(soldAt.getHours())}:${pad2(soldAt.getMinutes())}`,
@@ -337,7 +328,7 @@ export function VentaScreen() {
             businessId={businessId}
             customerId={customerId}
             sessionId={openSession.id}
-            negocioNombre={profile?.name ?? "Kromi POS"}
+            business={business}
             cartLines={cartLines}
             totals={totals}
             onQuoteCreated={() => setCart([])}
@@ -425,7 +416,7 @@ export function VentaScreen() {
         branchId={branchId}
         sessionId={openSession?.id ?? null}
         products={allProducts}
-        negocioNombre={profile?.name ?? "Kromi POS"}
+        business={business}
         onClose={() => setNcOpen(false)}
         onEmitted={() => {
           qc.invalidateQueries({ queryKey: ["products-with-stock"] });

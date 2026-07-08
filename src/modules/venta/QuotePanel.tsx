@@ -10,6 +10,7 @@ import {
 } from "@/data/sales";
 import { fmtCLP } from "@/lib/money";
 import type { Totals } from "@/lib/money";
+import { businessToNegocio, type BusinessRow } from "@/data/business";
 import { printQuote, printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
 import { PayDialog, type PayMethod } from "./PayDialog";
@@ -37,7 +38,7 @@ interface QuotePanelProps {
   businessId?: string;
   customerId?: string | null;
   sessionId?: string;
-  negocioNombre: string;
+  business?: BusinessRow;
   cartLines: CartLine[];
   totals: Totals;
   onQuoteCreated: () => void;
@@ -49,7 +50,7 @@ export function QuotePanel({
   businessId,
   customerId,
   sessionId,
-  negocioNombre,
+  business,
   cartLines,
   totals,
   onQuoteCreated,
@@ -62,19 +63,7 @@ export function QuotePanel({
   const [converting, setConverting] = useState<QuoteRow | null>(null);
   const [payBusy, setPayBusy] = useState(false);
 
-  const negocio = useMemo(
-    () => ({
-      tagline: "",
-      razon_social: negocioNombre,
-      rut: "",
-      giro: "",
-      direccion: "",
-      footer: "¡Gracias por su compra!",
-      printer_name: getPrinterName(),
-      social: null,
-    }),
-    [negocioNombre],
-  );
+  const negocio = useMemo(() => businessToNegocio(business, getPrinterName()), [business]);
 
   async function handleCrearCotizacion() {
     if (!branchId || !cartLines.length) return;

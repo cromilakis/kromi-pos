@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { emitirNotaCredito, buscarVentaPorFolio, type SaleWithLines } from "@/data/sales";
 import type { ProductRow } from "@/data/stock";
+import { businessToNegocio, type BusinessRow } from "@/data/business";
 import { fmtCLP } from "@/lib/money";
 import { printCreditNote } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
@@ -29,13 +30,13 @@ interface CreditNoteDialogProps {
   branchId?: string;
   sessionId?: string | null;
   products: ProductRow[];
-  negocioNombre: string;
+  business?: BusinessRow;
   onClose: () => void;
   onEmitted: () => void;
 }
 
 /** Diálogo de emisión de nota de crédito: por boleta (busca folio) o manual. Clona `saveCreditNote` del prototipo. */
-export function CreditNoteDialog({ open, branchId, sessionId, products, negocioNombre, onClose, onEmitted }: CreditNoteDialogProps) {
+export function CreditNoteDialog({ open, branchId, sessionId, products, business, onClose, onEmitted }: CreditNoteDialogProps) {
   const qc = useQueryClient();
   const [mode, setMode] = useState<"boleta" | "manual">("boleta");
   const [folioInput, setFolioInput] = useState("");
@@ -144,16 +145,7 @@ export function CreditNoteDialog({ open, branchId, sessionId, products, negocioN
       try {
         const createdAt = new Date(nc.created_at);
         await printCreditNote({
-          negocio: {
-            tagline: "",
-            razon_social: negocioNombre,
-            rut: "",
-            giro: "",
-            direccion: "",
-            footer: "¡Gracias por su compra!",
-            printer_name: getPrinterName(),
-            social: null,
-          },
+          negocio: businessToNegocio(business, getPrinterName()),
           folio: nc.folio,
           fecha: fmtDate(createdAt),
           hora: `${pad2(createdAt.getHours())}:${pad2(createdAt.getMinutes())}`,
