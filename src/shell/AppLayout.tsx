@@ -1,28 +1,11 @@
-import { useState, type MouseEvent } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
-import { Home, ShoppingCart, Package, Users, Wallet, Settings, LogOut, type LucideIcon } from "lucide-react";
+import { Home, ShoppingCart, Package, Users, Settings, LogOut, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
 import { useWork } from "@/session/WorkContext";
 import { BranchGate } from "@/session/BranchGate";
-import { CashGate } from "@/session/CashGate";
-import { useOpenSession, rpcCerrarCaja } from "@/data/work";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 const ROLE_LABEL: Record<Role, string> = {
   admin: "Administrador/a",
@@ -35,7 +18,6 @@ const NAV_ICON: Record<string, LucideIcon> = {
   Venta: ShoppingCart,
   Stock: Package,
   Clientes: Users,
-  Cierre: Wallet,
   Administración: Settings,
 };
 
@@ -64,58 +46,11 @@ function SidebarLink({ item }: { item: NavItem }) {
 }
 
 function Topbar() {
-  const { branch, register } = useWork();
-  const qc = useQueryClient();
-  const { data: openSession } = useOpenSession(register?.id);
-  const [counted, setCounted] = useState("");
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  async function cerrar(e: MouseEvent) {
-    e.preventDefault();
-    if (!openSession) return;
-    setBusy(true);
-    try {
-      await rpcCerrarCaja(openSession.id, Number(counted) || 0);
-      await qc.invalidateQueries({ queryKey: ["open-session"] });
-      setOpen(false);
-      setCounted("");
-    } catch (e) {
-      toast.error(`No se pudo cerrar la caja: ${e instanceof Error ? e.message : e}`);
-    } finally {
-      setBusy(false);
-    }
-  }
+  const { branch } = useWork();
 
   return (
     <div className="h-14 border-b border-[#E1E5EE] bg-white flex items-center justify-between px-6 shrink-0">
       <div className="text-sm font-bold text-[#0F2A1B]">{branch?.name ?? "Sin sucursal"}</div>
-      <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogTrigger asChild>
-          <Button variant="outline" size="sm" className="border-[#E1E5EE] text-[#0F2A1B]" disabled={!openSession}>
-            Cerrar caja
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cerrar caja</AlertDialogTitle>
-            <AlertDialogDescription>Ingresa el monto contado en efectivo para cerrar la caja actual.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <Input
-            autoFocus
-            inputMode="numeric"
-            placeholder="Monto contado"
-            value={counted}
-            onChange={(e) => setCounted(e.target.value)}
-          />
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction disabled={busy} onClick={cerrar}>
-              {busy ? "Cerrando…" : "Confirmar cierre"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
@@ -208,7 +143,7 @@ export function AppLayout() {
         <Topbar />
         <main className="flex-1 overflow-auto">
           <BranchGate businessId={profile.business_id}>
-            <CashGate><Outlet /></CashGate>
+            <Outlet />
           </BranchGate>
         </main>
       </div>

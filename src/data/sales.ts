@@ -1,0 +1,270 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+
+export interface SaleRow { id?: string; folio?: number; total: number; method?: string; sold_at?: string; }
+
+export function summarizeSales(rows: { total: number }[]): { total: number; count: number; avg: number } {
+  const total = rows.reduce((s, r) => s + r.total, 0);
+  const count = rows.length;
+  return { total, count, avg: count ? Math.round(total / count) : 0 };
+}
+
+/** Ventas de HOY de la sucursal (rango del día local). */
+export function useSalesToday(branchId: string | undefined) {
+  return useQuery({
+    queryKey: ["sales-today", branchId],
+    enabled: !!branchId,
+    queryFn: async () => {
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const { data, error } = await supabase
+        .from("sale").select("total").eq("branch_id", branchId!).gte("sold_at", start.toISOString());
+      if (error) throw error;
+      return summarizeSales(data ?? []);
+    },
+  });
+}
+
+export function useRecentSales(branchId: string | undefined, limit = 8) {
+  return useQuery({
+    queryKey: ["recent-sales", branchId, limit],
+    enabled: !!branchId,
+    queryFn: async (): Promise<SaleRow[]> => {
+      const { data, error } = await supabase
+        .from("sale").select("id,folio,total,method,sold_at").eq("branch_id", branchId!)
+        .order("sold_at", { ascending: false }).limit(limit);
+      if (error) throw error; return data ?? [];
+    },
+  });
+}
+
+export interface CartItem { product_id: string; qty: number; }
+
+export interface Sale {
+  id: string;
+  folio: number;
+  total: number;
+  neto: number;
+  iva: number;
+  method: string;
+  recv: number;
+  change: number;
+  sold_at: string;
+}
+
+/** Cobra la venta de forma atómica vía RPC (descuenta stock, registra la venta y sus líneas). */
+export async function cobrarVenta(args: {
+  p_branch: string;
+  p_session: string;
+  p_lines: CartItem[];
+  p_method: "efectivo" | "tarjeta";
+  p_recv: number;
+  p_customer?: string | null;
+}): Promise<Sale> {
+  const { data, error } = await supabase.rpc("cobrar_venta", {
+    p_branch: args.p_branch,
+    p_session: args.p_session,
+    p_lines: args.p_lines,
+    p_method: args.p_method,
+    p_recv: args.p_recv,
+    p_customer: args.p_customer ?? null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+/** Convierte el carrito (con qty) a las líneas que espera la RPC. */
+export function cartToLines(cart: { id: string; qty: number }[]): CartItem[] {
+  return cart.map((c) => ({ product_id: c.id, qty: c.qty }));
+}
+
+// ----------------------------------------------------------------------------
+// Cotizaciones (quote/quote_line): SOLO-LECTURA para el cliente. Se crean por
+// la RPC `crear_cotizacion` (security definer), que fija el precio desde
+// `product.price` en el servidor — el cliente nunca envía price/name (ver
+// migración 20260707120000_crear_cotizacion.sql). No mueven caja ni stock.
+// ----------------------------------------------------------------------------
+
+export interface QuoteLineInput { product_id: string; qty: number; }
+
+export interface QuoteLineRow { product_id: string | null; name_snapshot: string; price_snapshot: number; qty: number; }
+
+export interface QuoteRow {
+  id: string;
+  folio: number;
+  branch_id: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  valid_until: string;
+  total: number;
+  neto: number;
+  iva: number;
+  converted: boolean;
+  sale_id: string | null;
+  created_at: string;
+  lines: QuoteLineRow[];
+}
+
+/** Vigente = no vencida (independiente de si ya fue convertida). */
+export function isQuoteVigente(validUntil: string, today: Date = new Date()): boolean {
+  const limit = new Date(`${validUntil}T23:59:59`);
+  return limit.getTime() >= today.getTime();
+}
+
+/** Crea una cotización vía RPC (precio del servidor). No mueve caja ni stock. */
+export async function crearCotizacion(args: {
+  branch_id: string;
+  customer_id?: string | null;
+  valid_until: string;
+  lines: QuoteLineInput[];
+}) {
+  if (!args.lines.length) throw new Error("La cotización no tiene líneas.");
+  const { data: quote, error } = await supabase.rpc("crear_cotizacion", {
+    p_branch: args.branch_id,
+    p_customer: args.customer_id ?? null,
+    p_valid_until: args.valid_until,
+    p_lines: args.lines.map((l) => ({ product_id: l.product_id, qty: l.qty })),
+  });
+  if (error) throw error;
+  return quote as { id: string; folio: number; valid_until: string; total: number; neto: number; iva: number };
+}
+
+/** Cotizaciones de la sucursal (vigentes, vencidas y convertidas), con sus líneas. */
+export function useQuotes(branchId: string | undefined) {
+  return useQuery({
+    queryKey: ["quotes", branchId],
+    enabled: !!branchId,
+    queryFn: async (): Promise<QuoteRow[]> => {
+      const { data, error } = await supabase
+        .from("quote")
+        .select(
+          "id,folio,branch_id,customer_id,valid_until,total,neto,iva,converted,sale_id,created_at," +
+            "customer:customer_id(name),quote_line(product_id,name_snapshot,price_snapshot,qty)",
+        )
+        .eq("branch_id", branchId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((q: any) => ({
+        id: q.id,
+        folio: q.folio,
+        branch_id: q.branch_id,
+        customer_id: q.customer_id,
+        customer_name: q.customer?.name ?? null,
+        valid_until: q.valid_until,
+        total: q.total,
+        neto: q.neto,
+        iva: q.iva,
+        converted: q.converted,
+        sale_id: q.sale_id,
+        created_at: q.created_at,
+        lines: (q.quote_line ?? []) as QuoteLineRow[],
+      }));
+    },
+  });
+}
+
+/** Convierte una cotización en venta al PRECIO COTIZADO (congelado en quote_line). */
+export async function convertirCotizacion(
+  quoteId: string,
+  session: string,
+  method: "efectivo" | "tarjeta",
+  recv: number,
+): Promise<Sale> {
+  const { data, error } = await supabase.rpc("convertir_cotizacion", {
+    p_quote: quoteId,
+    p_session: session,
+    p_method: method,
+    p_recv: recv,
+  });
+  if (error) throw error;
+  return data as Sale;
+}
+
+// ----------------------------------------------------------------------------
+// Notas de crédito (por boleta o manual): RPC atómica repone stock si corresponde.
+// ----------------------------------------------------------------------------
+
+export interface CreditNoteLineInput { product_id: string; qty: number; restock: boolean; }
+
+export interface CreditNote {
+  id: string;
+  folio: number;
+  sale_id: string | null;
+  method: string;
+  reason: string | null;
+  total: number;
+  neto: number;
+  iva: number;
+  created_at: string;
+}
+
+export async function emitirNotaCredito(args: {
+  p_branch: string;
+  p_session: string | null;
+  p_sale: string | null;
+  p_method: "efectivo" | "tarjeta";
+  p_reason: string;
+  p_lines: CreditNoteLineInput[];
+}): Promise<CreditNote> {
+  if (!args.p_lines.length) throw new Error("La nota de crédito no tiene líneas.");
+  const { data, error } = await supabase.rpc("emitir_nota_credito", {
+    p_branch: args.p_branch,
+    p_session: args.p_session,
+    p_sale: args.p_sale,
+    p_method: args.p_method,
+    p_reason: args.p_reason,
+    p_lines: args.p_lines,
+  });
+  if (error) throw error;
+  return data as CreditNote;
+}
+
+export interface SaleWithLines {
+  id: string;
+  folio: number;
+  method: string;
+  total: number;
+  neto: number;
+  iva: number;
+  sold_at: string;
+  lines: { product_id: string | null; name_snapshot: string; price_snapshot: number; qty: number }[];
+}
+
+/** Busca una venta por folio en la sucursal, con sus líneas (NC "por boleta"). */
+export async function buscarVentaPorFolio(branchId: string, folio: number): Promise<SaleWithLines | null> {
+  const { data, error } = await supabase
+    .from("sale")
+    .select("id,folio,method,total,neto,iva,sold_at,sale_line(product_id,name_snapshot,price_snapshot,qty)")
+    .eq("branch_id", branchId)
+    .eq("folio", folio)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    id: data.id,
+    folio: data.folio,
+    method: data.method,
+    total: data.total,
+    neto: data.neto,
+    iva: data.iva,
+    sold_at: data.sold_at,
+    lines: (data as any).sale_line ?? [],
+  };
+}
+
+export interface CriticalStockRow { name: string; stock: number; min_stock: number; }
+
+export function useCriticalStock(branchId: string | undefined) {
+  return useQuery({
+    queryKey: ["critical-stock", branchId],
+    enabled: !!branchId,
+    queryFn: async (): Promise<CriticalStockRow[]> => {
+      // inventory de la sucursal con stock <= min_stock del producto
+      const { data, error } = await supabase
+        .from("inventory").select("stock, product:product_id(name,min_stock)").eq("branch_id", branchId!);
+      if (error) throw error;
+      return (data ?? [])
+        .map((r: any) => ({ name: r.product?.name, stock: r.stock, min_stock: r.product?.min_stock ?? 0 }))
+        .filter((r: any) => r.min_stock > 0 && r.stock <= r.min_stock);
+    },
+  });
+}

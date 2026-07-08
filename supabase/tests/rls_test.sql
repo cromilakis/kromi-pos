@@ -137,6 +137,53 @@ begin
   end;
 end $$;
 
+-- Fixture: producto y cotización existentes del negocio A, insertados con el
+-- rol por defecto (bypassa RLS) para el test de regresión (f) de abajo.
+reset role;
+insert into public.product (id, business_id, name, price) values
+  ('d1111111-0000-0000-0000-000000000001','a1111111-0000-0000-0000-000000000001','Prod A', 1000);
+insert into public.quote (id, business_id, branch_id, folio, valid_until, total, neto, iva) values
+  ('f1111111-0000-0000-0000-000000000001','a1111111-0000-0000-0000-000000000001',
+   'b1111111-0000-0000-0000-000000000001', 1, current_date + 7, 1000, 840, 160);
+insert into public.quote_line (id, quote_id, product_id, name_snapshot, price_snapshot, qty) values
+  ('11111111-0000-0000-0000-000000000001','f1111111-0000-0000-0000-000000000001',
+   'd1111111-0000-0000-0000-000000000001','Prod A', 1000, 1);
+
+-- Volver a simular la sesión del usuario A
+set local role authenticated;
+select set_config('request.jwt.claims',
+  json_build_object('sub','e1111111-0000-0000-0000-000000000001','role','authenticated')::text, true);
+
+-- f) Regresión (fix ③a: fraude de precio vía price_snapshot manipulado): quote/
+-- quote_line son SOLO-LECTURA para el cliente (se crean solo por la RPC
+-- `crear_cotizacion`, security definer, que fija el precio desde product.price).
+-- A no debe poder insertar una línea propia ni pisar el price_snapshot existente.
+do $$
+begin
+  begin
+    insert into public.quote_line (quote_id, product_id, name_snapshot, price_snapshot, qty)
+    values ('f1111111-0000-0000-0000-000000000001','d1111111-0000-0000-0000-000000000001','Prod A', 1, 1);
+    raise exception 'FUGA: cliente puede escribir quote_line directamente';
+  exception
+    when sqlstate '42501' then
+      raise notice 'OK: insert directo de quote_line bloqueado por RLS (42501)';
+  end;
+
+  -- UPDATE sin política aplicable: RLS no lanza 42501 (a diferencia de INSERT),
+  -- filtra las filas visibles a 0 vía USING implícito (false), por lo que el
+  -- UPDATE "tiene éxito" pero sin afectar ninguna fila. Se verifica por rowcount.
+  declare v_rows int;
+  begin
+    update public.quote_line set price_snapshot = 1
+     where id = '11111111-0000-0000-0000-000000000001';
+    get diagnostics v_rows = row_count;
+    if v_rows <> 0 then
+      raise exception 'FUGA: cliente pudo modificar price_snapshot directamente (% fila(s))', v_rows;
+    end if;
+    raise notice 'OK: update directo de quote_line no afectó filas (RLS sin política de UPDATE)';
+  end;
+end $$;
+
 reset role;
 \echo 'rls_test OK'
 rollback;

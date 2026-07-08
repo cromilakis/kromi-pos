@@ -6,7 +6,6 @@ const BASE: NavItem[] = [
   { to: "/venta", label: "Venta" },
   { to: "/stock", label: "Stock" },
   { to: "/clientes", label: "Clientes" },
-  { to: "/cierre", label: "Cierre" },
 ];
 const ADMIN: NavItem = { to: "/admin", label: "Administración" };
 
