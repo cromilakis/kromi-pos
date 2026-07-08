@@ -145,9 +145,8 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onClick={submitting ? undefined : onCancel}>
-      <div className="max-h-[88vh] w-[640px] max-w-full overflow-auto rounded-[20px] bg-white p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-1 text-[17px] font-black text-[#0F2A1B]">Confirmar recepción de factura</div>
+    <div className="mx-auto w-full max-w-[1100px] rounded-[20px] border border-[#E1E5EE] bg-white p-6">
+      <div className="mb-1 text-[17px] font-black text-[#0F2A1B]">Confirmar recepción de factura</div>
         <div className="mb-4 text-[13px] text-[#7C95A8]">
           Folio {extraction.documento.folio || "—"} · {extraction.documento.fecha || "sin fecha"}
         </div>
@@ -207,15 +206,18 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
               return (
                 <div
                   key={idx}
-                  className="rounded-2xl border p-3"
+                  className="rounded-2xl border p-3.5"
                   style={{ borderColor: ok ? "#E1E5EE" : "#F5C2C2", background: ok ? "#fff" : "#FDECEC" }}
                 >
-                  <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <div className="text-[13.5px] font-bold text-[#0F2A1B]">
-                      {l.qty} × {l.supplier_code || "—"} · {l.description || "Sin descripción"}
+                  <div className="grid grid-cols-[60px_120px_1fr_120px_120px] items-baseline gap-3">
+                    <div className="text-[13.5px] font-bold text-[#0F2A1B]">{l.qty} u.</div>
+                    <div className="truncate text-[13px] font-semibold text-[#7C95A8]">{l.supplier_code || "—"}</div>
+                    <div className="truncate text-[13.5px] font-bold text-[#0F2A1B]">{l.description || "Sin descripción"}</div>
+                    <div className="text-right text-[13px] font-bold" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>
+                      {fmtCLP(l.unit_cost)} c/u
                     </div>
-                    <div className="text-[13px] font-bold" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>
-                      {fmtCLP(l.unit_cost)} c/u · total {fmtCLP(l.line_total)}
+                    <div className="text-right text-[13.5px] font-black" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>
+                      {fmtCLP(l.line_total)}
                     </div>
                   </div>
                   {!ok && <div className="mt-1 text-[11.5px] font-bold text-[#9a2533]">Cantidad × costo no coincide con el total de la línea.</div>}
@@ -309,7 +311,6 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
             {submitting ? "Guardando…" : "Confirmar recepción"}
           </button>
         </div>
-      </div>
     </div>
   );
 }

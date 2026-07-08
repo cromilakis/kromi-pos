@@ -69,7 +69,7 @@ export function StockScreen() {
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
-  const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [view, setView] = useState<"list" | "recepcion">("list");
   const [invoiceListOpen, setInvoiceListOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -217,6 +217,34 @@ export function StockScreen() {
 
   const showCriticalBanner = canManage && lowStockList.length > 0;
 
+  if (view === "recepcion") {
+    return (
+      <div className="relative min-h-full overflow-auto px-[32px] py-[28px]">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <div className="mb-1.5 text-[11px] font-bold uppercase tracking-[.14em]" style={{ color: "var(--brand)" }}>
+              Mantención
+            </div>
+            <h2 className="m-0 text-[26px] font-black tracking-[-.01em] text-[#0F2A1B]">Cargar desde factura</h2>
+          </div>
+          <button
+            onClick={() => setView("list")}
+            className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
+          >
+            ← Volver a stock
+          </button>
+        </div>
+        <InvoiceUpload
+          onClose={() => setView("list")}
+          onDone={() => {
+            setView("list");
+            refetchAll();
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="relative min-h-full overflow-auto px-[32px] py-[28px]">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
@@ -243,7 +271,7 @@ export function StockScreen() {
             </button>
             <input ref={fileRef} type="file" accept=".csv" onChange={onFile} className="hidden" />
             <button
-              onClick={() => setInvoiceOpen(true)}
+              onClick={() => setView("recepcion")}
               title="Recepcionar una compra a partir del PDF de la factura"
               className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
             >
@@ -450,16 +478,6 @@ export function StockScreen() {
           businessId={businessId ?? ""}
           branchId={branchId ?? ""}
           onSaved={refetchAll}
-        />
-      )}
-
-      {invoiceOpen && (
-        <InvoiceUpload
-          onClose={() => setInvoiceOpen(false)}
-          onDone={() => {
-            setInvoiceOpen(false);
-            refetchAll();
-          }}
         />
       )}
 
