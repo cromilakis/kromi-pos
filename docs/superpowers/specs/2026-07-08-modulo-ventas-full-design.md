@@ -48,15 +48,21 @@ completo se define aquí de una vez.
   `internal_code`).
 - **Atajos de teclado**: **ninguno por ahora**. El lector de código de barras
   actúa como teclado que escribe en la búsqueda.
+- **Cotizaciones como módulo aparte**: cotizar **no** requiere caja abierta. Se
+  extrae a su propia ruta/módulo. Crear/ver cotizaciones lo pueden hacer
+  **cajero y admin**. La **conversión a venta ocurre desde el módulo Cotizaciones**
+  y **exige caja abierta** en ese momento (porque cobra y baja stock).
 
 ## Orden de implementación
 
-1. Fix layout del carrito
-2. Datos del negocio / boleta
-3. Código de barras
-4. Descuentos
-5. Retener / recuperar venta (depende del formato de carrito con descuentos)
-6. Pulido UX transversal
+1. Fix layout del carrito (sub-proyecto 1)
+2. Cotizaciones como módulo independiente (sub-proyecto 7) — limpia `VentaScreen`
+   antes de tocar el carrito en descuentos/retener
+3. Datos del negocio / boleta (sub-proyecto 2)
+4. Código de barras (sub-proyecto 3)
+5. Descuentos (sub-proyecto 4)
+6. Retener / recuperar venta (sub-proyecto 5; depende del formato de carrito con descuentos)
+7. Pulido UX transversal (sub-proyecto 6)
 
 Cada sub-proyecto es entregable y verificable de forma independiente.
 
@@ -203,6 +209,40 @@ layout del carrito ya se resuelve en el sub-proyecto 1. Alcance acotado; los ít
 concretos se enumeran en el plan de implementación.
 
 ---
+
+## Sub-proyecto 7 — Cotizaciones como módulo independiente
+
+**Objetivo:** poder crear y consultar cotizaciones **sin abrir caja**, sacándolas
+del gate de caja de `VentaScreen`. La conversión a venta sigue exigiendo caja.
+
+**Contexto actual:** `QuotePanel` se renderiza como un tab dentro de `VentaScreen`,
+que hace `if (!openSession) return <AbrirCajaGate/>` (`VentaScreen.tsx`), obligando
+a abrir caja para cotizar. `crear_cotizacion` no toca caja ni stock;
+`convertir_cotizacion` sí requiere `session`.
+
+**Cambios de frontend (sin migración):**
+- Nueva ruta `/cotizaciones` en `src/App.tsx`, accesible a `admin`, `kromi` y
+  `cajero`, **sin** gate de caja.
+- Nueva entrada "Cotizaciones" en el sidebar (`src/session/nav.ts`), visible para
+  esos roles.
+- Nuevo módulo `src/modules/cotizaciones/CotizacionesScreen.tsx` que reutiliza
+  `QuotePanel`/`useQuotes`. Como fuera de venta no hay carrito en curso, la
+  creación de cotización se hace con su propio selector de productos/líneas (o se
+  parte del panel existente adaptado a no depender de `cartLines`).
+- Quitar el tab "Cotizaciones" de `VentaScreen` (queda sólo la venta).
+- **Conversión a venta** desde la lista de cotizaciones: botón "Convertir a venta"
+  que exige caja abierta; si no hay sesión abierta, avisa que debe abrir caja
+  (no la abre automáticamente). Usa `convertir_cotizacion` con la sesión vigente.
+
+**Consideración de diseño:** hoy `QuotePanel` recibe `cartLines`/`totals` desde
+`VentaScreen`. Al independizarse, el módulo de cotizaciones necesita su propia
+forma de armar líneas (buscar productos y elegir cantidades) sin depender del
+carrito de venta. El plan de este sub-proyecto detallará si se generaliza
+`QuotePanel` o se crea un armador de líneas propio.
+
+**Verificación:** un cajero sin caja abierta puede entrar a `/cotizaciones`, crear
+y ver cotizaciones; al convertir sin caja se le pide abrir caja; con caja abierta
+la conversión genera la venta correctamente.
 
 ## Fuera de alcance (YAGNI)
 
