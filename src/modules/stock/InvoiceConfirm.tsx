@@ -16,10 +16,11 @@ interface InvoiceConfirmProps {
 }
 
 interface LineState extends ExtractedLine {
-  /** Producto existente vinculado (por mapeo automático o elegido a mano). Vacío si aún no se resuelve. */
+  /**
+   * Producto existente vinculado (por mapeo automático o elegido a mano).
+   * Vacío ("") = no se mapea a ninguno existente → se creará un producto nuevo.
+   */
   product_id: string;
-  /** true si el usuario eligió crear un producto nuevo para esta línea. */
-  newProduct: boolean;
   newName: string;
   newCategoryId: string;
 }
@@ -57,7 +58,7 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
   });
 
   const [lines, setLines] = useState<LineState[]>(() =>
-    extraction.lineas.map((l) => ({ ...l, product_id: "", newProduct: false, newName: l.description, newCategoryId: "" })),
+    extraction.lineas.map((l) => ({ ...l, product_id: "", newName: l.description, newCategoryId: "" })),
   );
 
   // Aplica el mapeo proveedor→código→producto una sola vez, cuando llega (no pisa ediciones del usuario).
@@ -72,8 +73,6 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
   }, [supplierMap]);
 
   const [submitting, setSubmitting] = useState(false);
-
-  const productById = useMemo(() => new Map((products ?? []).map((p) => [p.id, p])), [products]);
 
   const computedTotal = useMemo(() => sumLineTotals(lines), [lines]);
   const amountsOk = totalsMatch(computedTotal, extraction.documento.neto);
@@ -111,15 +110,13 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
       const base = { supplier_code: l.supplier_code, description: l.description, qty: l.qty, unit_cost: l.unit_cost, line_total: l.line_total };
       if (l.product_id) {
         p_lines.push({ ...base, product_id: l.product_id });
-      } else if (l.newProduct) {
+      } else {
+        // Sin producto existente seleccionado → se crea uno nuevo.
         if (!l.newName.trim()) {
           toast.error(`Falta el nombre del producto nuevo para la línea "${l.description || l.supplier_code}".`);
           return;
         }
         p_lines.push({ ...base, new_product: { name: l.newName.trim(), category_id: l.newCategoryId || null } });
-      } else {
-        toast.error(`Selecciona o crea un producto para la línea "${l.description || l.supplier_code}".`);
-        return;
       }
     }
 
@@ -150,13 +147,25 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
 
   return (
     <div className="mx-auto w-full max-w-[1100px] rounded-[20px] border border-[#E1E5EE] bg-white p-6">
-      <div className="mb-1 text-[17px] font-black text-[#0F2A1B]">Confirmar recepción de factura</div>
-        <div className="mb-4 text-[13px] text-[#7C95A8]">
-          Folio {extraction.documento.folio || "—"} · {extraction.documento.fecha || "sin fecha"}
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[17px] font-black text-[#0F2A1B]">Confirmar recepción de factura</div>
+          <div className="text-[13px] text-[#7C95A8]">{extraction.documento.fecha || "sin fecha"}</div>
         </div>
+        {extraction.documento.folio && (
+          <span className="shrink-0 rounded-full px-3 py-1 text-[14px] font-black text-white" style={{ background: "var(--brand)" }}>
+            #{extraction.documento.folio}
+          </span>
+        )}
+      </div>
 
         <div className="mb-4">
-          <div className="mb-1.5 text-[12px] font-bold uppercase tracking-[.08em] text-[#9aa8bd]">Proveedor</div>
+          <div className="mb-1.5 flex items-center gap-2">
+            <span className="text-[12px] font-bold uppercase tracking-[.08em] text-[#9aa8bd]">Proveedor</span>
+            {!loadingSupplier && !existingSupplier && (
+              <span className="rounded-full bg-[#FEF6DD] px-2 py-0.5 text-[10.5px] font-black uppercase tracking-[.04em] text-[#8A6D12]">Nuevo</span>
+            )}
+          </div>
           {loadingSupplier ? (
             <div className="text-[13.5px] text-[#9aa8bd]">Buscando proveedor…</div>
           ) : existingSupplier ? (
@@ -171,14 +180,6 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
             </div>
           ) : (
             <div className="rounded-2xl border border-[#E1E5EE] bg-white p-4">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="rounded-full bg-[#FEF6DD] px-2 py-0.5 text-[11px] font-black uppercase tracking-[.04em] text-[#8A6D12]">
-                  Nuevo proveedor
-                </span>
-                <span className="text-[12.5px] text-[#9aa8bd]">
-                  se creará con ID {supplierSeq != null ? String(supplierSeq).padStart(3, "0") : "…"}
-                </span>
-              </div>
               <div className="grid grid-cols-2 gap-3">
                 <label className="col-span-2 flex flex-col gap-1">
                   <span className="text-[11px] font-bold uppercase tracking-[.06em] text-[#9aa8bd]">Razón social</span>
@@ -232,7 +233,6 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
               <tbody>
                 {lines.map((l, idx) => {
                   const ok = checkLineTotal(l);
-                  const linked = l.product_id ? productById.get(l.product_id) : undefined;
                   return (
                     <tr key={idx} className="border-t border-[#EEF1F6]" style={{ background: ok ? undefined : "#FDECEC" }}>
                       <td className="px-3 py-1.5 text-right font-bold text-[#0F2A1B]">{l.qty}</td>
@@ -241,40 +241,29 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
                       <td className="px-3 py-1.5 text-right" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>{fmtCLP(l.unit_cost)}</td>
                       <td className="px-3 py-1.5 text-right font-black" style={{ color: ok ? "#0F2A1B" : "#9a2533" }}>{fmtCLP(l.line_total)}</td>
                       <td className="px-3 py-1.5">
-                        {l.product_id ? (
-                          <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-[#E7EFE8] px-2 py-0.5 text-[12px] font-bold text-[#0F2A1B]">
-                              {linked?.internal_code ? `${linked.internal_code} · ` : "→ "}{linked?.name ?? "Producto vinculado"}
-                            </span>
-                            <button onClick={() => updateLine(idx, { product_id: "" })} className="text-[11px] font-bold text-[#7C95A8] underline">Cambiar</button>
-                          </div>
-                        ) : l.newProduct ? (
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="rounded bg-[#EEF1F6] px-1.5 py-0.5 text-[11px] font-bold text-[#7C95A8]">
-                              {supplierSeq != null ? String(supplierSeq).padStart(3, "0") : "…"}-{l.supplier_code || (idx + 1)}
-                            </span>
-                            <input value={l.newName} onChange={(e) => updateLine(idx, { newName: e.target.value })}
-                              placeholder="Nombre del producto" className="min-w-[150px] flex-1 rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none" />
-                            <select value={l.newCategoryId} onChange={(e) => updateLine(idx, { newCategoryId: e.target.value })}
-                              className="rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
-                              <option value="">Sin categoría</option>
-                              {(categories ?? []).map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
-                            </select>
-                            <button onClick={() => updateLine(idx, { newProduct: false })} className="text-[11px] font-bold text-[#7C95A8] underline">Cancelar</button>
-                          </div>
-                        ) : (
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <select value="" onChange={(e) => updateLine(idx, { product_id: e.target.value })}
-                              className="min-w-[170px] rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
-                              <option value="" disabled>Elegir producto…</option>
-                              {(products ?? []).map((p) => (
-                                <option key={p.id} value={p.id}>{p.internal_code ? `${p.internal_code} · ${p.name}` : p.name}</option>
-                              ))}
-                            </select>
-                            <button onClick={() => updateLine(idx, { newProduct: true })}
-                              className="rounded-[8px] border border-[#A7E3C0] bg-[#E6F7EE] px-2 py-1 text-[12px] font-bold text-[#0a6e36]">+ Crear</button>
-                          </div>
-                        )}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <select value={l.product_id} onChange={(e) => updateLine(idx, { product_id: e.target.value })}
+                            className="min-w-[190px] rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
+                            <option value="">Ninguno (Crear nuevo)</option>
+                            {(products ?? []).map((p) => (
+                              <option key={p.id} value={p.id}>{p.internal_code ? `${p.internal_code} · ${p.name}` : p.name}</option>
+                            ))}
+                          </select>
+                          {!l.product_id && (
+                            <>
+                              <span className="rounded bg-[#EEF1F6] px-1.5 py-0.5 text-[11px] font-bold text-[#7C95A8]">
+                                {supplierSeq != null ? String(supplierSeq).padStart(3, "0") : "…"}-{l.supplier_code || (idx + 1)}
+                              </span>
+                              <input value={l.newName} onChange={(e) => updateLine(idx, { newName: e.target.value })}
+                                placeholder="Nombre del producto nuevo" className="min-w-[150px] flex-1 rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none" />
+                              <select value={l.newCategoryId} onChange={(e) => updateLine(idx, { newCategoryId: e.target.value })}
+                                className="rounded-[8px] border border-[#E1E5EE] px-2 py-1 text-[12.5px] outline-none">
+                                <option value="">Sin categoría</option>
+                                {(categories ?? []).map((c) => (<option key={c.id} value={c.id}>{c.label}</option>))}
+                              </select>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
