@@ -352,39 +352,43 @@ export function VentaScreen() {
       qc.invalidateQueries({ queryKey: ["customers", businessId] });
       setCustomerId(null);
 
-      // Emitir la boleta electrónica (best-effort; NO bloquea la venta ya cobrada).
+      // Emitir la boleta electrónica. La venta ya está cobrada; si la emisión falla,
+      // NO se imprime nada: la venta queda pendiente en "Boletas del día" para reintentar.
       let dteFolio: number | undefined;
       let timbrePng: string | null | undefined;
       try {
         const em = await emitirBoleta(sale.id);
         if (em.status === "emitida") { dteFolio = em.folio; timbrePng = em.timbre_png ?? null; }
-        else toast.warning(`Venta cobrada. Boleta pendiente de emisión (${em.message ?? em.status}).`);
+        else toast.error(`La boleta no se pudo emitir (${em.message ?? em.status}). Quedó pendiente en «Boletas del día» para reintentar.`);
       } catch {
-        toast.warning("Venta cobrada. Boleta pendiente de emisión (sin conexión con el SII).");
+        toast.error("La boleta no se pudo emitir (sin conexión con el SII). Quedó pendiente en «Boletas del día» para reintentar.");
       }
+      qc.invalidateQueries({ queryKey: ["sales-today-dte", branchId] });
 
-      const soldAt = new Date(sale.sold_at);
-      // Forma esperada por `print_receipt` (struct ReceiptPayload en src-tauri/src/escpos.rs).
-      const payload = {
-        negocio: businessToNegocio(business, getPrinterName()),
-        folio: sale.folio,
-        fecha: `${pad2(soldAt.getDate())}/${pad2(soldAt.getMonth() + 1)}/${soldAt.getFullYear()}`,
-        hora: `${pad2(soldAt.getHours())}:${pad2(soldAt.getMinutes())}`,
-        items: soldLines.map((l) => ({ nombre: l.product.name, qty: l.qty, precio: l.product.price, descuento: resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0) })),
-        neto: sale.neto,
-        iva: sale.iva,
-        total: sale.total,
-        descuento: soldLines.reduce((s, l) => s + resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0), 0),
-        dte_folio: dteFolio,
-        timbre_png: timbrePng ?? null,
-        reimpresion: false,
-        metodo: sale.method,
-        open_drawer: sale.method === "efectivo",
-      };
-      try {
-        await printReceipt(payload);
-      } catch (e) {
-        toast.error(`La venta se registró, pero no se pudo imprimir la boleta: ${e instanceof Error ? e.message : e}`);
+      // Solo se imprime la boleta si fue emitida (con folio y timbre del SII).
+      if (dteFolio) {
+        const soldAt = new Date(sale.sold_at);
+        const payload = {
+          negocio: businessToNegocio(business, getPrinterName()),
+          folio: sale.folio,
+          fecha: `${pad2(soldAt.getDate())}/${pad2(soldAt.getMonth() + 1)}/${soldAt.getFullYear()}`,
+          hora: `${pad2(soldAt.getHours())}:${pad2(soldAt.getMinutes())}`,
+          items: soldLines.map((l) => ({ nombre: l.product.name, qty: l.qty, precio: l.product.price, descuento: resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0) })),
+          neto: sale.neto,
+          iva: sale.iva,
+          total: sale.total,
+          descuento: soldLines.reduce((s, l) => s + resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0), 0),
+          dte_folio: dteFolio,
+          timbre_png: timbrePng ?? null,
+          reimpresion: false,
+          metodo: sale.method,
+          open_drawer: sale.method === "efectivo",
+        };
+        try {
+          await printReceipt(payload);
+        } catch (e) {
+          toast.error(`Boleta emitida (folio ${dteFolio}) pero no se pudo imprimir: ${e instanceof Error ? e.message : e}. Reimprime desde «Boletas del día».`);
+        }
       }
     } catch (e) {
       toast.error(`No se pudo cobrar la venta: ${e instanceof Error ? e.message : e}`);
