@@ -36,6 +36,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
   const [critical, setCritical] = useState(false);
   const [supplierId, setSupplierId] = useState<string>("");
   const [imgUrl, setImgUrl] = useState("");
+  const [barcode, setBarcode] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
       setCritical(product.critical);
       setSupplierId(product.supplier_id ?? "");
       setImgUrl(product.img_url ?? "");
+      setBarcode(product.barcode ?? "");
     } else {
       setName("");
       setCategoryId(categories[0]?.id ?? "");
@@ -58,6 +60,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
       setCritical(false);
       setSupplierId("");
       setImgUrl("");
+      setBarcode("");
     }
   }, [open, product, categories]);
 
@@ -86,6 +89,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           critical,
           img_url: imgUrl.trim() || null,
           supplier_id: supplierId || null,
+          barcode: barcode.trim() || null,
         });
         await upsertInventory(created.id, branchId, stockNum);
         toast.success("Producto creado.");
@@ -98,6 +102,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           critical,
           img_url: imgUrl.trim() || null,
           supplier_id: supplierId || null,
+          barcode: barcode.trim() || null,
         });
         await upsertInventory(product.id, branchId, stockNum);
         toast.success("Producto actualizado.");
@@ -202,6 +207,10 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           <div>
             <label style={labelStyle}>Imagen (URL, opcional)</label>
             <input style={inputStyle} value={imgUrl} onChange={(e) => setImgUrl(e.target.value)} placeholder="https://…" />
+          </div>
+          <div>
+            <label style={labelStyle}>Código de barras (opcional)</label>
+            <input style={inputStyle} value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Escanea o escribe el código" />
           </div>
         </div>
         <div style={{ padding: "16px 24px", borderTop: "1px solid #E1E5EE", background: "#FAFBFD", display: "flex", justifyContent: "flex-end", gap: 10 }}>
