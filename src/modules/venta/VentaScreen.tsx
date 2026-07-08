@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Bookmark, Undo2, Lock, Grid3x3, ScanLine } from "lucide-react";
+import { Bookmark, Undo2, Lock, Grid3x3, ScanLine, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -391,15 +391,19 @@ export function VentaScreen() {
     <div className="flex h-full">
       <div className="flex min-h-0 min-w-0 flex-1 flex-col px-[22px] pt-[18px]">
         <div className="mb-4 flex items-center gap-2.5">
-          <div className="flex max-w-[420px] flex-1 items-center gap-2.5 rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              placeholder="Buscar planta, maceta, accesorio…"
-              className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#0F2A1B] outline-none"
-            />
-          </div>
+          {mode === "catalogo" ? (
+            <div className="flex max-w-[420px] flex-1 items-center gap-2.5 rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+                placeholder="Buscar planta, maceta, accesorio…"
+                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#0F2A1B] outline-none"
+              />
+            </div>
+          ) : (
+            <div className="flex-1" />
+          )}
           <div className="inline-flex gap-1 rounded-full bg-[#F0F2F7] p-1">
             <button onClick={() => setMode("catalogo")} className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-bold" style={mode === "catalogo" ? { background: "var(--brand)", color: "#fff" } : { color: "#5a6b7e" }}>
               <Grid3x3 className="size-4" strokeWidth={1.9} /> Catálogo
@@ -494,7 +498,17 @@ export function VentaScreen() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right font-black text-[#0F2A1B]">{fmtCLP(unit * qty)}</td>
-                      <td className="px-4 py-3 text-right"><button onClick={() => decCartAll(product.id)} title="Quitar" className="text-[#D02E2E]">🗑</button></td>
+                      <td className="px-4 py-3">
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => decCartAll(product.id)}
+                            title="Quitar del carrito"
+                            className="flex size-8 items-center justify-center rounded-lg border border-[#F5C2C2] bg-white text-[#D02E2E] hover:bg-[#FDECEC]"
+                          >
+                            <Trash2 className="size-[16px]" strokeWidth={1.9} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                     );
                   })}
