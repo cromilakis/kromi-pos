@@ -27,7 +27,6 @@ declare
   v_inv      public.purchase_invoice;
   v_pid      uuid;
   v_code     text;
-  v_idx      int := 0;
   ln         jsonb;
 begin
   select business_id into v_business from public.branch where id = p_branch;
@@ -35,6 +34,9 @@ begin
   if auth.uid() is not null and v_business is distinct from public.current_business_id() and not public.is_kromi() then
     raise exception 'no autorizado para operar en este negocio';
   end if;
+
+  -- Serializa la asignación de seq (proveedor y código de respaldo) por negocio
+  perform pg_advisory_xact_lock(hashtext('supplier_seq:' || v_business::text));
 
   -- Proveedor: usar el id dado o crear, asignando correlativo por negocio
   v_supplier := nullif(p_supplier->>'id','')::uuid;
@@ -61,11 +63,12 @@ begin
 
   -- Líneas
   for ln in select * from jsonb_array_elements(p_lines) loop
-    v_idx := v_idx + 1;
     v_pid := nullif(ln->>'product_id','')::uuid;
     -- Crear producto nuevo si corresponde, con código interno {seq}-{código proveedor}
     if v_pid is null and (ln->'new_product') is not null then
-      v_code := lpad(v_seq::text, 3, '0') || '-' || coalesce(nullif(ln->>'supplier_code',''), v_idx::text);
+      v_code := lpad(v_seq::text, 3, '0') || '-' ||
+                coalesce(nullif(ln->>'supplier_code',''),
+                         'S' || (select count(*) + 1 from public.product where business_id = v_business and supplier_id = v_supplier)::text);
       insert into public.product (business_id, name, category_id, price, supplier_id, internal_code)
       values (v_business, ln->'new_product'->>'name',
               nullif(ln->'new_product'->>'category_id','')::uuid, 0, v_supplier, v_code)
