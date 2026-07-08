@@ -66,7 +66,8 @@ export function useNextSupplierSeq(businessId: string | undefined) {
     queryKey: ["next-supplier-seq", businessId], enabled: !!businessId,
     queryFn: async () => {
       const { data, error } = await supabase.from("supplier")
-        .select("seq").eq("business_id", businessId!).order("seq", { ascending: false }).limit(1);
+        .select("seq").eq("business_id", businessId!).not("seq", "is", null)
+        .order("seq", { ascending: false }).limit(1);
       if (error) throw error;
       return ((data?.[0]?.seq as number | null) ?? 0) + 1;
     },
