@@ -3,17 +3,17 @@ import { useAuth } from "@/auth/AuthProvider";
 import { RequireAuth } from "@/shell/RequireAuth";
 import { RequireRole } from "@/shell/RequireRole";
 import { AppLayout } from "@/shell/AppLayout";
-import { Placeholder } from "@/routes/placeholders";
 import { InicioScreen } from "@/modules/inicio/InicioScreen";
 import { StockScreen } from "@/modules/stock/StockScreen";
 import { VentaScreen } from "@/modules/venta/VentaScreen";
 import { ClientesScreen } from "@/modules/clientes/ClientesScreen";
+import { BusinessSettings } from "@/modules/admin/BusinessSettings";
 
 function AdminRoute() {
   const { profile } = useAuth();
   return (
     <RequireRole role={profile?.role} allow={["admin", "kromi"]}>
-      <Placeholder title="Administración" />
+      <BusinessSettings />
     </RequireRole>
   );
 }
