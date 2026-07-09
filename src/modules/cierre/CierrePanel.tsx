@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -152,10 +153,10 @@ export function CierrePanel({ onClosed }: CierrePanelProps) {
         };
         await printCierre(payload);
       } catch (e) {
-        toast.error(`La caja se cerró, pero no se pudo imprimir el comprobante: ${e instanceof Error ? e.message : e}`);
+        notifyError(`La caja se cerró, pero no se pudo imprimir el comprobante.`, e instanceof Error ? e.message : e);
       }
     } catch (e) {
-      toast.error(`No se pudo cerrar la caja: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo cerrar la caja.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
     }

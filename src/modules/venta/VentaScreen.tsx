@@ -13,7 +13,7 @@ import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data
 import { cobrarVenta, cartToLines, useSalesTodayDte, type SaleDteRow } from "@/data/sales";
 import { emitirBoleta } from "@/data/sii";
 import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "@/lib/money";
-import { errMsg } from "@/lib/errors";
+import { errMsg, notifyError } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
 import { Button } from "@/components/ui/button";
@@ -43,7 +43,7 @@ function AbrirCajaGate() {
       await rpcAbrirCaja(register.id, Number(floatAmount) || 0);
       await qc.invalidateQueries({ queryKey: ["open-session"] });
     } catch (e) {
-      toast.error(`No se pudo abrir la caja: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo abrir la caja.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
     }
@@ -245,7 +245,7 @@ export function VentaScreen() {
       toast.success("Venta guardada.");
       qc.invalidateQueries({ queryKey: ["held-sales", branchId] });
     } catch (e) {
-      toast.error(`No se pudo guardar la venta: ${errMsg(e)}`);
+      notifyError(`No se pudo guardar la venta.`, errMsg(e));
     }
   }
 
@@ -268,7 +268,7 @@ export function VentaScreen() {
       await deleteHeldSale(h.id);
       qc.invalidateQueries({ queryKey: ["held-sales", branchId] });
     } catch (e) {
-      toast.error(`No se pudo quitar la venta guardada: ${errMsg(e)}`);
+      notifyError(`No se pudo quitar la venta guardada.`, errMsg(e));
     }
     if (ajustes > 0) toast.warning("Algunas líneas se ajustaron por stock o productos no disponibles.");
   }
@@ -278,7 +278,7 @@ export function VentaScreen() {
       await deleteHeldSale(id);
       qc.invalidateQueries({ queryKey: ["held-sales", branchId] });
     } catch (e) {
-      toast.error(`No se pudo descartar: ${errMsg(e)}`);
+      notifyError(`No se pudo descartar.`, errMsg(e));
     }
   }
 
@@ -294,7 +294,7 @@ export function VentaScreen() {
         toast.success(`Boleta emitida (folio ${em.folio}).`);
         qc.invalidateQueries({ queryKey: ["sales-today-dte", branchId] });
       } else {
-        toast.error(`No se pudo emitir: ${em.message ?? em.status}`);
+        notifyError(`No se pudo emitir.`, em.message ?? em.status);
       }
     } finally {
       setDteBusy(null);
@@ -323,7 +323,7 @@ export function VentaScreen() {
     try {
       await printReceipt(payload);
     } catch (e) {
-      toast.error(`No se pudo imprimir: ${errMsg(e)}`);
+      notifyError(`No se pudo imprimir.`, errMsg(e));
     }
   }
 
@@ -359,7 +359,7 @@ export function VentaScreen() {
       try {
         const em = await emitirBoleta(sale.id);
         if (em.status === "emitida") { dteFolio = em.folio; timbrePng = em.timbre_png ?? null; }
-        else toast.error(`La boleta no se pudo emitir (${em.message ?? em.status}). Quedó pendiente en «Boletas del día» para reintentar.`);
+        else notifyError("La boleta no se pudo emitir. Quedó pendiente en «Boletas del día» para reintentar.", em.message ?? em.status);
       } catch {
         toast.error("La boleta no se pudo emitir (sin conexión con el SII). Quedó pendiente en «Boletas del día» para reintentar.");
       }
@@ -387,11 +387,11 @@ export function VentaScreen() {
         try {
           await printReceipt(payload);
         } catch (e) {
-          toast.error(`Boleta emitida (folio ${dteFolio}) pero no se pudo imprimir: ${e instanceof Error ? e.message : e}. Reimprime desde «Boletas del día».`);
+          notifyError(`Boleta emitida (folio ${dteFolio}) pero no se pudo imprimir. Reimprime desde «Boletas del día».`, e instanceof Error ? e.message : e);
         }
       }
     } catch (e) {
-      toast.error(`No se pudo cobrar la venta: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo cobrar la venta.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
       setPayOpen(false);

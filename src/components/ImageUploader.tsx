@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { processImage } from "@/lib/image";
-import { errMsg } from "@/lib/errors";
+import { errMsg, notifyError } from "@/lib/errors";
 
 interface Props {
   value: string | null;
@@ -24,7 +24,7 @@ export function ImageUploader({ value, onChange, onUpload, maxSize, label }: Pro
       const url = await onUpload(blob);
       onChange(url);
     } catch (e) {
-      toast.error(`No se pudo subir la imagen: ${errMsg(e)}`);
+      notifyError(`No se pudo subir la imagen.`, errMsg(e));
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";

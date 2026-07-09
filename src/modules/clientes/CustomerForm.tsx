@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import type { CustomerRow } from "@/data/customers";
 import { createCustomer, updateCustomer } from "@/data/customers";
@@ -74,7 +75,7 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
       onSaved();
       onClose();
     } catch (e) {
-      toast.error(`No se pudo guardar el cliente: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo guardar el cliente.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
     }

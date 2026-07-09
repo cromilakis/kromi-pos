@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import type { CategoryRow, ProductRow, SupplierRow } from "@/data/stock";
 import { createProduct, updateProduct, upsertInventory } from "@/data/stock";
@@ -118,7 +119,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
       onSaved();
       onClose();
     } catch (e) {
-      toast.error(`No se pudo guardar el producto: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo guardar el producto.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
     }

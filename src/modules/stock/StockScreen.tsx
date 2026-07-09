@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -176,7 +177,7 @@ export function StockScreen() {
       setAnchorId(null);
       refetchAll();
     } catch (err) {
-      toast.error(`No se pudo cambiar la categoría: ${err instanceof Error ? err.message : err}`);
+      notifyError(`No se pudo cambiar la categoría.`, err instanceof Error ? err.message : err);
     }
   }
 
@@ -194,7 +195,7 @@ export function StockScreen() {
       await upsertInventory(p.id, branchId, next);
       refetchAll();
     } catch (e) {
-      toast.error(`No se pudo actualizar el stock: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo actualizar el stock.`, e instanceof Error ? e.message : e);
     }
   }
 
@@ -205,7 +206,7 @@ export function StockScreen() {
       setConfirmDeleteId(null);
       refetchAll();
     } catch (e) {
-      toast.error(`No se pudo eliminar el producto: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo eliminar el producto.`, e instanceof Error ? e.message : e);
     }
   }
 

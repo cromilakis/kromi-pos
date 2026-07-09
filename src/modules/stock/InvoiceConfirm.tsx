@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -165,7 +166,7 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
         if (err.code) msg = `[${err.code}] ${msg}`;
         if (err.details) msg += ` — ${err.details}`;
       }
-      toast.error(`No se pudo recepcionar la factura: ${msg}`);
+      notifyError(`No se pudo recepcionar la factura.`, msg);
     } finally {
       setSubmitting(false);
     }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import { usePurchaseInvoices, invoiceDownloadUrl } from "@/data/purchases";
 import { useSuppliers } from "@/data/stock";
@@ -46,7 +47,7 @@ export function PurchaseInvoicesScreen({ businessId }: Props) {
       const saved = await saveUrlAs(url, suggested);
       if (saved) toast.success("PDF guardado.");
     } catch (err) {
-      toast.error(`No se pudo descargar el PDF: ${err instanceof Error ? err.message : err}`);
+      notifyError(`No se pudo descargar el PDF.`, err instanceof Error ? err.message : err);
     } finally {
       setDownloadingId(null);
     }

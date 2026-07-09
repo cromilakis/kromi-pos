@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -57,7 +58,7 @@ export function StockLoad({ onClose, onDone }: StockLoadProps) {
       setPdf(data);
     } catch (err) {
       if (cancelledRef.current) return;
-      toast.error(`No se pudo analizar la factura: ${err instanceof Error ? err.message : err}`);
+      notifyError(`No se pudo analizar la factura.`, err instanceof Error ? err.message : err);
     } finally {
       if (!cancelledRef.current) setBusy(false);
     }
@@ -90,7 +91,7 @@ export function StockLoad({ onClose, onDone }: StockLoadProps) {
       qc.invalidateQueries({ queryKey: ["critical-stock"] });
       onDone();
     } catch (e) {
-      toast.error(`No se pudo actualizar el stock: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo actualizar el stock.`, e instanceof Error ? e.message : e);
     } finally {
       setApplying(false);
     }

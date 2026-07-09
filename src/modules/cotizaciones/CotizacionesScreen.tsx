@@ -12,7 +12,7 @@ import { crearCotizacion, convertirCotizacion, useQuotes, isQuoteVigente, type Q
 import { computeTotals, fmtCLP } from "@/lib/money";
 import { printQuote, printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
-import { errMsg } from "@/lib/errors";
+import { errMsg, notifyError } from "@/lib/errors";
 import { PayDialog, type PayMethod } from "@/modules/venta/PayDialog";
 
 interface QuoteItem { id: string; qty: number; }
@@ -103,10 +103,10 @@ export function CotizacionesScreen() {
           total: quote.total,
         });
       } catch (e) {
-        toast.error(`La cotización se generó, pero no se pudo imprimir: ${errMsg(e)}`);
+        notifyError(`La cotización se generó, pero no se pudo imprimir.`, errMsg(e));
       }
     } catch (e) {
-      toast.error(`No se pudo generar la cotización: ${errMsg(e)}`);
+      notifyError(`No se pudo generar la cotización.`, errMsg(e));
     } finally {
       setCreating(false);
     }
@@ -126,7 +126,7 @@ export function CotizacionesScreen() {
         total: q.total,
       });
     } catch (e) {
-      toast.error(`No se pudo imprimir la cotización: ${errMsg(e)}`);
+      notifyError(`No se pudo imprimir la cotización.`, errMsg(e));
     }
   }
 
@@ -167,10 +167,10 @@ export function CotizacionesScreen() {
           open_drawer: sale.method === "efectivo",
         });
       } catch (e) {
-        toast.error(`La venta se registró, pero no se pudo imprimir la boleta: ${errMsg(e)}`);
+        notifyError(`La venta se registró, pero no se pudo imprimir la boleta.`, errMsg(e));
       }
     } catch (e) {
-      toast.error(`No se pudo convertir la cotización: ${errMsg(e)}`);
+      notifyError(`No se pudo convertir la cotización.`, errMsg(e));
     } finally {
       setPayBusy(false);
     }

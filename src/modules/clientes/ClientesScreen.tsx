@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -43,7 +44,7 @@ export function ClientesScreen() {
       setConfirmDeleteId(null);
       refetchAll();
     } catch (e) {
-      toast.error(`No se pudo eliminar el cliente: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo eliminar el cliente.`, e instanceof Error ? e.message : e);
     }
   }
 

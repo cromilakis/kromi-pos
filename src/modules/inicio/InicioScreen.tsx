@@ -1,7 +1,7 @@
 import { useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { Link } from "react-router-dom";
 import { ShoppingCart, AlertTriangle, PackageSearch } from "lucide-react";
-import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
@@ -31,7 +31,7 @@ function AbrirCajaCard() {
       await rpcAbrirCaja(register.id, Number(floatAmount) || 0);
       await qc.invalidateQueries({ queryKey: ["open-session"] });
     } catch (e) {
-      toast.error(`No se pudo abrir la caja: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo abrir la caja.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
     }

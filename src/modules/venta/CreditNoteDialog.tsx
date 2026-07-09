@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { emitirNotaCredito, buscarVentaPorFolio, type SaleWithLines } from "@/data/sales";
@@ -92,7 +93,7 @@ export function CreditNoteDialog({ open, branchId, sessionId, products, business
         })),
       );
     } catch (e) {
-      toast.error(`No se pudo buscar la boleta: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo buscar la boleta.`, e instanceof Error ? e.message : e);
     } finally {
       setSearching(false);
     }
@@ -158,11 +159,11 @@ export function CreditNoteDialog({ open, branchId, sessionId, products, business
           total: nc.total,
         });
       } catch (e) {
-        toast.error(`La nota de crédito se emitió, pero no se pudo imprimir: ${e instanceof Error ? e.message : e}`);
+        notifyError(`La nota de crédito se emitió, pero no se pudo imprimir.`, e instanceof Error ? e.message : e);
       }
       onClose();
     } catch (e) {
-      toast.error(`No se pudo emitir la nota de crédito: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo emitir la nota de crédito.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
     }

@@ -1,11 +1,11 @@
 import { useState, useEffect, type ReactNode } from "react";
+import { notifyError } from "@/lib/errors";
 import { useRegisters, useOpenSession, rpcAbrirCaja } from "@/data/work";
 import { useWork } from "./WorkContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { toast } from "sonner";
 
 export function CashGate({ children }: { children: ReactNode }) {
   const { branch, register, setRegister } = useWork();
@@ -28,7 +28,7 @@ export function CashGate({ children }: { children: ReactNode }) {
       await rpcAbrirCaja(register!.id, Number(floatAmount) || 0);
       await qc.invalidateQueries({ queryKey: ["open-session"] });
     } catch (e) {
-      toast.error(`No se pudo abrir la caja: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo abrir la caja.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
     }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import type { CategoryRow } from "@/data/stock";
 import { createCategory, deleteCategory, updateCategory } from "@/data/stock";
@@ -67,7 +68,7 @@ export function CategoryManager({ categories, productCountByCategory, businessId
       setForm(null);
       onChanged();
     } catch (e) {
-      toast.error(`No se pudo guardar la categoría: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo guardar la categoría.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
     }
@@ -92,7 +93,7 @@ export function CategoryManager({ categories, productCountByCategory, businessId
       setConfirm(null);
       onChanged();
     } catch (e) {
-      toast.error(`No se pudo eliminar la categoría: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo eliminar la categoría.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
     }

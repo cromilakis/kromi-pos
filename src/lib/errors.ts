@@ -1,3 +1,12 @@
+import { toast } from "sonner";
+
+/** Muestra al usuario un mensaje amigable (enmascarado) y envía el detalle técnico
+ *  a la consola para depuración. Usar en catch en vez de exponer `e.message` en el toast. */
+export function notifyError(userMessage: string, err?: unknown): void {
+  if (err !== undefined) console.error("[error]", userMessage, err);
+  toast.error(userMessage);
+}
+
 /** Extrae un mensaje legible de cualquier error. Los errores de Supabase
  *  (PostgrestError, StorageError) son objetos planos con `.message`, no
  *  instancias de Error, por lo que `${e}` daría "[object Object]". */

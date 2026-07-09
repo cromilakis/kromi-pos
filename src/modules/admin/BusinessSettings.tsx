@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -73,7 +74,7 @@ export function BusinessSettings() {
       toast.success("Datos del negocio actualizados.");
       qc.invalidateQueries({ queryKey: ["business", businessId] });
     } catch (e) {
-      toast.error(`No se pudo guardar: ${e instanceof Error ? e.message : e}`);
+      notifyError(`No se pudo guardar.`, e instanceof Error ? e.message : e);
     } finally {
       setBusy(false);
     }
