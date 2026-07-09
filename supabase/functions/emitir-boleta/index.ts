@@ -4,6 +4,8 @@ const SF_URL = Deno.env.get("SIMPLEFACTURA_URL") ?? "https://api.simplefactura.c
 const SF_EMAIL = Deno.env.get("SIMPLEFACTURA_EMAIL")!;
 const SF_PASSWORD = Deno.env.get("SIMPLEFACTURA_PASSWORD")!;
 const SF_AMBIENTE = Number(Deno.env.get("SIMPLEFACTURA_AMBIENTE") ?? "0");
+// Nombre de la sucursal del emisor (en la URL los espacios van como "_").
+const SUCURSAL = (Deno.env.get("SIMPLEFACTURA_SUCURSAL") ?? "Casa Matriz").replace(/\s+/g, "_");
 // Emisor: en demo se usa un RUT autorizado por la cuenta demo (no el del negocio real).
 const EMISOR = {
   RUTEmisor: Deno.env.get("SIMPLEFACTURA_RUT_EMISOR") ?? "78181331-1",
@@ -84,7 +86,7 @@ Deno.serve(async (req) => {
       },
     };
 
-    const emit = await fetch(`${SF_URL}/invoiceV2/Casa_Matriz`, {
+    const emit = await fetch(`${SF_URL}/invoiceV2/${SUCURSAL}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(body),
