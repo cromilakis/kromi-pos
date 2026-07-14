@@ -9,15 +9,16 @@ const BASE: NavItem[] = [
   { to: "/clientes", label: "Clientes" },
 ];
 const NC: NavItem = { to: "/notas-credito", label: "Notas de crédito" };
+const HISTORIAL: NavItem = { to: "/historial", label: "Historial" };
 const ADMIN: NavItem = { to: "/admin", label: "Administración" };
 
 export function navForRole(role: Role): NavItem[] {
   if (role !== "admin" && role !== "kromi") return BASE;
-  // "Notas de crédito" justo debajo de "Venta"; "Administración" al final.
+  // "Notas de crédito" e "Historial" justo debajo de "Venta"; "Administración" al final.
   const items: NavItem[] = [];
   for (const it of BASE) {
     items.push(it);
-    if (it.to === "/venta") items.push(NC);
+    if (it.to === "/venta") { items.push(NC); items.push(HISTORIAL); }
   }
   items.push(ADMIN);
   return items;

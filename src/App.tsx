@@ -11,6 +11,7 @@ import { ClientesScreen } from "@/modules/clientes/ClientesScreen";
 import { AdminScreen } from "@/modules/admin/AdminScreen";
 import { NotasCreditoScreen } from "@/modules/notas-credito/NotasCreditoScreen";
 import { NuevaNotaCredito } from "@/modules/notas-credito/NuevaNotaCredito";
+import { HistorialScreen } from "@/modules/historial/HistorialScreen";
 
 function AdminRoute() {
   const { profile } = useAuth();
@@ -39,6 +40,15 @@ function NuevaNotaCreditoRoute() {
   );
 }
 
+function HistorialRoute() {
+  const { profile } = useAuth();
+  return (
+    <RequireRole role={profile?.role} allow={["admin", "kromi"]}>
+      <HistorialScreen />
+    </RequireRole>
+  );
+}
+
 export default function App() {
   return (
     <Routes>
@@ -51,6 +61,7 @@ export default function App() {
         <Route path="admin" element={<AdminRoute />} />
         <Route path="notas-credito" element={<NotasCreditoRoute />} />
         <Route path="notas-credito/nueva" element={<NuevaNotaCreditoRoute />} />
+        <Route path="historial" element={<HistorialRoute />} />
       </Route>
     </Routes>
   );
