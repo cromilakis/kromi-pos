@@ -22,18 +22,18 @@ end $$;
 
 -- Funciones auxiliares
 do $$ begin
-  if to_regprocedure('public.norm_rut(text)') is null then
-    raise exception 'FALTA funcion public.norm_rut(text)';
+  if to_regprocedure('public.normalize_rut(text)') is null then
+    raise exception 'FALTA funcion public.normalize_rut(text)';
   end if;
 end $$;
 
--- norm_rut normaliza (sin puntos/guion, minúscula)
+-- normalize_rut normaliza (sin puntos/guion, minúscula)
 do $$ begin
-  if public.norm_rut('11.111.111-1') <> '111111111' then
-    raise exception 'norm_rut incorrecto: %', public.norm_rut('11.111.111-1');
+  if public.normalize_rut('11.111.111-1') <> '111111111' then
+    raise exception 'normalize_rut incorrecto: %', public.normalize_rut('11.111.111-1');
   end if;
-  if public.norm_rut('12.345.678-K') <> '12345678k' then
-    raise exception 'norm_rut no minuscula K: %', public.norm_rut('12.345.678-K');
+  if public.normalize_rut('12.345.678-K') <> '12345678k' then
+    raise exception 'normalize_rut no minuscula K: %', public.normalize_rut('12.345.678-K');
   end if;
 end $$;
 

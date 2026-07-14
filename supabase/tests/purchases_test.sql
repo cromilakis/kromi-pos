@@ -1,5 +1,5 @@
 -- ============================================================================
--- Test RPC recepcionar_factura: crea proveedor/productos, mapea, registra
+-- Test RPC receive_invoice: crea proveedor/productos, mapea, registra
 -- factura+líneas (historial de costo), suma inventario; atómica; no duplica.
 -- Transacción con ROLLBACK.
 -- ============================================================================
@@ -13,7 +13,7 @@ insert into public.category (id, business_id, key, label) values ('ca000000-0000
 do $$
 declare v_inv public.purchase_invoice; v_pid uuid; v_stock int; v_cost int;
 begin
-  v_inv := public.recepcionar_factura(
+  v_inv := public.receive_invoice(
     'bc000000-0000-0000-0000-000000000001',
     '{"razon_social":"Floriterra","rut":"78.964.380-6"}'::jsonb,
     '{"doc_type":"factura","folio":"59763","issued_at":"2026-07-02","neto":14970,"iva":2844,"total":17814}'::jsonb,
@@ -44,7 +44,7 @@ end $$;
 do $$
 begin
   begin
-    perform public.recepcionar_factura(
+    perform public.receive_invoice(
       'bc000000-0000-0000-0000-000000000001',
       (select jsonb_build_object('id', id, 'razon_social','Floriterra','rut','78.964.380-6') from public.supplier where rut='78.964.380-6'),
       '{"doc_type":"factura","folio":"59763","issued_at":"2026-07-02","neto":14970,"iva":2844,"total":17814}'::jsonb,
@@ -61,7 +61,7 @@ do $$
 declare v_pid uuid; v_stock int; v_seq int; v_new_code text;
 begin
   select product_id into v_pid from public.supplier_product where supplier_code='00T017';
-  perform public.recepcionar_factura(
+  perform public.receive_invoice(
     'bc000000-0000-0000-0000-000000000001',
     '{"razon_social":"Vivero Sur","rut":"77.111.222-3"}'::jsonb,
     '{"doc_type":"factura","folio":"1001","issued_at":"2026-07-03","neto":10000,"iva":1900,"total":11900}'::jsonb,
@@ -93,7 +93,7 @@ declare v_new_code1 text; v_new_code2 text;
 begin
   select internal_code into v_new_code1 from public.product where name='SIN CODIGO';
 
-  perform public.recepcionar_factura(
+  perform public.receive_invoice(
     'bc000000-0000-0000-0000-000000000001',
     (select jsonb_build_object('id', id, 'razon_social','Vivero Sur','rut','77.111.222-3') from public.supplier where rut='77.111.222-3'),
     '{"doc_type":"factura","folio":"1002","issued_at":"2026-07-04","neto":5000,"iva":950,"total":5950}'::jsonb,
@@ -113,7 +113,7 @@ end $$;
 do $$
 declare v_pid uuid; v_stock int; v_n int;
 begin
-  perform public.recepcionar_factura(
+  perform public.receive_invoice(
     'bc000000-0000-0000-0000-000000000001',
     '{"razon_social":"Repetido SA","rut":"76.555.444-2"}'::jsonb,
     '{"doc_type":"factura","folio":"7000","issued_at":"2026-07-05","neto":3000,"iva":570,"total":3570}'::jsonb,

@@ -113,27 +113,27 @@ begin
   end;
 end $$;
 
--- e) Regresión (fix cobro a precio arbitrario): _registrar_venta es el núcleo
+-- e) Regresión (fix cobro a precio arbitrario): _register_sale es el núcleo
 -- interno con precio EXPLÍCITO por línea; NO debe ser invocable directamente por
--- authenticated (solo indirectamente vía cobrar_venta/convertir_cotizacion). El
+-- authenticated (solo indirectamente vía charge_sale/convert_quote). El
 -- chequeo de privilegio de EXECUTE ocurre ANTES de ejecutar el cuerpo, por lo que
 -- el 42501 salta sin importar que los args sean dummy/inexistentes.
 do $$
 begin
   begin
-    perform public._registrar_venta(
+    perform public._register_sale(
       '00000000-0000-0000-0000-000000000000'::uuid,
       '00000000-0000-0000-0000-000000000000'::uuid,
       '[]'::jsonb,
       'efectivo'::public.sale_method,
       1,
       null);
-    raise exception 'FUGA: authenticated pudo llamar _registrar_venta directamente';
+    raise exception 'FUGA: authenticated pudo llamar _register_sale directamente';
   exception
     when sqlstate '42501' then
-      raise notice 'OK: _registrar_venta bloqueada para authenticated (RLS/GRANT 42501)';
+      raise notice 'OK: _register_sale bloqueada para authenticated (RLS/GRANT 42501)';
     when others then
-      raise exception 'FUGA: authenticated puede llamar _registrar_venta directamente (%)', sqlerrm;
+      raise exception 'FUGA: authenticated puede llamar _register_sale directamente (%)', sqlerrm;
   end;
 end $$;
 
@@ -156,7 +156,7 @@ select set_config('request.jwt.claims',
 
 -- f) Regresión (fix ③a: fraude de precio vía price_snapshot manipulado): quote/
 -- quote_line son SOLO-LECTURA para el cliente (se crean solo por la RPC
--- `crear_cotizacion`, security definer, que fija el precio desde product.price).
+-- `create_quote`, security definer, que fija el precio desde product.price).
 -- A no debe poder insertar una línea propia ni pisar el price_snapshot existente.
 do $$
 begin
