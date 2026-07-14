@@ -72,6 +72,21 @@ begin
   end loop;
 end $$;
 
+-- credit_note gana columnas DTE (Task 1)
+do $$
+declare cols text[] := array['dte_status', 'dte_folio', 'dte_timbre', 'dte_track_id', 'emitted_at', 'cod_ref'];
+       c text;
+begin
+  foreach c in array cols loop
+    if not exists(
+      select 1 from information_schema.columns
+      where table_schema='public' and table_name='credit_note' and column_name=c
+    ) then
+      raise exception 'FALTA columna public.credit_note.%', c;
+    end if;
+  end loop;
+end $$;
+
 -- Folio único por sucursal en sale
 do $$
 declare b uuid := '22222222-2222-2222-2222-222222222222';
