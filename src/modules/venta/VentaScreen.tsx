@@ -151,8 +151,11 @@ export function VentaScreen() {
   function inCart(id: string): number {
     return cart.find((c) => c.id === id)?.qty ?? 0;
   }
+  function capacity(p: ProductRow): number {
+    return p.is_service ? Infinity : p.stock;
+  }
   function avail(p: ProductRow): number {
-    return p.stock - inCart(p.id);
+    return capacity(p) - inCart(p.id);
   }
 
   function addToCart(p: ProductRow) {
@@ -189,7 +192,7 @@ export function VentaScreen() {
       const i = c.findIndex((x) => x.id === id);
       if (i < 0) return c;
       const p = productById.get(id);
-      if (!p || c[i].qty + 1 > p.stock) return c;
+      if (!p || c[i].qty + 1 > capacity(p)) return c;
       const next = c.slice();
       next[i] = { ...next[i], qty: next[i].qty + 1 };
       return next;
@@ -217,7 +220,7 @@ export function VentaScreen() {
 
   function addToCartQty(p: ProductRow, qty: number) {
     const current = cart.find((c) => c.id === p.id)?.qty ?? 0;
-    const next = Math.min(current + qty, p.stock);
+    const next = Math.min(current + qty, capacity(p));
     if (next <= 0) {
       toast.error(`${p.name}: sin stock disponible.`);
       return;
@@ -268,7 +271,7 @@ export function VentaScreen() {
     for (const item of h.cart) {
       const p = productById.get(item.product_id);
       if (!p) { ajustes++; continue; }
-      const qty = Math.min(item.qty, p.stock);
+      const qty = Math.min(item.qty, p.is_service ? item.qty : p.stock);
       if (qty <= 0) { ajustes++; continue; }
       if (qty !== item.qty) ajustes++;
       next.push({ id: item.product_id, qty });
@@ -557,7 +560,7 @@ export function VentaScreen() {
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => decCart(product.id)} className="flex size-7 items-center justify-center rounded-lg border border-[#E1E5EE] bg-white text-[#556A7C]">–</button>
                           <span className="min-w-6 text-center font-black text-[#0F2A1B]">{qty}</span>
-                          <button onClick={() => incCart(product.id)} disabled={qty >= product.stock} className="flex size-7 items-center justify-center rounded-lg bg-[#D3F4E0] disabled:opacity-40" style={{ color: "var(--brand)" }}>+</button>
+                          <button onClick={() => incCart(product.id)} disabled={qty >= capacity(product)} className="flex size-7 items-center justify-center rounded-lg bg-[#D3F4E0] disabled:opacity-40" style={{ color: "var(--brand)" }}>+</button>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right font-black text-[#0F2A1B]">{fmtCLP(unit * qty)}</td>
@@ -658,7 +661,7 @@ export function VentaScreen() {
                         <div className="mb-0.5 truncate text-sm font-bold text-[#0F2A1B]">{p.name}</div>
                         <div className="flex items-baseline justify-between gap-2">
                           <span className="text-xs font-bold" style={{ color: disabled ? "#D02E2E" : "#556A7C" }}>
-                            {disabled ? "Sin stock" : `${available} disp.`}
+                            {p.is_service ? "Servicio" : disabled ? "Sin stock" : `${available} disp.`}
                           </span>
                           {p.discount_pct > 0 ? (
                             <span className="flex items-baseline gap-1.5">
