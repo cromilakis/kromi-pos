@@ -41,9 +41,14 @@ export async function createCustomer(input: {
   email?: string | null;
   phone?: string | null;
   created_by?: string | null;
-}) {
-  const { error } = await supabase.from("customer").insert(input);
+}): Promise<CustomerRow> {
+  const { data, error } = await supabase
+    .from("customer")
+    .insert(input)
+    .select("id,name,email,phone,points,spent,visits")
+    .single();
   if (error) throw error;
+  return data;
 }
 
 export async function updateCustomer(id: string, input: Partial<{ name: string; email: string | null; phone: string | null }>) {
