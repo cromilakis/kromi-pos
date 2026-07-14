@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
 
     const { data: sale, error: e1 } = await admin
       .from("sale")
-      .select("id,folio,neto,iva,total,dte_status,dte_folio,dte_timbre,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
+      .select("id,folio,neto,iva,total,discount_amount,points_discount,points_redeemed,dte_status,dte_folio,dte_timbre,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
       .eq("id", sale_id).single();
     if (e1 || !sale) return json({ status: "error", message: "venta no encontrada" }, 404);
 
@@ -79,6 +79,24 @@ Deno.serve(async (req) => {
       if (desc > 0) d.DescuentoMonto = desc;
       return d;
     });
+    // Descuento global (comercial o canje de puntos): se declara aparte del descuento por
+    // línea vía DscRcgGlobal. TpoMov:1 = Descuento (genera "D"; el enum es 1-based, TpoMov:0
+    // pasa el preview pero rompe en emisión real con <TpoMov></TpoMov> vacío) y
+    // TpoValor:2 = Monto (genera "$"). Si no hay descuento global, la clave no se incluye
+    // (undefined, no array vacío).
+    const descuentoGlobal = sale.discount_amount ?? 0;
+    const dscRcgGlobal = descuentoGlobal > 0
+      ? [{
+          NroLinDR: 1,
+          TpoMov: 1,
+          TpoValor: 2,
+          ValorDR: String(descuentoGlobal),
+          GlosaDR: (sale.points_redeemed ?? 0) > 0
+            ? `Canje de puntos (${sale.points_redeemed} pts)`
+            : "Descuento",
+        }]
+      : undefined;
+
     const body = {
       Documento: {
         Encabezado: {
@@ -86,9 +104,12 @@ Deno.serve(async (req) => {
           Emisor: EMISOR,
           // Boleta al público: receptor "consumidor final" (RUT 66666666-6).
           Receptor: { RUTRecep: "66666666-6", RznSocRecep: "Consumidor Final", DirRecep: "Ciudad", CmnaRecep: "Santiago", CiudadRecep: "Santiago" },
+          // MntNeto/IVA/MntTotal ya vienen reducidos por el servidor (descuentan el global);
+          // no se recalculan aquí.
           Totales: { MntNeto: String(sale.neto), IVA: String(sale.iva), MntTotal: String(sale.total) },
         },
         Detalle: detalle,
+        ...(dscRcgGlobal ? { DscRcgGlobal: dscRcgGlobal } : {}),
       },
     };
 
