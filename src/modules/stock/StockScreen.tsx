@@ -14,6 +14,7 @@ import { PurchaseInvoicesScreen } from "@/modules/compras/PurchaseInvoicesScreen
 
 /** Bajo mínimo: mismo criterio que la alerta de Inicio (min_stock configurado y stock en o bajo el mínimo). */
 function isLowStock(p: ProductRow): boolean {
+  if (p.is_service) return false;
   return p.min_stock > 0 && p.stock <= p.min_stock;
 }
 
@@ -494,12 +495,18 @@ export function StockScreen() {
                     </td>
                     <td className="px-4 py-2 text-right font-bold text-[#556A7C]">{fmtCLP(p.price)}</td>
                     <td className="px-4 py-2 text-right text-[#5E6E7E]">{p.min_stock > 0 ? p.min_stock : "—"}</td>
-                    <td className="px-4 py-2 text-right font-black" style={{ color: low ? "#D02E2E" : "#0F2A1B" }}>{p.stock}</td>
+                    <td className="px-4 py-2 text-right font-black" style={{ color: low ? "#D02E2E" : "#0F2A1B" }}>
+                      {p.is_service ? <span className="text-[12px] font-bold text-[#556A7C]">Servicio</span> : p.stock}
+                    </td>
                     {canManage && (
                       <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1.5">
-                          <button onClick={() => adjustStock(p, -1)} title="Restar 1" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[17px] text-[#556A7C]">–</button>
-                          <button onClick={() => adjustStock(p, 1)} title="Sumar 1" className="flex size-[28px] items-center justify-center rounded-[9px] bg-[#D3F4E0] text-[17px]" style={{ color: "var(--brand)" }}>+</button>
+                          {!p.is_service && (
+                            <>
+                              <button onClick={() => adjustStock(p, -1)} title="Restar 1" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[17px] text-[#556A7C]">–</button>
+                              <button onClick={() => adjustStock(p, 1)} title="Sumar 1" className="flex size-[28px] items-center justify-center rounded-[9px] bg-[#D3F4E0] text-[17px]" style={{ color: "var(--brand)" }}>+</button>
+                            </>
+                          )}
                           <button onClick={() => { setEditing(p); setFormOpen(true); }} title="Editar producto" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#556A7C]">✎</button>
                           <button onClick={() => setConfirmDeleteId(p.id)} title="Eliminar producto" className="flex size-[28px] items-center justify-center rounded-[9px] border border-[#F5C2C2] bg-white text-[#D02E2E]">🗑</button>
                         </div>
@@ -569,36 +576,46 @@ export function StockScreen() {
                             🗑
                           </button>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => adjustStock(p, -1)}
-                            className="flex size-[30px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[18px] text-[#556A7C]"
-                          >
-                            –
-                          </button>
-                          <span className="min-w-[24px] text-center text-[15px] font-black" style={{ color: low ? "#D02E2E" : "#0F2A1B" }}>
-                            {p.stock}
-                          </span>
-                          <button
-                            onClick={() => adjustStock(p, 1)}
-                            className="flex size-[30px] items-center justify-center rounded-[9px] bg-[#D3F4E0] text-[18px]"
-                            style={{ color: "var(--brand)" }}
-                          >
-                            +
-                          </button>
-                        </div>
+                        {p.is_service ? (
+                          <span className="rounded-full bg-[#EEF1F6] px-2.5 py-1 text-[12px] font-bold text-[#556A7C]">Servicio</span>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => adjustStock(p, -1)}
+                              className="flex size-[30px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[18px] text-[#556A7C]"
+                            >
+                              –
+                            </button>
+                            <span className="min-w-[24px] text-center text-[15px] font-black" style={{ color: low ? "#D02E2E" : "#0F2A1B" }}>
+                              {p.stock}
+                            </span>
+                            <button
+                              onClick={() => adjustStock(p, 1)}
+                              className="flex size-[30px] items-center justify-center rounded-[9px] bg-[#D3F4E0] text-[18px]"
+                              style={{ color: "var(--brand)" }}
+                            >
+                              +
+                            </button>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="mt-3 flex items-center justify-between gap-2">
-                        <span className="text-[11.5px] font-bold" style={{ color: low ? "#D02E2E" : "#5E6E7E" }}>
-                          {low ? "Stock bajo" : "Stock"}
-                        </span>
-                        <span className="flex items-baseline gap-1">
-                          <span className="text-[15px] font-black" style={{ color: low ? "#D02E2E" : "#0F2A1B" }}>
-                            {p.stock}
-                          </span>
-                          <span className="text-xs font-semibold text-[#5E6E7E]">u.</span>
-                        </span>
+                        {p.is_service ? (
+                          <span className="text-[11.5px] font-bold text-[#556A7C]">Servicio</span>
+                        ) : (
+                          <>
+                            <span className="text-[11.5px] font-bold" style={{ color: low ? "#D02E2E" : "#5E6E7E" }}>
+                              {low ? "Stock bajo" : "Stock"}
+                            </span>
+                            <span className="flex items-baseline gap-1">
+                              <span className="text-[15px] font-black" style={{ color: low ? "#D02E2E" : "#0F2A1B" }}>
+                                {p.stock}
+                              </span>
+                              <span className="text-xs font-semibold text-[#5E6E7E]">u.</span>
+                            </span>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
