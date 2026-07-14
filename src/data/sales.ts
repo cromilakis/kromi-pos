@@ -41,6 +41,7 @@ export interface SaleDteRow {
   id: string; folio: number; total: number; sold_at: string; method: string;
   dte_status: string; dte_folio: number | null; dte_timbre: string | null;
   points_redeemed: number; points_discount: number;
+  doc_type: string;
   lines: { name_snapshot: string; price_snapshot: number; qty: number; discount_amount: number }[];
 }
 
@@ -54,7 +55,7 @@ export function useSalesTodayDte(branchId: string | undefined) {
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const { data, error } = await supabase
         .from("sale")
-        .select("id,folio,total,sold_at,method,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
+        .select("id,folio,total,sold_at,method,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,doc_type,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
         .eq("branch_id", branchId!)
         .gte("sold_at", start.toISOString())
         .order("sold_at", { ascending: false })
@@ -64,6 +65,7 @@ export function useSalesTodayDte(branchId: string | undefined) {
         id: s.id, folio: s.folio, total: s.total, sold_at: s.sold_at, method: s.method,
         dte_status: s.dte_status, dte_folio: s.dte_folio, dte_timbre: s.dte_timbre,
         points_redeemed: s.points_redeemed ?? 0, points_discount: s.points_discount ?? 0,
+        doc_type: s.doc_type ?? "boleta",
         lines: s.sale_line ?? [],
       }));
     },
@@ -87,6 +89,7 @@ export interface Sale {
   discount_amount: number;
   points_redeemed: number;
   points_discount: number;
+  doc_type: string;
 }
 
 /** Cobra la venta de forma atómica vía RPC. Descuentos (línea y total) los recalcula
@@ -101,6 +104,7 @@ export async function chargeSale(args: {
   p_total_disc?: DiscountInput;
   p_discount_id?: string | null;
   p_points_redeem?: number;
+  p_doc_type?: "boleta" | "factura";
 }): Promise<Sale> {
   const { data, error } = await supabase.rpc("charge_sale", {
     p_branch: args.p_branch,
@@ -112,6 +116,7 @@ export async function chargeSale(args: {
     p_total_disc: args.p_total_disc ?? null,
     p_discount_id: args.p_discount_id ?? null,
     p_points_redeem: args.p_points_redeem ?? 0,
+    p_doc_type: args.p_doc_type ?? "boleta",
   });
   if (error) throw error;
   return data;
