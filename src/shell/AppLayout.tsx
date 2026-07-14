@@ -6,6 +6,9 @@ import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
 import { BranchGate } from "@/session/BranchGate";
 import { Button } from "@/components/ui/button";
+import { useBusiness } from "@/data/business";
+import { useIdleLock } from "@/session/useIdleLock";
+import { LockScreen } from "./LockScreen";
 
 const ROLE_LABEL: Record<Role, string> = {
   admin: "Administrador/a",
@@ -56,6 +59,9 @@ export function AppLayout() {
   const isVenta = location.pathname === "/venta";
   useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
 
+  const { data: business } = useBusiness(profile?.business_id);
+  const { locked, unlock } = useIdleLock(business?.lock_timeout_min ?? 0);
+
   if (profileError) {
     return (
       <div className="min-h-full grid place-items-center p-6">
@@ -80,6 +86,7 @@ export function AppLayout() {
 
   return (
     <div className="h-full flex">
+      {locked && <LockScreen onUnlock={unlock} />}
       <aside className={`shrink-0 bg-white border-r border-[#E1E5EE] flex flex-col ${collapsed ? "w-[68px] p-2" : "w-[236px] p-3.5"}`}>
         <div className={`pb-3 ${collapsed ? "flex justify-center" : "flex items-center gap-[11px] px-2"}`}>
           <div className="size-[38px] rounded-xl shrink-0 overflow-hidden shadow-[0_3px_10px_rgba(34,196,99,.28)]">
