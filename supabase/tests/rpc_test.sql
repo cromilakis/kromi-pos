@@ -270,5 +270,119 @@ begin
   end if;
 end $$;
 
+-- charge_sale: p_discount_id (descuento predefinido, Task 2.2) aplica el %
+-- sin exigir admin y persiste sale.discount_id; descuento inactivo, vencido
+-- o de otro negocio es rechazado. Un descuento de LÍNEA ad-hoc sigue
+-- exigiendo admin aunque venga p_discount_id.
+do $$
+declare
+  v_product       uuid := 'eeeeeeee-0000-0000-0000-000000000004';
+  v_discount      uuid := 'd0000000-0000-0000-0000-000000000001';
+  v_disc_inactive uuid := 'd0000000-0000-0000-0000-000000000002';
+  v_disc_expired  uuid := 'd0000000-0000-0000-0000-000000000003';
+  v_disc_other    uuid := 'd0000000-0000-0000-0000-000000000004';
+  v_other_biz     uuid := 'a0000000-0000-0000-0000-000000000099';
+  v_sale          public.sale;
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Ficus','dddddddd-0000-0000-0000-000000000001',10000);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',20);
+
+  insert into public.discount (id, business_id, name, percent, active) values
+    (v_discount,'aaaaaaaa-0000-0000-0000-000000000001','10%',10,true);
+  insert into public.discount (id, business_id, name, percent, active) values
+    (v_disc_inactive,'aaaaaaaa-0000-0000-0000-000000000001','inactivo',10,false);
+  insert into public.discount (id, business_id, name, percent, active, valid_until) values
+    (v_disc_expired,'aaaaaaaa-0000-0000-0000-000000000001','vencido',10,true,current_date - 1);
+  insert into public.business (id, name, rut) values (v_other_biz,'Otro','2-7');
+  insert into public.discount (id, business_id, name, percent, active) values
+    (v_disc_other,v_other_biz,'otro negocio',10,true);
+
+  -- (a) descuento activo 10% aplica sin exigir admin; sale.discount_id queda seteado.
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+    ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+    'efectivo', 9000, null, null, v_discount);
+
+  if v_sale.discount_id is distinct from v_discount then
+    raise exception 'sale.discount_id no quedo seteado: %', v_sale.discount_id;
+  end if;
+  if v_sale.total <> 9000 then raise exception 'total con descuento 10%% incorrecto (esperado 9000): %', v_sale.total; end if;
+
+  -- (b) descuento inactivo -> excepción.
+  begin
+    perform public.charge_sale(
+      'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+      ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+      'efectivo', 10000, null, null, v_disc_inactive);
+    raise exception 'FALLO: descuento inactivo no fue rechazado';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%no está activo o no está vigente%' then
+      raise exception 'error inesperado (inactivo): %', sqlerrm;
+    end if;
+  end;
+
+  -- (c) descuento vencido -> excepción.
+  begin
+    perform public.charge_sale(
+      'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+      ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+      'efectivo', 10000, null, null, v_disc_expired);
+    raise exception 'FALLO: descuento vencido no fue rechazado';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%no está activo o no está vigente%' then
+      raise exception 'error inesperado (vencido): %', sqlerrm;
+    end if;
+  end;
+
+  -- (d) descuento de otro negocio -> excepción.
+  begin
+    perform public.charge_sale(
+      'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+      ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+      'efectivo', 10000, null, null, v_disc_other);
+    raise exception 'FALLO: descuento de otro negocio no fue rechazado';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%no está activo o no está vigente%' then
+      raise exception 'error inesperado (otro negocio): %', sqlerrm;
+    end if;
+  end;
+
+end $$;
+
+-- (e) descuento de LÍNEA ad-hoc junto con p_discount_id sigue exigiendo admin.
+-- `is_pos_admin()` depende de auth.uid(); como postgres (sin JWT) devuelve
+-- null (no false), así que este caso se prueba simulando un cajero real
+-- autenticado (mismo patrón que supabase/tests/rls_test.sql).
+insert into auth.users (id, email, raw_user_meta_data) values
+  ('e4444444-0000-0000-0000-000000000004','ud@pos.kromi.local',
+    jsonb_build_object('business_id','aaaaaaaa-0000-0000-0000-000000000001','name','UD','rut','4-6','role','cajero'));
+
+set local role authenticated;
+select set_config('request.jwt.claims',
+  json_build_object('sub','e4444444-0000-0000-0000-000000000004','role','authenticated')::text, true);
+
+do $$
+begin
+  begin
+    perform public.charge_sale(
+      'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+      ('[{"product_id":"eeeeeeee-0000-0000-0000-000000000004","qty":1,"disc_kind":"pct","disc_value":5}]')::jsonb,
+      'efectivo', 10000, null, null, 'd0000000-0000-0000-0000-000000000001');
+    raise exception 'FALLO: descuento de linea + p_discount_id no exigio admin';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%los descuentos requieren rol administrador%' then
+      raise exception 'error inesperado (linea+discount_id): %', sqlerrm;
+    end if;
+  end;
+end $$;
+
+reset role;
+
 \echo 'rpc_test (folios+caja) OK'
 rollback;
