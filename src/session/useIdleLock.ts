@@ -50,11 +50,14 @@ export function useIdleLock(timeoutMin: number): { locked: boolean; unlock: () =
     }
 
     armTimer();
-    for (const ev of ACTIVITY_EVENTS) window.addEventListener(ev, onActivity, { passive: true });
+    // Capture: el scroll dentro de contenedores internos (p.ej. <main className="overflow-auto">
+    // de AppLayout) no burbujea hasta window, así que hay que escucharlo en fase de captura
+    // para detectar la actividad desde cualquier contenedor anidado.
+    for (const ev of ACTIVITY_EVENTS) window.addEventListener(ev, onActivity, { capture: true, passive: true });
 
     return () => {
       clearTimer();
-      for (const ev of ACTIVITY_EVENTS) window.removeEventListener(ev, onActivity);
+      for (const ev of ACTIVITY_EVENTS) window.removeEventListener(ev, onActivity, true);
     };
   }, [timeoutMin]);
 

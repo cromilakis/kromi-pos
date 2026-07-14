@@ -74,6 +74,7 @@ export function BusinessSettings() {
       });
       toast.success("Datos del negocio actualizados.");
       qc.invalidateQueries({ queryKey: ["business", businessId] });
+      qc.invalidateQueries({ queryKey: ["business-branding", businessId] });
     } catch (e) {
       notifyError(`No se pudo guardar.`, e instanceof Error ? e.message : e);
     } finally {

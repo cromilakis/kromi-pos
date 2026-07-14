@@ -17,7 +17,7 @@ export function useProfileQuery(userId: string | undefined) {
 
 export function useBusinessQuery(businessId: string | undefined) {
   return useQuery({
-    queryKey: ["business", businessId],
+    queryKey: ["business-branding", businessId],
     enabled: !!businessId,
     queryFn: async (): Promise<Business> => {
       const { data, error } = await supabase
