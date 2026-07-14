@@ -9,7 +9,9 @@ import { useBusiness, businessToNegocio } from "@/data/business";
 import { getPrinterName } from "@/lib/printerConfig";
 import { printReceipt } from "@/lib/print";
 import { notifyError, errMsg } from "@/lib/errors";
-import { Eye, Printer, Undo2 } from "lucide-react";
+import { getDtePdf } from "@/data/sii";
+import { savePdfBase64 } from "@/lib/fileSave";
+import { Eye, Printer, Undo2, FileText } from "lucide-react";
 
 function todayLocalIso(): string {
   const d = new Date();
@@ -145,6 +147,25 @@ export function HistorialScreen() {
     nav("/notas-credito/nueva", { state: { folio: row.dte_folio } });
   }
 
+  const [pdfBusy, setPdfBusy] = useState<string | null>(null);
+
+  async function descargarPdf(row: SaleHistoryRow) {
+    setPdfBusy(row.id);
+    try {
+      const r = await getDtePdf(row.id);
+      if (r.status === "ok" && r.pdf_base64) {
+        const nombre = `${row.doc_type === "factura" ? "factura" : "boleta"}-${row.dte_folio}.pdf`;
+        await savePdfBase64(r.pdf_base64, nombre);
+      } else {
+        notifyError("No se pudo descargar el PDF.", r.message);
+      }
+    } catch (e) {
+      notifyError("No se pudo descargar el PDF.", errMsg(e));
+    } finally {
+      setPdfBusy(null);
+    }
+  }
+
   return (
     <div className="relative flex h-full flex-col px-[32px] py-[28px]">
       <div className="mb-4">
@@ -250,6 +271,15 @@ export function HistorialScreen() {
                     style={{ background: "#E6F7EE", color: "var(--brand)" }}
                   >
                     <Printer className="size-[18px]" strokeWidth={2} />
+                  </button>
+                  <button
+                    onClick={() => descargarPdf(r)}
+                    disabled={!r.dte_folio || pdfBusy === r.id}
+                    title={!r.dte_folio ? "La boleta no está emitida en el SII" : "Descargar PDF"}
+                    className="flex size-9 items-center justify-center rounded-lg hover:brightness-95 disabled:opacity-40"
+                    style={{ background: "#EEF2F7", color: "#475569" }}
+                  >
+                    <FileText className="size-[18px]" strokeWidth={2} />
                   </button>
                   <button
                     onClick={() => emitirNotaCredito(r)}

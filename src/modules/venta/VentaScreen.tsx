@@ -12,7 +12,8 @@ import { useBusiness, businessToNegocio } from "@/data/business";
 import { useActiveDiscounts } from "@/data/discounts";
 import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data/heldSales";
 import { chargeSale, cartToLines, useSalesTodayDte, type SaleDteRow } from "@/data/sales";
-import { issueReceipt } from "@/data/sii";
+import { issueReceipt, getDtePdf } from "@/data/sii";
+import { savePdfBase64 } from "@/lib/fileSave";
 import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "@/lib/money";
 import { errMsg, notifyError } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
@@ -98,6 +99,7 @@ export function VentaScreen() {
   const [boletasOpen, setBoletasOpen] = useState(false);
   const { data: salesDte } = useSalesTodayDte(branchId);
   const [dteBusy, setDteBusy] = useState<string | null>(null);
+  const [pdfBusy, setPdfBusy] = useState<string | null>(null);
   const [mode, setMode] = useState<"catalogo" | "lectura">("catalogo");
   const [scanQty, setScanQty] = useState(1);
   const scanRef = useRef<HTMLInputElement>(null);
@@ -315,6 +317,23 @@ export function VentaScreen() {
       }
     } finally {
       setDteBusy(null);
+    }
+  }
+
+  async function descargarPdf(h: SaleDteRow) {
+    setPdfBusy(h.id);
+    try {
+      const r = await getDtePdf(h.id);
+      if (r.status === "ok" && r.pdf_base64) {
+        const nombre = `${h.doc_type === "factura" ? "factura" : "boleta"}-${h.dte_folio}.pdf`;
+        await savePdfBase64(r.pdf_base64, nombre);
+      } else {
+        notifyError("No se pudo descargar el PDF.", r.message);
+      }
+    } catch (e) {
+      notifyError("No se pudo descargar el PDF.", errMsg(e));
+    } finally {
+      setPdfBusy(null);
     }
   }
 
@@ -799,9 +818,18 @@ export function VentaScreen() {
                     </div>
                     <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold" style={{ background: badge.bg, color: badge.fg }}>{badge.label}</span>
                     {emitida ? (
-                      <button onClick={() => reimprimirBoleta(h)} className="rounded-[10px] border border-[#E1E5EE] bg-white px-3.5 py-2 text-[13px] font-bold text-[#5a6b7e]">
-                        Reimprimir
-                      </button>
+                      <>
+                        <button onClick={() => reimprimirBoleta(h)} className="rounded-[10px] border border-[#E1E5EE] bg-white px-3.5 py-2 text-[13px] font-bold text-[#5a6b7e]">
+                          Reimprimir
+                        </button>
+                        <button
+                          onClick={() => descargarPdf(h)}
+                          disabled={pdfBusy === h.id}
+                          className="rounded-[10px] border border-[#E1E5EE] bg-white px-3.5 py-2 text-[13px] font-bold text-[#475569] disabled:opacity-60"
+                        >
+                          {pdfBusy === h.id ? "Descargando…" : "PDF"}
+                        </button>
+                      </>
                     ) : (
                       <button onClick={() => reintentarBoleta(h)} disabled={dteBusy === h.id} className="rounded-[10px] px-3.5 py-2 text-[13px] font-bold text-white disabled:opacity-60" style={{ background: "var(--brand)" }}>
                         {dteBusy === h.id ? "Emitiendo…" : "Reintentar"}
