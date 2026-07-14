@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { notifyError } from "@/lib/errors";
 import { Link, useNavigate } from "react-router-dom";
-import { ShoppingCart, AlertTriangle, PackageSearch } from "lucide-react";
+import { PackageSearch } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
@@ -114,30 +114,43 @@ export function InicioScreen() {
           </div>
         </div>
 
-        {/* caja + CTA venta */}
-        <div className="mb-[18px] flex flex-wrap items-start gap-[18px]">
-          <div className="min-w-[280px] flex-1 basis-[340px]">
-            {openSession ? (
-              <Link
-                to="/venta"
-                className="flex items-center gap-[13px] rounded-[18px] p-5 text-white no-underline"
-                style={{ background: "var(--brand)" }}
-              >
-                <span className="flex size-[42px] shrink-0 items-center justify-center rounded-[12px] bg-white/20">
-                  <ShoppingCart className="size-[20px]" strokeWidth={2} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[15px] font-extrabold">Nueva venta</div>
-                  <div className="text-[12.5px] text-white/80">Caja abierta</div>
+        {/* fila dividida: stock bajo (o abrir caja) + actividad reciente */}
+        <div className="mb-[18px] grid grid-cols-1 gap-[18px] lg:grid-cols-2">
+          {/* Columna izquierda: abrir caja si no hay sesión; con caja abierta, stock bajo (admin/kromi) */}
+          {!openSession ? (
+            <AbrirCajaCard />
+          ) : showCritical ? (
+            <div className="rounded-[18px] border border-[#E1E5EE] bg-white p-5">
+              <div className="mb-1.5 flex items-center justify-between">
+                <div className="text-[16px] font-black text-[#0F2A1B]">Stock bajo</div>
+                <Link to="/stock" className="text-[13px] font-bold no-underline" style={{ color: "var(--brand)" }}>
+                  Ir a Stock →
+                </Link>
+              </div>
+              {!critical || critical.length === 0 ? (
+                <div className="py-[18px] text-[13.5px] text-[#5E6E7E]">Sin productos bajo el mínimo. 👍</div>
+              ) : (
+                <div>
+                  {critical.map((r, i) => (
+                    <div key={`${r.name}-${i}`} className="flex items-center gap-[13px] border-b border-[#F0F2F7] py-[11px] last:border-0">
+                      <span className="flex size-[36px] shrink-0 items-center justify-center rounded-[10px] bg-[#F0F2F7] text-[#556A7C]">
+                        <PackageSearch className="size-[18px]" strokeWidth={1.8} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[14px] font-bold text-[#0F2A1B]">{r.name}</div>
+                      </div>
+                      <span className="min-w-[74px] whitespace-nowrap text-right text-[14px] font-black text-[#0F2A1B]">
+                        {r.stock} / {r.min_stock}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <span className="whitespace-nowrap text-[13px] font-bold">Ir a Venta →</span>
-              </Link>
-            ) : (
-              <AbrirCajaCard />
-            )}
-          </div>
+              )}
+            </div>
+          ) : null}
 
-          <div className="min-w-[280px] flex-[1.4] basis-[420px] rounded-[18px] border border-[#E1E5EE] bg-white p-5">
+          {/* Columna derecha: actividad reciente. Si no hay columna izquierda (cajero con caja), ocupa el ancho. */}
+          <div className={`rounded-[18px] border border-[#E1E5EE] bg-white p-5 ${openSession && !showCritical ? "lg:col-span-2" : ""}`}>
             <div className="mb-2 text-[16px] font-black text-[#0F2A1B]">Actividad reciente</div>
             {!recent || recent.length === 0 ? (
               <div className="py-[18px] text-[13.5px] text-[#5E6E7E]">Todavía no hay ventas hoy.</div>
@@ -167,55 +180,6 @@ export function InicioScreen() {
             )}
           </div>
         </div>
-
-        {/* stock crítico (solo admin/kromi) */}
-        {showCritical && critical && critical.length > 0 && (
-          <Link
-            to="/stock"
-            className="mb-[18px] flex w-full items-center gap-[13px] rounded-[18px] border border-[#F5C2C2] bg-[#FDECEC] p-4 text-left no-underline"
-          >
-            <span className="flex size-[38px] shrink-0 items-center justify-center rounded-[11px] bg-[#F8D2D2] text-[#B3261E]">
-              <AlertTriangle className="size-[19px]" strokeWidth={2} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="text-[15px] font-extrabold text-[#9a2533]">
-                {critical.length} {critical.length === 1 ? "producto" : "productos"} con stock crítico
-              </div>
-              <div className="mt-px text-[12.5px] text-[#b1607a]">Revisa el stock crítico y genera la solicitud de reposición.</div>
-            </div>
-            <span className="whitespace-nowrap text-[13px] font-extrabold text-[#9a2533]">Ir a Stock →</span>
-          </Link>
-        )}
-
-        {showCritical && (
-          <div className="rounded-[18px] border border-[#E1E5EE] bg-white p-5">
-            <div className="mb-1.5 flex items-center justify-between">
-              <div className="text-[16px] font-black text-[#0F2A1B]">Stock bajo</div>
-              <Link to="/stock" className="text-[13px] font-bold no-underline" style={{ color: "var(--brand)" }}>
-                Ir a Stock →
-              </Link>
-            </div>
-            {!critical || critical.length === 0 ? (
-              <div className="py-[18px] text-[13.5px] text-[#5E6E7E]">Sin productos bajo el mínimo. 👍</div>
-            ) : (
-              <div>
-                {critical.map((r, i) => (
-                  <div key={`${r.name}-${i}`} className="flex items-center gap-[13px] border-b border-[#F0F2F7] py-[11px] last:border-0">
-                    <span className="flex size-[36px] shrink-0 items-center justify-center rounded-[10px] bg-[#F0F2F7] text-[#556A7C]">
-                      <PackageSearch className="size-[18px]" strokeWidth={1.8} />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[14px] font-bold text-[#0F2A1B]">{r.name}</div>
-                    </div>
-                    <span className="min-w-[74px] whitespace-nowrap text-right text-[14px] font-black text-[#0F2A1B]">
-                      {r.stock} / {r.min_stock}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );
