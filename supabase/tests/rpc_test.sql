@@ -463,4 +463,154 @@ begin
   end if;
 end $$;
 
+-- _register_sale: acumulación configurable (business.points_clp_per_point /
+-- points_multiplier) reemplaza el floor(total/1000) hardcodeado.
+do $$
+declare
+  v_session uuid := 'f0000000-0000-0000-0000-000000000001';
+  v_product uuid := '77777777-0000-0000-0000-000000000001';
+  v_cust    uuid := 'c0000000-0000-0000-0000-000000000002';
+  v_sale    public.sale;
+  v_points  int;
+begin
+  update public.business set points_clp_per_point = 100, points_multiplier = 2
+    where id = 'aaaaaaaa-0000-0000-0000-000000000001';
+
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Regadera','dddddddd-0000-0000-0000-000000000001',10000);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',5);
+  insert into public.customer (id, business_id, name) values
+    (v_cust,'aaaaaaaa-0000-0000-0000-000000000001','Puntos Config');
+
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+    ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+    'efectivo', 10000, v_cust);
+
+  -- floor(10000 * 2 / 100) = 200
+  if v_sale.points <> 200 then raise exception 'acumulacion configurable: puntos en venta incorrectos: %', v_sale.points; end if;
+  select points into v_points from public.customer where id = v_cust;
+  if v_points <> 200 then raise exception 'acumulacion configurable: puntos cliente incorrectos: %', v_points; end if;
+
+  -- Restaura la config por defecto para no afectar los tests siguientes.
+  update public.business set points_clp_per_point = 1000, points_multiplier = 1
+    where id = 'aaaaaaaa-0000-0000-0000-000000000001';
+end $$;
+
+-- charge_sale: canje de puntos válido resta puntos del cliente, baja el
+-- total de la venta y persiste points_redeemed/points_discount.
+do $$
+declare
+  v_session uuid := 'f0000000-0000-0000-0000-000000000001';
+  v_product uuid := '77777777-0000-0000-0000-000000000002';
+  v_cust    uuid := 'c0000000-0000-0000-0000-000000000003';
+  v_sale    public.sale;
+  v_points  int;
+begin
+  update public.business set points_redeem_clp_per_point = 50
+    where id = 'aaaaaaaa-0000-0000-0000-000000000001';
+
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Pala','dddddddd-0000-0000-0000-000000000001',10000);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',5);
+  insert into public.customer (id, business_id, name, points) values
+    (v_cust,'aaaaaaaa-0000-0000-0000-000000000001','Canje Valido',100);
+
+  -- bruto=10000; canje de 3 puntos * 50 clp/punto = 150 (no supera el bruto).
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+    ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+    'efectivo', 10000, v_cust, null, null, 3);
+
+  if v_sale.total <> 9850 then raise exception 'canje: total incorrecto (esperado 9850): %', v_sale.total; end if;
+  if v_sale.points_redeemed <> 3 then raise exception 'canje: points_redeemed incorrecto: %', v_sale.points_redeemed; end if;
+  if v_sale.points_discount <> 150 then raise exception 'canje: points_discount incorrecto: %', v_sale.points_discount; end if;
+
+  -- Puntos ganados sobre el total ya descontado: floor(9850*1/1000) = 9.
+  -- Neto esperado: 100 (inicial) - 3 (canjeados) + 9 (ganados) = 106.
+  select points into v_points from public.customer where id = v_cust;
+  if v_points <> 106 then raise exception 'canje: puntos netos del cliente incorrectos (esperado 106): %', v_points; end if;
+end $$;
+
+-- charge_sale: canje sin cliente identificado -> excepción.
+do $$
+declare
+  v_session uuid := 'f0000000-0000-0000-0000-000000000001';
+  v_product uuid := '77777777-0000-0000-0000-000000000003';
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Rastrillo','dddddddd-0000-0000-0000-000000000001',5000);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',5);
+
+  begin
+    perform public.charge_sale(
+      'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+      ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+      'efectivo', 5000, null, null, null, 2);
+    raise exception 'FALLO: canje sin cliente no fue rechazado';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%requiere un cliente identificado%' then
+      raise exception 'error inesperado (canje sin cliente): %', sqlerrm;
+    end if;
+  end;
+end $$;
+
+-- charge_sale: canje con saldo de puntos insuficiente -> excepción.
+do $$
+declare
+  v_session uuid := 'f0000000-0000-0000-0000-000000000001';
+  v_product uuid := '77777777-0000-0000-0000-000000000004';
+  v_cust    uuid := 'c0000000-0000-0000-0000-000000000004';
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Manguera','dddddddd-0000-0000-0000-000000000001',5000);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',5);
+  insert into public.customer (id, business_id, name, points) values
+    (v_cust,'aaaaaaaa-0000-0000-0000-000000000001','Sin Saldo',1);
+
+  begin
+    perform public.charge_sale(
+      'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+      ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+      'efectivo', 5000, v_cust, null, null, 5);
+    raise exception 'FALLO: canje con saldo insuficiente no fue rechazado';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%no tiene puntos suficientes%' then
+      raise exception 'error inesperado (saldo insuficiente): %', sqlerrm;
+    end if;
+  end;
+end $$;
+
+-- charge_sale: canje de puntos + p_discount_id -> excepción (exclusión mutua).
+do $$
+declare
+  v_session uuid := 'f0000000-0000-0000-0000-000000000001';
+  v_product uuid := '77777777-0000-0000-0000-000000000005';
+  v_cust    uuid := 'c0000000-0000-0000-0000-000000000002';
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Tijera','dddddddd-0000-0000-0000-000000000001',5000);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',5);
+
+  begin
+    perform public.charge_sale(
+      'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+      ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+      'efectivo', 5000, v_cust, null, 'd0000000-0000-0000-0000-000000000001', 2);
+    raise exception 'FALLO: canje + descuento predefinido no fue rechazado';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%no se puede combinar con otro descuento%' then
+      raise exception 'error inesperado (canje + discount_id): %', sqlerrm;
+    end if;
+  end;
+end $$;
+
 rollback;
