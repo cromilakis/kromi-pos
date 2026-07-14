@@ -26,6 +26,12 @@ function dteBadge(row: SaleHistoryRow): { label: string; bg: string; fg: string 
   return { label: "Pendiente", bg: "#FBF1E0", fg: "#9A6F12" };
 }
 
+/** Tipo de documento (Boleta o Factura). */
+function docTypeBadge(row: SaleHistoryRow): { label: string; bg: string; fg: string } {
+  if (row.doc_type === "factura") return { label: "Factura", bg: "#FEE8E8", fg: "#8B3A3A" };
+  return { label: "Boleta", bg: "#F0F9F7", fg: "#1B5E59" };
+}
+
 /** Identificador visible de la venta: folio SII (#dte_folio) o marca de pendiente. */
 function folioSii(row: { dte_folio: number | null }): string {
   return row.dte_folio ? `#${row.dte_folio}` : "— pendiente";
@@ -200,6 +206,7 @@ export function HistorialScreen() {
         <div className="flex flex-col gap-2.5">
           {rows.map((r) => {
             const badge = dteBadge(r);
+            const typeBadge = docTypeBadge(r);
             return (
               <div key={r.id} className="flex items-center gap-4 rounded-2xl border border-[#E1E5EE] bg-white px-[18px] py-4">
                 <div className="min-w-0 flex-1">
@@ -208,6 +215,7 @@ export function HistorialScreen() {
                     {new Date(r.sold_at).toLocaleString("es-CL")} · {r.customer_name ?? "Sin cliente"} · {r.method}
                   </div>
                 </div>
+                <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold" style={{ background: typeBadge.bg, color: typeBadge.fg }}>{typeBadge.label}</span>
                 <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold" style={{ background: badge.bg, color: badge.fg }}>{badge.label}</span>
                 <div className="text-base font-black text-[#0F2A1B]">{fmtCLP(r.total)}</div>
                 <div className="flex flex-none items-center gap-1.5">
