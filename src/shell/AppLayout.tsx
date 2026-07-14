@@ -23,12 +23,24 @@ const NAV_ICON: Record<string, LucideIcon> = {
   "Notas de crédito": FileMinus,
 };
 
+/** Color propio de cada ícono del menú, para que la navegación sea colorida. */
+const NAV_COLOR: Record<string, string> = {
+  Inicio: "#2563EB",           // azul
+  Venta: "#16A34A",            // verde
+  Cotizaciones: "#7C3AED",     // violeta
+  Stock: "#D97706",            // ámbar
+  Clientes: "#0891B2",         // cyan
+  Administración: "#DB2777",   // rosa
+  "Notas de crédito": "#DC2626", // rojo
+};
+
 function initialsOf(name: string): string {
   return name.split(" ").slice(0, 2).map((w) => w[0]).filter(Boolean).join("").toUpperCase();
 }
 
 function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   const Icon = NAV_ICON[item.label] ?? Home;
+  const iconColor = NAV_COLOR[item.label] ?? "#2A3A2E";
   return (
     <NavLink to={item.to} end={item.to === "/"} title={collapsed ? item.label : undefined}>
       {({ isActive }) => (
@@ -39,7 +51,7 @@ function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
             background: isActive ? "color-mix(in srgb, var(--brand) 14%, transparent)" : "transparent",
           }}
         >
-          <Icon className="size-[18px] shrink-0" strokeWidth={1.8} />
+          <Icon className="size-[18px] shrink-0" strokeWidth={1.9} style={{ color: iconColor }} />
           {!collapsed && <span className="truncate">{item.label}</span>}
         </span>
       )}
@@ -125,7 +137,7 @@ export function AppLayout() {
                     background: adminActive ? "color-mix(in srgb, var(--brand) 14%, transparent)" : "transparent",
                   }}
                 >
-                  <Settings className="size-[18px] shrink-0" strokeWidth={1.8} />
+                  <Settings className="size-[18px] shrink-0" strokeWidth={1.9} style={{ color: NAV_COLOR["Administración"] }} />
                   {!collapsed && <span className="truncate">{adminItem.label}</span>}
                 </span>
               </NavLink>
