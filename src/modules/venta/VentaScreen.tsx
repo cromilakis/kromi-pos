@@ -342,7 +342,7 @@ export function VentaScreen() {
     }
   }
 
-  async function handleConfirmPay(method: PayMethod, recv: number, discountId: string | null) {
+  async function handleConfirmPay(method: PayMethod, recv: number, discountId: string | null, pointsRedeem = 0) {
     if (!branchId || !openSession) return;
     setBusy(true);
     try {
@@ -354,6 +354,7 @@ export function VentaScreen() {
         p_recv: recv,
         p_customer: customerId,
         p_discount_id: discountId,
+        p_points_redeem: pointsRedeem,
       });
 
       // Venta confirmada en BD: limpiar carrito, refrescar datos e imprimir la boleta.
@@ -688,7 +689,16 @@ export function VentaScreen() {
         <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} />
       )}
 
-      <PayDialog open={payOpen} total={totals.total} busy={busy} discounts={activeDiscounts ?? []} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />
+      <PayDialog
+        open={payOpen}
+        total={totals.total}
+        busy={busy}
+        discounts={activeDiscounts ?? []}
+        customerPoints={selectedCustomer?.points ?? 0}
+        pointsRedeemRate={business?.points_redeem_clp_per_point ?? 1}
+        onClose={() => setPayOpen(false)}
+        onConfirm={handleConfirmPay}
+      />
 
       <CustomerPickerDialog
         open={pickerOpen}

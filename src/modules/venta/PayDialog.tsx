@@ -9,29 +9,35 @@ interface PayDialogProps {
   total: number;
   busy: boolean;
   discounts: DiscountRow[];
+  customerPoints?: number;
+  pointsRedeemRate?: number;
   onClose: () => void;
-  onConfirm: (method: PayMethod, recv: number, discountId: string | null) => void;
+  onConfirm: (method: PayMethod, recv: number, discountId: string | null, pointsRedeem: number) => void;
 }
 
-/** Diálogo de cobro: método, descuento predefinido, efectivo recibido y vuelto. Clona el popup de cobro del prototipo. */
-export function PayDialog({ open, total, busy, discounts, onClose, onConfirm }: PayDialogProps) {
+/** Diálogo de cobro: método, descuento predefinido, canje de puntos, efectivo recibido y vuelto. Clona el popup de cobro del prototipo. */
+export function PayDialog({ open, total, busy, discounts, customerPoints = 0, pointsRedeemRate = 1, onClose, onConfirm }: PayDialogProps) {
   const [method, setMethod] = useState<PayMethod>("tarjeta");
   const [cashStr, setCashStr] = useState("");
   const [discountId, setDiscountId] = useState<string | null>(null);
+  const [pointsRedeem, setPointsRedeem] = useState(0);
 
   useEffect(() => {
     if (open) {
       setMethod("tarjeta");
       setCashStr("");
       setDiscountId(null);
+      setPointsRedeem(0);
     }
   }, [open]);
 
   if (!open) return null;
 
-  const selected = discounts.find((d) => d.id === discountId) ?? null;
+  const selected = pointsRedeem > 0 ? null : (discounts.find((d) => d.id === discountId) ?? null);
   const discAmount = selected ? resolveDiscount(total, "pct", selected.percent) : 0;
-  const effectiveTotal = total - discAmount;
+  const pointsDiscount = pointsRedeem > 0 ? Math.min(total, pointsRedeem * pointsRedeemRate) : 0;
+  const effectiveTotal = total - discAmount - pointsDiscount;
+  const maxPointsRedeem = Math.max(0, Math.min(customerPoints, Math.ceil(total / pointsRedeemRate)));
 
   const recv = method === "efectivo" ? Number(cashStr) || 0 : effectiveTotal;
   const change = recv - effectiveTotal;
@@ -63,6 +69,12 @@ export function PayDialog({ open, total, busy, discounts, onClose, onConfirm }: 
               <span>-{fmtCLP(discAmount)}</span>
             </div>
           )}
+          {pointsDiscount > 0 && (
+            <div className="mb-2 flex items-baseline justify-between px-1 text-[13px] font-bold text-[#D02E2E]">
+              <span>Canje de puntos ({pointsRedeem} pts)</span>
+              <span>-{fmtCLP(pointsDiscount)}</span>
+            </div>
+          )}
           <div className="flex items-baseline justify-between rounded-2xl border border-[#E1E5EE] bg-[#F6F7FB] px-4 py-3">
             <span className="text-sm font-semibold text-[#556A7C]">Total a cobrar</span>
             <span className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(effectiveTotal)}</span>
@@ -76,7 +88,8 @@ export function PayDialog({ open, total, busy, discounts, onClose, onConfirm }: 
               <select
                 value={discountId ?? ""}
                 onChange={(e) => setDiscountId(e.target.value || null)}
-                className="w-full rounded-xl border border-[#E1E5EE] bg-white px-3 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none"
+                disabled={pointsRedeem > 0}
+                className="w-full rounded-xl border border-[#E1E5EE] bg-white px-3 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none disabled:opacity-50"
               >
                 <option value="">Sin descuento</option>
                 {discounts.map((d) => (
@@ -85,6 +98,36 @@ export function PayDialog({ open, total, busy, discounts, onClose, onConfirm }: 
                   </option>
                 ))}
               </select>
+            </div>
+          )}
+          {customerPoints > 0 && (
+            <div className="mb-[18px] px-6">
+              <label className="mb-1 block text-[11px] font-semibold text-[#556A7C]">
+                Canjear puntos (disponibles: {customerPoints})
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={pointsRedeem === 0 ? "" : String(pointsRedeem)}
+                  disabled={!!discountId}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "");
+                    const n = digits === "" ? 0 : Math.min(maxPointsRedeem, Number(digits));
+                    setPointsRedeem(n);
+                  }}
+                  placeholder="0"
+                  className="w-full rounded-xl border border-[#E1E5EE] bg-white px-3 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setPointsRedeem(maxPointsRedeem)}
+                  disabled={!!discountId || maxPointsRedeem <= 0}
+                  className="shrink-0 rounded-xl border border-[#E1E5EE] bg-white px-3 py-2.5 text-[12px] font-bold text-[#2A3A2E] disabled:opacity-50"
+                >
+                  Usar todos
+                </button>
+              </div>
             </div>
           )}
           <div className="mb-[18px] flex gap-2.5 px-6 pt-1">
@@ -157,7 +200,7 @@ export function PayDialog({ open, total, busy, discounts, onClose, onConfirm }: 
               Cancelar
             </button>
             <button
-              onClick={() => onConfirm(method, recv, discountId)}
+              onClick={() => onConfirm(method, recv, discountId, pointsRedeem)}
               disabled={busy || !canConfirm}
               className="flex-1 rounded-2xl py-3.5 text-[15px] font-bold text-white disabled:opacity-50"
               style={{ background: "var(--brand)" }}
