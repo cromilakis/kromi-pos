@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -36,6 +36,7 @@ type Modo = "anular" | "devolver";
 
 export function NuevaNotaCredito() {
   const navigate = useNavigate();
+  const location = useLocation();
   const qc = useQueryClient();
   const { profile } = useAuth();
   const { branch, register } = useWork();
@@ -55,14 +56,25 @@ export function NuevaNotaCredito() {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const preloadedFolio = (location.state as { folio?: number } | null)?.folio;
+  const preloadDone = useRef(false);
+
+  useEffect(() => {
+    if (preloadDone.current || !preloadedFolio || !branchId) return;
+    preloadDone.current = true;
+    setFolioInput(String(preloadedFolio));
+    void handleBuscarFolio(preloadedFolio);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preloadedFolio, branchId]);
+
   const boletaEmitida = foundSale?.dte_status === "emitida" && !!foundSale.dte_folio;
 
   const lineasActivas = modo === "anular" ? lines : lines.filter((l) => l.selected);
   const total = lineasActivas.reduce((s, l) => s + l.qty * l.price, 0);
   const canSave = boletaEmitida && lineasActivas.some((l) => l.qty > 0);
 
-  async function handleBuscarFolio() {
-    const folio = Number(folioInput);
+  async function handleBuscarFolio(folioOverride?: number) {
+    const folio = folioOverride ?? Number(folioInput);
     if (!branchId || !folio) return;
     setSearching(true);
     try {
@@ -198,7 +210,7 @@ export function NuevaNotaCredito() {
               className="flex-1 rounded-[11px] border border-[#E1E5EE] px-3.5 py-2.5 text-sm text-[#0F2A1B] outline-none"
             />
             <button
-              onClick={handleBuscarFolio}
+              onClick={() => handleBuscarFolio()}
               disabled={searching || !folioInput}
               className="rounded-[11px] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
               style={{ background: "var(--brand)" }}

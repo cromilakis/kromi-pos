@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
 import { useSalesHistory, HISTORY_PAGE, type SaleHistoryRow } from "@/data/salesHistory";
 import { CustomerPickerDialog } from "@/modules/venta/CustomerPickerDialog";
 import { fmtCLP } from "@/lib/money";
+import { useBusiness, businessToNegocio } from "@/data/business";
+import { getPrinterName } from "@/lib/printerConfig";
+import { printReceipt } from "@/lib/print";
+import { notifyError, errMsg } from "@/lib/errors";
 
 function todayLocalIso(): string {
   const d = new Date();
@@ -19,12 +24,20 @@ function dteBadge(row: SaleHistoryRow): { label: string; bg: string; fg: string 
   return { label: "Pendiente", bg: "#FBF1E0", fg: "#9A6F12" };
 }
 
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
 /** Historial de ventas de la sucursal: filtros por fecha/cliente/folio y paginación. */
 export function HistorialScreen() {
   const { profile } = useAuth();
   const { branch } = useWork();
+  const nav = useNavigate();
   const businessId = profile?.business_id;
   const branchId = branch?.id;
+  const { data: business } = useBusiness(businessId);
+
+  const [detail, setDetail] = useState<SaleHistoryRow | null>(null);
 
   const today = todayLocalIso();
   const [from, setFrom] = useState(today);
@@ -68,6 +81,35 @@ export function HistorialScreen() {
   }
 
   const canLoadMore = (data?.length ?? 0) >= HISTORY_PAGE;
+
+  async function reimprimirBoleta(row: SaleHistoryRow) {
+    const soldAt = new Date(row.sold_at);
+    const payload = {
+      negocio: businessToNegocio(business, getPrinterName()),
+      folio: row.folio,
+      fecha: `${pad2(soldAt.getDate())}/${pad2(soldAt.getMonth() + 1)}/${soldAt.getFullYear()}`,
+      hora: `${pad2(soldAt.getHours())}:${pad2(soldAt.getMinutes())}`,
+      items: row.lines.map((l) => ({ nombre: l.name_snapshot, qty: l.qty, precio: l.price_snapshot, descuento: l.discount_amount ?? 0 })),
+      neto: row.neto,
+      iva: row.iva,
+      total: row.total,
+      descuento: row.lines.reduce((s, l) => s + (l.discount_amount ?? 0), 0),
+      dte_folio: row.dte_folio ?? undefined,
+      timbre_png: row.dte_timbre ?? null,
+      reimpresion: true,
+      metodo: row.method,
+      open_drawer: false,
+    };
+    try {
+      await printReceipt(payload);
+    } catch (e) {
+      notifyError(`No se pudo imprimir.`, errMsg(e));
+    }
+  }
+
+  function emitirNotaCredito(row: SaleHistoryRow) {
+    nav("/notas-credito/nueva", { state: { folio: row.dte_folio } });
+  }
 
   return (
     <div className="relative flex h-full flex-col px-[32px] py-[28px]">
@@ -155,6 +197,30 @@ export function HistorialScreen() {
                 </div>
                 <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold" style={{ background: badge.bg, color: badge.fg }}>{badge.label}</span>
                 <div className="text-base font-black text-[#0F2A1B]">{fmtCLP(r.total)}</div>
+                <div className="flex flex-none items-center gap-1.5">
+                  <button
+                    onClick={() => setDetail(r)}
+                    className="rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[12.5px] font-bold text-[#5a6b7e]"
+                  >
+                    Detalle
+                  </button>
+                  <button
+                    onClick={() => reimprimirBoleta(r)}
+                    disabled={!r.dte_folio}
+                    title={!r.dte_folio ? "La boleta no está emitida en el SII" : undefined}
+                    className="rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[12.5px] font-bold text-[#5a6b7e] disabled:opacity-40"
+                  >
+                    Reimprimir
+                  </button>
+                  <button
+                    onClick={() => emitirNotaCredito(r)}
+                    disabled={!r.dte_folio}
+                    title={!r.dte_folio ? "La boleta no está emitida en el SII" : undefined}
+                    className="rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[12.5px] font-bold text-[#5a6b7e] disabled:opacity-40"
+                  >
+                    Nota de crédito
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -180,6 +246,57 @@ export function HistorialScreen() {
         onContinueWithout={() => { setCustomerId(null); setCustomerName(null); setPickerOpen(false); }}
         onClose={() => setPickerOpen(false)}
       />
+
+      {detail && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setDetail(null);
+          }}
+        >
+          <div
+            className="w-[480px] max-w-full rounded-[22px] bg-white p-6"
+            onClick={(e) => e.stopPropagation()}
+            style={{ boxShadow: "0 24px 70px rgba(0,0,64,.35)" }}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-[19px] font-black text-[#0F2A1B]">Venta #{detail.folio}</div>
+              <button onClick={() => setDetail(null)} className="text-[13px] font-bold text-[#5a6b7e]">
+                Cerrar
+              </button>
+            </div>
+
+            <div className="mb-3 text-[12.5px] text-[#556A7C]">
+              {new Date(detail.sold_at).toLocaleString("es-CL")} · {detail.customer_name ?? "Sin cliente"} · {detail.method}
+              {detail.dte_folio ? ` · SII ${detail.dte_folio}` : ""}
+            </div>
+
+            <div className="mb-4 flex flex-col gap-2">
+              {detail.lines.map((l, idx) => (
+                <div key={idx} className="flex items-center gap-2.5 rounded-xl border border-[#E1E5EE] px-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13.5px] font-bold text-[#0F2A1B]">{l.name_snapshot}</div>
+                    <div className="text-xs text-[#556A7C]">
+                      {l.qty} × {fmtCLP(l.price_snapshot)}
+                      {l.discount_amount > 0 ? ` · Descuento ${fmtCLP(l.discount_amount)}` : ""}
+                    </div>
+                  </div>
+                  <div className="text-[13.5px] font-black text-[#0F2A1B]">{fmtCLP(l.qty * l.price_snapshot - l.discount_amount)}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-1.5 rounded-xl border border-[#E1E5EE] bg-[#F8FAFC] px-3.5 py-3 text-[13px] font-bold text-[#556A7C]">
+              <div className="flex justify-between"><span>Neto</span><span className="text-[#0F2A1B]">{fmtCLP(detail.neto)}</span></div>
+              <div className="flex justify-between"><span>IVA</span><span className="text-[#0F2A1B]">{fmtCLP(detail.iva)}</span></div>
+              {detail.discount_amount > 0 && (
+                <div className="flex justify-between"><span>Descuento</span><span className="text-[#0F2A1B]">{fmtCLP(detail.discount_amount)}</span></div>
+              )}
+              <div className="flex justify-between text-[15px]"><span>Total</span><span className="text-[#0F2A1B]">{fmtCLP(detail.total)}</span></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
