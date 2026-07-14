@@ -160,8 +160,8 @@ export function InicioScreen() {
                   <button
                     key={s.id}
                     type="button"
-                    onClick={() => nav("/historial", s.dte_folio ? { state: { folio: s.dte_folio } } : undefined)}
-                    title="Ver en el historial"
+                    onClick={() => nav("/historial", s.dte_folio ? { state: { folio: s.dte_folio, openDetail: true } } : undefined)}
+                    title="Ver el detalle de la venta"
                     className="flex w-full items-center gap-[13px] border-b border-[#F0F2F7] py-[11px] text-left last:border-0 hover:bg-[#F7FAF8]"
                   >
                     <div className="min-w-0 flex-1">

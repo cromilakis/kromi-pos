@@ -50,6 +50,7 @@ export function HistorialScreen() {
   const nav = useNavigate();
   const location = useLocation();
   const didInitFolio = useRef(false);
+  const pendingDetailFolio = useRef<number | null>(null);
   const businessId = profile?.business_id;
   const branchId = branch?.id;
   const { data: business } = useBusiness(businessId);
@@ -95,7 +96,24 @@ export function HistorialScreen() {
     setPage(0);
     setRows([]);
     setAppliedFolio(folio);
+    // Si se llega con openDetail (desde la actividad reciente del Inicio), recordar el
+    // folio para abrir su detalle en cuanto lleguen los resultados de la búsqueda.
+    if ((location.state as { openDetail?: boolean } | null)?.openDetail) {
+      pendingDetailFolio.current = folio;
+    }
   }, [location.state]);
+
+  // Abre el detalle de la venta pendiente (llegada desde el Inicio) cuando la búsqueda
+  // por folio ya trajo la fila correspondiente. Disparo único por folio.
+  useEffect(() => {
+    const f = pendingDetailFolio.current;
+    if (f == null) return;
+    const row = rows.find((r) => r.dte_folio === f);
+    if (row) {
+      pendingDetailFolio.current = null;
+      setDetail(row);
+    }
+  }, [rows]);
 
   function handleBuscar() {
     setPage(0);
