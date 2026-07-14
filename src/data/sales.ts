@@ -265,6 +265,7 @@ export interface CreditNoteRow {
   id: string; folio: number; total: number; reason: string | null; created_at: string;
   dte_status: string; dte_folio: number | null; dte_timbre: string | null;
   sale_id: string | null; cod_ref: number | null; method: string;
+  boleta_folio: number | null; // folio SII de la boleta anulada (fallback: folio interno); null si NC manual
   lines: { name_snapshot: string; price_snapshot: number; qty: number }[];
 }
 
@@ -277,7 +278,7 @@ export function useCreditNotes(branchId: string | undefined) {
     queryFn: async (): Promise<CreditNoteRow[]> => {
       const { data, error } = await supabase
         .from("credit_note")
-        .select("id,folio,total,reason,created_at,dte_status,dte_folio,dte_timbre,sale_id,cod_ref,method,credit_note_line(name_snapshot,price_snapshot,qty)")
+        .select("id,folio,total,reason,created_at,dte_status,dte_folio,dte_timbre,sale_id,cod_ref,method,credit_note_line(name_snapshot,price_snapshot,qty),sale:sale_id(dte_folio,folio)")
         .eq("branch_id", branchId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -285,6 +286,7 @@ export function useCreditNotes(branchId: string | undefined) {
         id: c.id, folio: c.folio, total: c.total, reason: c.reason, created_at: c.created_at,
         dte_status: c.dte_status, dte_folio: c.dte_folio, dte_timbre: c.dte_timbre,
         sale_id: c.sale_id, cod_ref: c.cod_ref, method: c.method,
+        boleta_folio: c.sale ? (c.sale.dte_folio ?? c.sale.folio ?? null) : null,
         lines: c.credit_note_line ?? [],
       }));
     },

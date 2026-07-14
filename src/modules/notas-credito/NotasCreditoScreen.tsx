@@ -103,6 +103,7 @@ export function NotasCreditoScreen() {
             <thead>
               <tr className="sticky top-0 bg-[#F7FAF8] text-left text-[11.5px] font-bold uppercase tracking-[.06em] text-[#5E6E7E]">
                 <th className="px-3 py-2.5">Folio NC</th>
+                <th className="px-3 py-2.5">Boleta</th>
                 <th className="px-3 py-2.5">Folio SII</th>
                 <th className="px-3 py-2.5">Fecha</th>
                 <th className="px-3 py-2.5 text-right">Total</th>
@@ -122,6 +123,7 @@ export function NotasCreditoScreen() {
                 return (
                   <tr key={nc.id} className="border-t border-[#EEF1F6] hover:bg-[#FAFBFD]">
                     <td className="px-3 py-2.5 font-bold text-[#0F2A1B]">NC-{nc.folio}</td>
+                    <td className="px-3 py-2.5 text-[13px] text-[#556A7C]">{nc.boleta_folio ?? "Manual"}</td>
                     <td className="px-3 py-2.5 text-[13px] text-[#556A7C]">{nc.dte_folio ?? "—"}</td>
                     <td className="px-3 py-2.5 text-[13px] text-[#556A7C]">{fmtDate(new Date(nc.created_at))}</td>
                     <td className="px-3 py-2.5 text-right font-bold text-[#0F2A1B]">{fmtCLP(nc.total)}</td>
