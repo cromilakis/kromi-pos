@@ -6,13 +6,23 @@ const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scr
 /** No reiniciar el timer más de una vez cada X ms (evita miles de resets por mousemove). */
 const ACTIVITY_THROTTLE_MS = 3_000;
 
+/** Clave de persistencia del flag de bloqueo (sobrevive a un reload de la webview). */
+const LOCK_KEY = "kromi.locked";
+
 /**
  * Bloqueo por inactividad. Si `timeoutMin <= 0` nunca bloquea (no arma timers).
  * Mientras `locked` es true la actividad NO reinicia el timer: solo `unlock()` lo hace.
- * Estado en memoria (no persiste entre recargas).
+ * El estado de bloqueo se persiste en `localStorage` para que un reload (F5/Ctrl+R)
+ * no desbloquee la app mientras la sesión de Supabase sigue activa.
  */
 export function useIdleLock(timeoutMin: number): { locked: boolean; unlock: () => void } {
-  const [locked, setLocked] = useState(false);
+  const [locked, setLocked] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(LOCK_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   const lockedRef = useRef(locked);
   lockedRef.current = locked;
 
@@ -21,6 +31,11 @@ export function useIdleLock(timeoutMin: number): { locked: boolean; unlock: () =
 
   useEffect(() => {
     if (!(timeoutMin > 0)) {
+      try {
+        localStorage.removeItem(LOCK_KEY);
+      } catch {
+        // entorno sin localStorage: ignorar
+      }
       setLocked(false);
       return;
     }
@@ -37,6 +52,11 @@ export function useIdleLock(timeoutMin: number): { locked: boolean; unlock: () =
     function armTimer() {
       clearTimer();
       timerRef.current = setTimeout(() => {
+        try {
+          localStorage.setItem(LOCK_KEY, "1");
+        } catch {
+          // entorno sin localStorage: ignorar
+        }
         setLocked(true);
       }, timeoutMs);
     }
@@ -62,11 +82,23 @@ export function useIdleLock(timeoutMin: number): { locked: boolean; unlock: () =
   }, [timeoutMin]);
 
   function unlock() {
+    try {
+      localStorage.removeItem(LOCK_KEY);
+    } catch {
+      // entorno sin localStorage: ignorar
+    }
     setLocked(false);
     lastActivityRef.current = Date.now();
     if (timeoutMin > 0) {
       if (timerRef.current !== null) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => setLocked(true), timeoutMin * 60_000);
+      timerRef.current = setTimeout(() => {
+        try {
+          localStorage.setItem(LOCK_KEY, "1");
+        } catch {
+          // entorno sin localStorage: ignorar
+        }
+        setLocked(true);
+      }, timeoutMin * 60_000);
     }
   }
 
