@@ -16,6 +16,7 @@ const base: BusinessRow = {
   points_clp_per_point: 1000,
   points_multiplier: 1,
   points_redeem_clp_per_point: 1,
+  lock_timeout_min: 0,
 };
 
 describe("businessToNegocio", () => {

@@ -16,9 +16,10 @@ export interface BusinessRow {
   points_clp_per_point: number;
   points_multiplier: number;
   points_redeem_clp_per_point: number;
+  lock_timeout_min: number;
 }
 
-const COLS = "id,name,nombre_comercial,rut,giro,direccion,tagline,footer,logo_url,social_red,social_url,points_clp_per_point,points_multiplier,points_redeem_clp_per_point";
+const COLS = "id,name,nombre_comercial,rut,giro,direccion,tagline,footer,logo_url,social_red,social_url,points_clp_per_point,points_multiplier,points_redeem_clp_per_point,lock_timeout_min";
 
 export function useBusiness(businessId?: string) {
   return useQuery({
