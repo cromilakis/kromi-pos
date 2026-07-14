@@ -245,6 +245,7 @@ export async function emitirNotaCredito(args: {
   p_method: "efectivo" | "tarjeta";
   p_reason: string;
   p_lines: CreditNoteLineInput[];
+  p_cod_ref: 1 | 3;
 }): Promise<CreditNote> {
   if (!args.p_lines.length) throw new Error("La nota de crédito no tiene líneas.");
   const { data, error } = await supabase.rpc("emitir_nota_credito", {
@@ -254,9 +255,40 @@ export async function emitirNotaCredito(args: {
     p_method: args.p_method,
     p_reason: args.p_reason,
     p_lines: args.p_lines,
+    p_cod_ref: args.p_cod_ref,
   });
   if (error) throw error;
   return data as CreditNote;
+}
+
+export interface CreditNoteRow {
+  id: string; folio: number; total: number; reason: string | null; created_at: string;
+  dte_status: string; dte_folio: number | null; dte_timbre: string | null;
+  sale_id: string | null; cod_ref: number | null; method: string;
+  lines: { name_snapshot: string; price_snapshot: number; qty: number }[];
+}
+
+/** Notas de crédito de la sucursal, con su estado de emisión (DTE) y líneas, para
+ *  reintentar/reimprimir la nota de crédito electrónica. */
+export function useCreditNotes(branchId: string | undefined) {
+  return useQuery({
+    queryKey: ["credit-notes", branchId],
+    enabled: !!branchId,
+    queryFn: async (): Promise<CreditNoteRow[]> => {
+      const { data, error } = await supabase
+        .from("credit_note")
+        .select("id,folio,total,reason,created_at,dte_status,dte_folio,dte_timbre,sale_id,cod_ref,method,credit_note_line(name_snapshot,price_snapshot,qty)")
+        .eq("branch_id", branchId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((c: any) => ({
+        id: c.id, folio: c.folio, total: c.total, reason: c.reason, created_at: c.created_at,
+        dte_status: c.dte_status, dte_folio: c.dte_folio, dte_timbre: c.dte_timbre,
+        sale_id: c.sale_id, cod_ref: c.cod_ref, method: c.method,
+        lines: c.credit_note_line ?? [],
+      }));
+    },
+  });
 }
 
 export interface SaleWithLines {
