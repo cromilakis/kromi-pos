@@ -5,7 +5,7 @@ import { ShoppingCart, AlertTriangle, PackageSearch } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
-import { useOpenSession, rpcAbrirCaja } from "@/data/work";
+import { useOpenSession, rpcOpenCashSession } from "@/data/work";
 import { useSalesToday, useRecentSales, useCriticalStock } from "@/data/sales";
 import { fmtCLP } from "@/lib/money";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ function AbrirCajaCard() {
     if (!register) return;
     setBusy(true);
     try {
-      await rpcAbrirCaja(register.id, Number(floatAmount) || 0);
+      await rpcOpenCashSession(register.id, Number(floatAmount) || 0);
       await qc.invalidateQueries({ queryKey: ["open-session"] });
     } catch (e) {
       notifyError(`No se pudo abrir la caja.`, e instanceof Error ? e.message : e);

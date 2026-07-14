@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
-import { useSupplierByRut, useSupplierProductMap, recepcionarFactura } from "@/data/purchases";
+import { useSupplierByRut, useSupplierProductMap, receiveInvoice } from "@/data/purchases";
 import { useCategories, useProductsWithStock } from "@/data/stock";
 import { normalizeExtraction, checkLineTotal, sumLineTotals, totalsMatch, type Extraction, type ExtractedLine } from "@/lib/invoice";
 import { fmtCLP } from "@/lib/money";
@@ -29,7 +29,7 @@ interface LineState extends ExtractedLine {
 /**
  * Revisión y confirmación de una factura ya extraída: proveedor (existente o nuevo),
  * mapeo de líneas a productos (automático, existente o nuevo) y verificación de montos.
- * Al confirmar, llama a la RPC `recepcionar_factura` que crea todo de forma atómica.
+ * Al confirmar, llama a la RPC `receive_invoice` que crea todo de forma atómica.
  */
 export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, onDone }: InvoiceConfirmProps) {
   const { profile } = useAuth();
@@ -145,7 +145,7 @@ export function InvoiceConfirm({ pdfPath, extraction: rawExtraction, onCancel, o
 
     setSubmitting(true);
     try {
-      await recepcionarFactura({ p_branch: branchId, p_supplier, p_doc, p_lines, p_pdf_path: pdfPath });
+      await receiveInvoice({ p_branch: branchId, p_supplier, p_doc, p_lines, p_pdf_path: pdfPath });
       toast.success("Factura recepcionada. Stock actualizado.");
       qc.invalidateQueries({ queryKey: ["products-with-stock"] });
       qc.invalidateQueries({ queryKey: ["critical-stock"] });

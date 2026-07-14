@@ -1,6 +1,6 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { notifyError } from "@/lib/errors";
-import { useRegisters, useOpenSession, rpcAbrirCaja } from "@/data/work";
+import { useRegisters, useOpenSession, rpcOpenCashSession } from "@/data/work";
 import { useWork } from "./WorkContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ export function CashGate({ children }: { children: ReactNode }) {
   async function abrir() {
     setBusy(true);
     try {
-      await rpcAbrirCaja(register!.id, Number(floatAmount) || 0);
+      await rpcOpenCashSession(register!.id, Number(floatAmount) || 0);
       await qc.invalidateQueries({ queryKey: ["open-session"] });
     } catch (e) {
       notifyError(`No se pudo abrir la caja.`, e instanceof Error ? e.message : e);

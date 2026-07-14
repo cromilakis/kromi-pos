@@ -8,9 +8,9 @@ export interface EmitirResult {
 }
 
 /** Emite (o recupera si ya estaba emitida) la boleta electrónica de una venta vía
- *  la Edge Function `emitir-boleta`. No lanza: devuelve el estado para decidir la impresión. */
-export async function emitirBoleta(saleId: string): Promise<EmitirResult> {
-  const { data, error } = await supabase.functions.invoke("emitir-boleta", { body: { sale_id: saleId } });
+ *  la Edge Function `issue-receipt`. No lanza: devuelve el estado para decidir la impresión. */
+export async function issueReceipt(saleId: string): Promise<EmitirResult> {
+  const { data, error } = await supabase.functions.invoke("issue-receipt", { body: { sale_id: saleId } });
   if (error) {
     // FunctionsHttpError: el mensaje útil viene en el body de la respuesta (no en error.message).
     let message = error.message;
@@ -27,9 +27,9 @@ export async function emitirBoleta(saleId: string): Promise<EmitirResult> {
 }
 
 /** Emite (o recupera si ya estaba emitida) la nota de crédito electrónica vía
- *  la Edge Function `emitir-nota-credito`. No lanza: devuelve el estado para decidir la impresión. */
-export async function emitirNotaCreditoDte(creditNoteId: string): Promise<EmitirResult> {
-  const { data, error } = await supabase.functions.invoke("emitir-nota-credito", { body: { credit_note_id: creditNoteId } });
+ *  la Edge Function `issue-credit-note`. No lanza: devuelve el estado para decidir la impresión. */
+export async function issueCreditNoteDte(creditNoteId: string): Promise<EmitirResult> {
+  const { data, error } = await supabase.functions.invoke("issue-credit-note", { body: { credit_note_id: creditNoteId } });
   if (error) {
     // FunctionsHttpError: el mensaje útil viene en el body de la respuesta (no en error.message).
     let message = error.message;

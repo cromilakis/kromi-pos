@@ -5,8 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
 import { useOpenSession } from "@/data/work";
-import { emitirNotaCredito, buscarVentaPorFolio, type SaleWithLines } from "@/data/sales";
-import { emitirNotaCreditoDte } from "@/data/sii";
+import { issueCreditNote, buscarVentaPorFolio, type SaleWithLines } from "@/data/sales";
+import { issueCreditNoteDte } from "@/data/sii";
 import { useBusiness, businessToNegocio } from "@/data/business";
 import { fmtCLP } from "@/lib/money";
 import { printCreditNote } from "@/lib/print";
@@ -120,7 +120,7 @@ export function NuevaNotaCredito() {
     }
     setBusy(true);
     try {
-      const nc = await emitirNotaCredito({
+      const nc = await issueCreditNote({
         p_branch: branchId,
         p_session: sessionId,
         p_sale: foundSale.id,
@@ -130,7 +130,7 @@ export function NuevaNotaCredito() {
         p_cod_ref: modo === "anular" ? 1 : 3,
       });
 
-      const em = await emitirNotaCreditoDte(nc.id);
+      const em = await issueCreditNoteDte(nc.id);
       qc.invalidateQueries({ queryKey: ["products-with-stock"] });
       qc.invalidateQueries({ queryKey: ["critical-stock"] });
       qc.invalidateQueries({ queryKey: ["credit-notes", branchId] });

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
-export { rpcCerrarCaja as cerrarCaja } from "./work";
+export { rpcCloseCashSession as closeCashSession } from "./work";
 
 export interface CierreRow {
   id: string;
@@ -24,7 +24,7 @@ export function useCierres(branchId?: string) {
   });
 }
 
-/** Forma exacta del jsonb que devuelve la RPC `cerrar_caja` (ver supabase/migrations/20260707100200_functions.sql). */
+/** Forma exacta del jsonb que devuelve la RPC `close_cash_session` (ver supabase/migrations/20260707100200_functions.sql). */
 export interface CierreResumen {
   session_id: string;
   float: number;

@@ -87,7 +87,7 @@ export interface Sale {
 
 /** Cobra la venta de forma atómica vía RPC. Descuentos (línea y total) los recalcula
  *  y valida el servidor (solo admin); el cliente solo envía kind/value. */
-export async function cobrarVenta(args: {
+export async function chargeSale(args: {
   p_branch: string;
   p_session: string;
   p_lines: CartItem[];
@@ -96,7 +96,7 @@ export async function cobrarVenta(args: {
   p_customer?: string | null;
   p_total_disc?: DiscountInput;
 }): Promise<Sale> {
-  const { data, error } = await supabase.rpc("cobrar_venta", {
+  const { data, error } = await supabase.rpc("charge_sale", {
     p_branch: args.p_branch,
     p_session: args.p_session,
     p_lines: args.p_lines,
@@ -116,7 +116,7 @@ export function cartToLines(cart: { id: string; qty: number; disc_kind?: "pct" |
 
 // ----------------------------------------------------------------------------
 // Cotizaciones (quote/quote_line): SOLO-LECTURA para el cliente. Se crean por
-// la RPC `crear_cotizacion` (security definer), que fija el precio desde
+// la RPC `create_quote` (security definer), que fija el precio desde
 // `product.price` en el servidor — el cliente nunca envía price/name (ver
 // migración 20260707120000_crear_cotizacion.sql). No mueven caja ni stock.
 // ----------------------------------------------------------------------------
@@ -149,7 +149,7 @@ export function isQuoteVigente(validUntil: string, today: Date = new Date()): bo
 }
 
 /** Crea una cotización vía RPC (precio del servidor). No mueve caja ni stock. */
-export async function crearCotizacion(args: {
+export async function createQuote(args: {
   branch_id: string;
   customer_id?: string | null;
   valid_until: string;
@@ -157,7 +157,7 @@ export async function crearCotizacion(args: {
   discount_pct?: number;
 }) {
   if (!args.lines.length) throw new Error("La cotización no tiene líneas.");
-  const { data: quote, error } = await supabase.rpc("crear_cotizacion", {
+  const { data: quote, error } = await supabase.rpc("create_quote", {
     p_branch: args.branch_id,
     p_customer: args.customer_id ?? null,
     p_valid_until: args.valid_until,
@@ -204,13 +204,13 @@ export function useQuotes(branchId: string | undefined) {
 }
 
 /** Convierte una cotización en venta al PRECIO COTIZADO (congelado en quote_line). */
-export async function convertirCotizacion(
+export async function convertQuote(
   quoteId: string,
   session: string,
   method: "efectivo" | "tarjeta",
   recv: number,
 ): Promise<Sale> {
-  const { data, error } = await supabase.rpc("convertir_cotizacion", {
+  const { data, error } = await supabase.rpc("convert_quote", {
     p_quote: quoteId,
     p_session: session,
     p_method: method,
@@ -221,8 +221,8 @@ export async function convertirCotizacion(
 }
 
 /** Elimina una cotización (hard-delete vía RPC). Falla si ya fue convertida en venta. */
-export async function eliminarCotizacion(quoteId: string): Promise<void> {
-  const { error } = await supabase.rpc("eliminar_cotizacion", { p_quote: quoteId });
+export async function deleteQuote(quoteId: string): Promise<void> {
+  const { error } = await supabase.rpc("delete_quote", { p_quote: quoteId });
   if (error) throw error;
 }
 
@@ -244,7 +244,7 @@ export interface CreditNote {
   created_at: string;
 }
 
-export async function emitirNotaCredito(args: {
+export async function issueCreditNote(args: {
   p_branch: string;
   p_session: string | null;
   p_sale: string | null;
@@ -254,7 +254,7 @@ export async function emitirNotaCredito(args: {
   p_cod_ref: 1 | 3;
 }): Promise<CreditNote> {
   if (!args.p_lines.length) throw new Error("La nota de crédito no tiene líneas.");
-  const { data, error } = await supabase.rpc("emitir_nota_credito", {
+  const { data, error } = await supabase.rpc("issue_credit_note", {
     p_branch: args.p_branch,
     p_session: args.p_session,
     p_sale: args.p_sale,

@@ -4,14 +4,14 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
-import { useOpenSession, rpcAbrirCaja } from "@/data/work";
+import { useOpenSession, rpcOpenCashSession } from "@/data/work";
 import { useProductsWithStock, useCategories, findByBarcode } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
 import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
 import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data/heldSales";
-import { cobrarVenta, cartToLines, useSalesTodayDte, type SaleDteRow } from "@/data/sales";
-import { emitirBoleta } from "@/data/sii";
+import { chargeSale, cartToLines, useSalesTodayDte, type SaleDteRow } from "@/data/sales";
+import { issueReceipt } from "@/data/sii";
 import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "@/lib/money";
 import { errMsg, notifyError } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
@@ -39,7 +39,7 @@ function AbrirCajaGate() {
     if (!register) return;
     setBusy(true);
     try {
-      await rpcAbrirCaja(register.id, Number(floatAmount) || 0);
+      await rpcOpenCashSession(register.id, Number(floatAmount) || 0);
       await qc.invalidateQueries({ queryKey: ["open-session"] });
     } catch (e) {
       notifyError(`No se pudo abrir la caja.`, e instanceof Error ? e.message : e);
@@ -287,7 +287,7 @@ export function VentaScreen() {
   async function reintentarBoleta(h: SaleDteRow) {
     setDteBusy(h.id);
     try {
-      const em = await emitirBoleta(h.id);
+      const em = await issueReceipt(h.id);
       if (em.status === "emitida") {
         toast.success(`Boleta emitida (folio ${em.folio}).`);
         qc.invalidateQueries({ queryKey: ["sales-today-dte", branchId] });
@@ -329,7 +329,7 @@ export function VentaScreen() {
     if (!branchId || !openSession) return;
     setBusy(true);
     try {
-      const sale = await cobrarVenta({
+      const sale = await chargeSale({
         p_branch: branchId,
         p_session: openSession.id,
         p_lines: cartToLines(cart),
@@ -355,7 +355,7 @@ export function VentaScreen() {
       let dteFolio: number | undefined;
       let timbrePng: string | null | undefined;
       try {
-        const em = await emitirBoleta(sale.id);
+        const em = await issueReceipt(sale.id);
         if (em.status === "emitida") { dteFolio = em.folio; timbrePng = em.timbre_png ?? null; }
         else notifyError("La boleta no se pudo emitir. Quedó pendiente en «Boletas del día» para reintentar.", em.message ?? em.status);
       } catch {

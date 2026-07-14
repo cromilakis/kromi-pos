@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
 import { useOpenSession } from "@/data/work";
-import { useCierres, cerrarCaja, contarVentasSesion, fetchSessionOpenedAt, type CierreResumen, type CierreRow } from "@/data/cash";
+import { useCierres, closeCashSession, contarVentasSesion, fetchSessionOpenedAt, type CierreResumen, type CierreRow } from "@/data/cash";
 import { printCierre } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
 import { fmtCLP } from "@/lib/money";
@@ -115,7 +115,7 @@ export function CierrePanel({ onClosed }: CierrePanelProps) {
     const countedNum = Number(counted.replace(/[^\d]/g, "")) || 0;
     setBusy(true);
     try {
-      const r: CierreResumen = await cerrarCaja(openSession.id, countedNum);
+      const r: CierreResumen = await closeCashSession(openSession.id, countedNum);
       setResumen(r);
       toast.success("Caja cerrada.");
       qc.invalidateQueries({ queryKey: ["open-session"] });

@@ -33,14 +33,14 @@ export function useSupplierProductMap(supplierId: string | undefined) {
   });
 }
 
-export async function recepcionarFactura(args: {
+export async function receiveInvoice(args: {
   p_branch: string;
   p_supplier: Record<string, unknown>;
   p_doc: Record<string, unknown>;
   p_lines: Record<string, unknown>[];
   p_pdf_path: string;
 }) {
-  const { data, error } = await supabase.rpc("recepcionar_factura", args);
+  const { data, error } = await supabase.rpc("receive_invoice", args);
   if (error) throw error; return data;
 }
 

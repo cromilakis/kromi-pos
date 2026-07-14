@@ -35,11 +35,11 @@ export function useOpenSession(registerId: string | undefined) {
   });
 }
 
-export async function rpcAbrirCaja(registerId: string, floatAmount: number) {
-  const { data, error } = await supabase.rpc("abrir_caja", { p_register: registerId, p_float: floatAmount });
+export async function rpcOpenCashSession(registerId: string, floatAmount: number) {
+  const { data, error } = await supabase.rpc("open_cash_session", { p_register: registerId, p_float: floatAmount });
   if (error) throw error; return data;
 }
-export async function rpcCerrarCaja(sessionId: string, counted: number) {
-  const { data, error } = await supabase.rpc("cerrar_caja", { p_session: sessionId, p_counted: counted });
+export async function rpcCloseCashSession(sessionId: string, counted: number) {
+  const { data, error } = await supabase.rpc("close_cash_session", { p_session: sessionId, p_counted: counted });
   if (error) throw error; return data;
 }

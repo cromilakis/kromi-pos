@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
 import { useCreditNotes, type CreditNoteRow } from "@/data/sales";
-import { emitirNotaCreditoDte } from "@/data/sii";
+import { issueCreditNoteDte } from "@/data/sii";
 import { useBusiness, businessToNegocio } from "@/data/business";
 import { printCreditNote } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
@@ -57,7 +57,7 @@ export function NotasCreditoScreen() {
   async function handleReintentar(nc: CreditNoteRow) {
     setBusyId(nc.id);
     try {
-      const em = await emitirNotaCreditoDte(nc.id);
+      const em = await issueCreditNoteDte(nc.id);
       if (em.status === "emitida") {
         toast.success(`Nota de crédito emitida (folio ${em.folio}).`);
       } else {

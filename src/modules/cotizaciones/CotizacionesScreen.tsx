@@ -9,8 +9,8 @@ import { useProductsWithStock, useCategories } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
 import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
-import { crearCotizacion, convertirCotizacion, eliminarCotizacion, useQuotes, isQuoteVigente, type QuoteRow } from "@/data/sales";
-import { emitirBoleta } from "@/data/sii";
+import { createQuote, convertQuote, deleteQuote, useQuotes, isQuoteVigente, type QuoteRow } from "@/data/sales";
+import { issueReceipt } from "@/data/sii";
 import { computeTotals, resolveDiscount, fmtCLP } from "@/lib/money";
 import { printQuote, printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
@@ -120,7 +120,7 @@ export function CotizacionesScreen() {
     if (!branchId || lines.length === 0) return;
     setCreating(true);
     try {
-      const quote = await crearCotizacion({
+      const quote = await createQuote({
         branch_id: branchId,
         customer_id: customerId,
         valid_until: isoPlusDays(validDays),
@@ -192,7 +192,7 @@ export function CotizacionesScreen() {
     setPayBusy(true);
     try {
       // Cobra la cotización: crea la venta (descuenta stock) igual que una venta normal.
-      const sale = await convertirCotizacion(converting.id, openSession.id, method, recv);
+      const sale = await convertQuote(converting.id, openSession.id, method, recv);
       const soldAt = new Date(sale.sold_at);
       const quoteSnap = converting;
       qc.invalidateQueries({ queryKey: ["quotes"] });
@@ -207,7 +207,7 @@ export function CotizacionesScreen() {
       let dteFolio: number | undefined;
       let timbrePng: string | null | undefined;
       try {
-        const em = await emitirBoleta(sale.id);
+        const em = await issueReceipt(sale.id);
         if (em.status === "emitida") { dteFolio = em.folio; timbrePng = em.timbre_png ?? null; }
         else notifyError("La boleta no se pudo emitir. Quedó pendiente en «Boletas del día» para reintentar.", em.message ?? em.status);
       } catch {
@@ -249,7 +249,7 @@ export function CotizacionesScreen() {
   async function handleDelete(q: QuoteRow) {
     setDeleting(true);
     try {
-      await eliminarCotizacion(q.id);
+      await deleteQuote(q.id);
       toast.success(`Cotización #${q.folio} eliminada.`);
       setConfirmDelete(null);
       qc.invalidateQueries({ queryKey: ["quotes"] });
