@@ -8,7 +8,7 @@ import { StockScreen } from "@/modules/stock/StockScreen";
 import { VentaScreen } from "@/modules/venta/VentaScreen";
 import { CotizacionesScreen } from "@/modules/cotizaciones/CotizacionesScreen";
 import { ClientesScreen } from "@/modules/clientes/ClientesScreen";
-import { BusinessSettings } from "@/modules/admin/BusinessSettings";
+import { AdminScreen } from "@/modules/admin/AdminScreen";
 import { NotasCreditoScreen } from "@/modules/notas-credito/NotasCreditoScreen";
 import { NuevaNotaCredito } from "@/modules/notas-credito/NuevaNotaCredito";
 
@@ -16,7 +16,7 @@ function AdminRoute() {
   const { profile } = useAuth();
   return (
     <RequireRole role={profile?.role} allow={["admin", "kromi"]}>
-      <BusinessSettings />
+      <AdminScreen />
     </RequireRole>
   );
 }
