@@ -138,6 +138,7 @@ export function CreditNoteDialog({ open, branchId, sessionId, products, business
         p_method: method,
         p_reason: reason.trim() || "Sin motivo",
         p_lines: usable.map((l) => ({ product_id: l.product_id, qty: l.qty, restock: l.restock })),
+        p_cod_ref: 3,
       });
       toast.success(`Nota de crédito #${nc.folio} emitida.`);
       onEmitted();
