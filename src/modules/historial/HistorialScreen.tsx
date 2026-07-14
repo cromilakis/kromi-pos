@@ -94,6 +94,8 @@ export function HistorialScreen() {
       iva: row.iva,
       total: row.total,
       descuento: row.lines.reduce((s, l) => s + (l.discount_amount ?? 0), 0),
+      canje_pts: row.points_redeemed ?? 0,
+      canje_monto: row.points_discount ?? 0,
       dte_folio: row.dte_folio ?? undefined,
       timbre_png: row.dte_timbre ?? null,
       reimpresion: true,

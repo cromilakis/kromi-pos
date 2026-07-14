@@ -29,6 +29,8 @@ pub struct ReceiptPayload {
     pub iva: i64,
     pub total: i64,
     pub descuento: i64,
+    #[serde(default)] pub canje_pts: i64,
+    #[serde(default)] pub canje_monto: i64,
     #[serde(default)] pub dte_folio: Option<u32>,
     #[serde(default)] pub timbre_png: Option<String>,
     #[serde(default)] pub reimpresion: bool,
@@ -291,6 +293,9 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     line_lr(&mut b, "Neto", &money(p.neto), COL);
     if p.descuento > 0 {
         line_lr(&mut b, "Descuento", &format!("-{}", money(p.descuento)), COL);
+    }
+    if p.canje_monto > 0 {
+        line_lr(&mut b, &format!("Canje de puntos ({} pts)", p.canje_pts), &format!("-{}", money(p.canje_monto)), COL);
     }
     line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
     nl(&mut b);
@@ -607,6 +612,7 @@ mod tests {
             fecha: "27/06/2026".into(), hora: "14:32".into(),
             items: vec![Item { nombre: "Echeveria".into(), qty: 1, precio: 3990, descuento: 0 }],
             neto: 3353, iva: 637, total: 3990, descuento: 0,
+            canje_pts: 0, canje_monto: 0,
             dte_folio: None, timbre_png: None, reimpresion: false,
             metodo: metodo.into(), open_drawer: drawer,
         }

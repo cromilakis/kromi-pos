@@ -40,6 +40,7 @@ export function useRecentSales(branchId: string | undefined, limit = 8) {
 export interface SaleDteRow {
   id: string; folio: number; total: number; sold_at: string; method: string;
   dte_status: string; dte_folio: number | null; dte_timbre: string | null;
+  points_redeemed: number; points_discount: number;
   lines: { name_snapshot: string; price_snapshot: number; qty: number; discount_amount: number }[];
 }
 
@@ -53,7 +54,7 @@ export function useSalesTodayDte(branchId: string | undefined) {
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const { data, error } = await supabase
         .from("sale")
-        .select("id,folio,total,sold_at,method,dte_status,dte_folio,dte_timbre,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
+        .select("id,folio,total,sold_at,method,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
         .eq("branch_id", branchId!)
         .gte("sold_at", start.toISOString())
         .order("sold_at", { ascending: false })
@@ -62,6 +63,7 @@ export function useSalesTodayDte(branchId: string | undefined) {
       return (data ?? []).map((s: any) => ({
         id: s.id, folio: s.folio, total: s.total, sold_at: s.sold_at, method: s.method,
         dte_status: s.dte_status, dte_folio: s.dte_folio, dte_timbre: s.dte_timbre,
+        points_redeemed: s.points_redeemed ?? 0, points_discount: s.points_discount ?? 0,
         lines: s.sale_line ?? [],
       }));
     },
