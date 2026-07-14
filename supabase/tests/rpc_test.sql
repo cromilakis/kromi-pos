@@ -385,4 +385,26 @@ end $$;
 reset role;
 
 \echo 'rpc_test (folios+caja) OK'
+
+-- charge_sale: un servicio (is_service) se vende sin inventory y no descuenta stock
+do $$
+declare v_session uuid; v_sale public.sale; v_svc uuid := '11111111-0000-0000-0000-000000000001';
+begin
+  insert into public.product (id, business_id, name, category_id, price, is_service) values
+    (v_svc,'aaaaaaaa-0000-0000-0000-000000000001','Visita domiciliaria',
+     'dddddddd-0000-0000-0000-000000000001',20000,true);
+  -- NO se inserta fila en inventory para el servicio.
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001',
+    '[{"product_id":"11111111-0000-0000-0000-000000000001","qty":1}]'::jsonb,
+    'efectivo', 20000, null);
+  if v_sale.total <> 20000 then raise exception 'servicio: total incorrecto: %', v_sale.total; end if;
+  if not exists (select 1 from public.sale_line where sale_id = v_sale.id and product_id = v_svc) then
+    raise exception 'servicio: no se registró la línea';
+  end if;
+  if exists (select 1 from public.inventory where product_id = v_svc) then
+    raise exception 'servicio: no debe tener fila de inventory';
+  end if;
+end $$;
+
 rollback;
