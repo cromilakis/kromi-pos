@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Cart, type CartLine } from "./Cart";
 import { PayDialog, type PayMethod } from "./PayDialog";
+import { CustomerPickerDialog } from "./CustomerPickerDialog";
+import { shouldPromptCustomer } from "./customerPrompt";
 import { CierrePanel } from "@/modules/cierre/CierrePanel";
 
 interface CartItem {
@@ -86,6 +88,8 @@ export function VentaScreen() {
   const [busy, setBusy] = useState(false);
   const [cierreOpen, setCierreOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [askedForCustomer, setAskedForCustomer] = useState(false);
   const [heldOpen, setHeldOpen] = useState(false);
   const [boletasOpen, setBoletasOpen] = useState(false);
   const { data: salesDte } = useSalesTodayDte(branchId);
@@ -95,6 +99,7 @@ export function VentaScreen() {
   const scanRef = useRef<HTMLInputElement>(null);
 
   const allCustomers = customers ?? [];
+  const selectedCustomer = customerId ? allCustomers.find((c) => c.id === customerId) ?? null : null;
 
   const allProducts = products ?? [];
   const allCategories = categories ?? [];
@@ -152,6 +157,10 @@ export function VentaScreen() {
       toast.error(`${p.name}: sin stock disponible.`);
       return;
     }
+    if (shouldPromptCustomer(cart.length === 0, customerId, askedForCustomer)) {
+      setAskedForCustomer(true);
+      setPickerOpen(true);
+    }
     setCart((c) => {
       const i = c.findIndex((x) => x.id === p.id);
       if (i >= 0) {
@@ -196,6 +205,7 @@ export function VentaScreen() {
   }
   function clearCart() {
     setCart([]);
+    setAskedForCustomer(false);
   }
 
   function decCartAll(id: string) {
@@ -240,6 +250,7 @@ export function VentaScreen() {
       });
       setCart([]);
       setCustomerId(null);
+      setAskedForCustomer(false);
       toast.success("Venta guardada.");
       qc.invalidateQueries({ queryKey: ["held-sales", branchId] });
     } catch (e) {
@@ -349,6 +360,7 @@ export function VentaScreen() {
       qc.invalidateQueries({ queryKey: ["critical-stock"] });
       qc.invalidateQueries({ queryKey: ["customers", businessId] });
       setCustomerId(null);
+      setAskedForCustomer(false);
 
       // Emitir la boleta electrónica. La venta ya está cobrada; si la emisión falla,
       // NO se imprime nada: la venta queda pendiente en "Boletas del día" para reintentar.
@@ -456,19 +468,18 @@ export function VentaScreen() {
               <ScanLine className="size-4" strokeWidth={1.9} /> Lectura
             </button>
           </div>
-          <select
-            value={customerId ?? ""}
-            onChange={(e) => setCustomerId(e.target.value || null)}
-            title="Cliente de la venta"
-            className="rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none"
-          >
-            <option value="">Sin cliente</option>
-            {allCustomers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setPickerOpen(true)}
+              title="Cliente de la venta"
+              className="rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5 text-[13px] font-bold text-[#2A3A2E]"
+            >
+              {selectedCustomer ? selectedCustomer.name : "Sin cliente"}
+            </button>
+            {selectedCustomer && (
+              <button onClick={() => setCustomerId(null)} title="Quitar cliente" className="flex size-[34px] items-center justify-center rounded-xl border border-[#E1E5EE] bg-white text-[#556A7C]">×</button>
+            )}
+          </div>
           <button
             onClick={() => setHeldOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
@@ -667,6 +678,14 @@ export function VentaScreen() {
       )}
 
       <PayDialog open={payOpen} total={totals.total} busy={busy} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />
+
+      <CustomerPickerDialog
+        open={pickerOpen}
+        businessId={businessId}
+        onSelect={(c) => { setCustomerId(c.id); setPickerOpen(false); }}
+        onContinueWithout={() => setPickerOpen(false)}
+        onClose={() => setPickerOpen(false)}
+      />
 
       {heldOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) setHeldOpen(false); }}>
