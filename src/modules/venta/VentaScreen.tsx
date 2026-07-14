@@ -103,6 +103,7 @@ export function VentaScreen() {
 
   const allCustomers = customers ?? [];
   const selectedCustomer = customerId ? allCustomers.find((c) => c.id === customerId) ?? null : null;
+  const canFactura = !!selectedCustomer?.is_company && !!selectedCustomer?.rut;
 
   const allProducts = products ?? [];
   const allCategories = categories ?? [];
@@ -344,7 +345,13 @@ export function VentaScreen() {
     }
   }
 
-  async function handleConfirmPay(method: PayMethod, recv: number, discountId: string | null, pointsRedeem = 0) {
+  async function handleConfirmPay(
+    method: PayMethod,
+    recv: number,
+    discountId: string | null,
+    pointsRedeem = 0,
+    docType: "boleta" | "factura" = "boleta",
+  ) {
     if (!branchId || !openSession) return;
     setBusy(true);
     try {
@@ -357,6 +364,7 @@ export function VentaScreen() {
         p_customer: customerId,
         p_discount_id: discountId,
         p_points_redeem: pointsRedeem,
+        p_doc_type: docType,
       });
 
       // Venta confirmada en BD: limpiar carrito, refrescar datos e imprimir la boleta.
@@ -700,6 +708,7 @@ export function VentaScreen() {
         discounts={activeDiscounts ?? []}
         customerPoints={selectedCustomer?.points ?? 0}
         pointsRedeemRate={business?.points_redeem_clp_per_point ?? 1}
+        canFactura={canFactura}
         onClose={() => setPayOpen(false)}
         onConfirm={handleConfirmPay}
       />

@@ -4,6 +4,8 @@ import type { DiscountRow } from "@/data/discounts";
 
 export type PayMethod = "efectivo" | "tarjeta";
 
+export type DocType = "boleta" | "factura";
+
 interface PayDialogProps {
   open: boolean;
   total: number;
@@ -11,16 +13,18 @@ interface PayDialogProps {
   discounts: DiscountRow[];
   customerPoints?: number;
   pointsRedeemRate?: number;
+  canFactura?: boolean;
   onClose: () => void;
-  onConfirm: (method: PayMethod, recv: number, discountId: string | null, pointsRedeem: number) => void;
+  onConfirm: (method: PayMethod, recv: number, discountId: string | null, pointsRedeem: number, docType: DocType) => void;
 }
 
 /** Diálogo de cobro: método, descuento predefinido, canje de puntos, efectivo recibido y vuelto. Clona el popup de cobro del prototipo. */
-export function PayDialog({ open, total, busy, discounts, customerPoints = 0, pointsRedeemRate = 1, onClose, onConfirm }: PayDialogProps) {
+export function PayDialog({ open, total, busy, discounts, customerPoints = 0, pointsRedeemRate = 1, canFactura = false, onClose, onConfirm }: PayDialogProps) {
   const [method, setMethod] = useState<PayMethod>("tarjeta");
   const [cashStr, setCashStr] = useState("");
   const [discountId, setDiscountId] = useState<string | null>(null);
   const [pointsRedeem, setPointsRedeem] = useState(0);
+  const [docType, setDocType] = useState<DocType>("boleta");
 
   useEffect(() => {
     if (open) {
@@ -28,8 +32,15 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
       setCashStr("");
       setDiscountId(null);
       setPointsRedeem(0);
+      setDocType("boleta");
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!canFactura && docType === "factura") {
+      setDocType("boleta");
+    }
+  }, [canFactura, docType]);
 
   if (!open) return null;
 
@@ -130,6 +141,42 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
               </div>
             </div>
           )}
+          <div className="mb-[18px] px-6 pt-1">
+            <label className="mb-1 block text-[11px] font-semibold text-[#556A7C]">Tipo de documento</label>
+            <div className="flex gap-2.5">
+              <button
+                type="button"
+                onClick={() => setDocType("boleta")}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold"
+                style={
+                  docType === "boleta"
+                    ? { background: "var(--brand)", borderColor: "var(--brand)", color: "#fff" }
+                    : { background: "#fff", borderColor: "#E1E5EE", color: "#2A3A2E" }
+                }
+              >
+                Boleta
+              </button>
+              <button
+                type="button"
+                onClick={() => canFactura && setDocType("factura")}
+                disabled={!canFactura}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
+                style={
+                  docType === "factura"
+                    ? { background: "var(--brand)", borderColor: "var(--brand)", color: "#fff" }
+                    : { background: "#fff", borderColor: "#E1E5EE", color: "#2A3A2E" }
+                }
+              >
+                Factura
+              </button>
+            </div>
+            {!canFactura && (
+              <div className="mt-1.5 text-[12px] font-medium text-[#556A7C]">
+                Elige un cliente empresa para facturar
+              </div>
+            )}
+          </div>
+
           <div className="mb-[18px] flex gap-2.5 px-6 pt-1">
             <button
               onClick={() => setMethod("efectivo")}
@@ -200,7 +247,7 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
               Cancelar
             </button>
             <button
-              onClick={() => onConfirm(method, recv, discountId, pointsRedeem)}
+              onClick={() => onConfirm(method, recv, discountId, pointsRedeem, docType)}
               disabled={busy || !canConfirm}
               className="flex-1 rounded-2xl py-3.5 text-[15px] font-bold text-white disabled:opacity-50"
               style={{ background: "var(--brand)" }}
