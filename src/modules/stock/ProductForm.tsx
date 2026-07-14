@@ -41,6 +41,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
   const [imgUrl, setImgUrl] = useState("");
   const [barcode, setBarcode] = useState("");
   const [discountPct, setDiscountPct] = useState("");
+  const [isService, setIsService] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
       setImgUrl(product.img_url ?? "");
       setBarcode(product.barcode ?? "");
       setDiscountPct(product.discount_pct ? String(product.discount_pct) : "");
+      setIsService(product.is_service);
     } else {
       setName("");
       setCategoryId(categories[0]?.id ?? "");
@@ -67,6 +69,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
       setImgUrl("");
       setBarcode("");
       setDiscountPct("");
+      setIsService(false);
     }
   }, [open, product, categories]);
 
@@ -98,8 +101,9 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           supplier_id: supplierId || null,
           barcode: barcode.trim() || null,
           discount_pct: discountNum,
+          is_service: isService,
         });
-        await upsertInventory(created.id, branchId, stockNum);
+        if (!isService) await upsertInventory(created.id, branchId, stockNum);
         toast.success("Producto creado.");
       } else {
         await updateProduct(product.id, {
@@ -112,8 +116,9 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           supplier_id: supplierId || null,
           barcode: barcode.trim() || null,
           discount_pct: discountNum,
+          is_service: isService,
         });
-        await upsertInventory(product.id, branchId, stockNum);
+        if (!isService) await upsertInventory(product.id, branchId, stockNum);
         toast.success("Producto actualizado.");
       }
       onSaved();
@@ -147,6 +152,25 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
             <label style={labelStyle}>Nombre del producto</label>
             <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Monstera Deliciosa" />
           </div>
+          <div
+            onClick={() => setIsService((s) => !s)}
+            style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", border: "1px solid #E1E5EE", borderRadius: 12, padding: "11px 14px", gridColumn: "1 / -1" }}
+          >
+            <span
+              style={{
+                width: 20, height: 20, borderRadius: 6,
+                border: isService ? "0" : "1px solid #cdd5e3",
+                background: isService ? "var(--brand)" : "#fff",
+                color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flex: "none",
+              }}
+            >
+              {isService ? "✓" : ""}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, fontSize: 13.5, color: "#0F2A1B" }}>Es un servicio (a pedido, sin stock)</div>
+              <div style={{ fontSize: 12, color: "#556A7C" }}>Los servicios no llevan inventario: se pueden vender siempre (ej. Visita domiciliaria).</div>
+            </div>
+          </div>
           <div>
             <label style={labelStyle}>Categoría</label>
             <select style={inputStyle} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
@@ -173,14 +197,18 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
             <label style={labelStyle}>Precio (CLP)</label>
             <input style={inputStyle} value={price} onChange={(e) => setPrice(onlyDigits(e.target.value))} inputMode="numeric" placeholder="0" />
           </div>
-          <div>
-            <label style={labelStyle}>Stock (unidades)</label>
-            <input style={inputStyle} value={stock} onChange={(e) => setStock(onlyDigits(e.target.value))} inputMode="numeric" placeholder="0" />
-          </div>
-          <div>
-            <label style={labelStyle}>Stock mínimo (opcional)</label>
-            <input style={inputStyle} value={minStock} onChange={(e) => setMinStock(onlyDigits(e.target.value))} inputMode="numeric" placeholder="Sin alerta" />
-          </div>
+          {!isService && (
+            <div>
+              <label style={labelStyle}>Stock (unidades)</label>
+              <input style={inputStyle} value={stock} onChange={(e) => setStock(onlyDigits(e.target.value))} inputMode="numeric" placeholder="0" />
+            </div>
+          )}
+          {!isService && (
+            <div>
+              <label style={labelStyle}>Stock mínimo (opcional)</label>
+              <input style={inputStyle} value={minStock} onChange={(e) => setMinStock(onlyDigits(e.target.value))} inputMode="numeric" placeholder="Sin alerta" />
+            </div>
+          )}
           <div>
             <label style={labelStyle}>Descuento (%)</label>
             <input style={inputStyle} value={discountPct} onChange={(e) => setDiscountPct(onlyDigits(e.target.value).slice(0, 3))} inputMode="numeric" placeholder="0" />
@@ -192,32 +220,34 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           <div style={{ gridColumn: "1 / -1", fontSize: 12, color: "#556A7C", lineHeight: 1.4, marginTop: -6 }}>
             <b style={{ color: "#9A6F12", fontWeight: 700 }}>Stock mínimo</b>: si el stock baja de ese número se marca como stock bajo (vacío = sin alerta). <b style={{ color: "#0a6e36", fontWeight: 700 }}>Descuento</b> mayor a 0 vende el producto con ese % y lo marca <b style={{ color: "#0a6e36", fontWeight: 700 }}>CON DESCUENTO</b>.
           </div>
-          <div
-            onClick={() => setCritical((c) => !c)}
-            style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", border: "1px solid #E1E5EE", borderRadius: 12, padding: "11px 14px", gridColumn: "1 / -1" }}
-          >
-            <span
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: 6,
-                border: critical ? "0" : "1px solid #cdd5e3",
-                background: critical ? "var(--brand)" : "#fff",
-                color: "#fff",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 13,
-                flex: "none",
-              }}
+          {!isService && (
+            <div
+              onClick={() => setCritical((c) => !c)}
+              style={{ display: "flex", alignItems: "center", gap: 11, cursor: "pointer", border: "1px solid #E1E5EE", borderRadius: 12, padding: "11px 14px", gridColumn: "1 / -1" }}
             >
-              {critical ? "✓" : ""}
-            </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: 13.5, color: "#0F2A1B" }}>Producto crítico (esencial)</div>
-              <div style={{ fontSize: 12, color: "#556A7C" }}>Aparece marcado con ★ y prioriza la reposición cuando esté bajo el mínimo.</div>
+              <span
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 6,
+                  border: critical ? "0" : "1px solid #cdd5e3",
+                  background: critical ? "var(--brand)" : "#fff",
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 13,
+                  flex: "none",
+                }}
+              >
+                {critical ? "✓" : ""}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 13.5, color: "#0F2A1B" }}>Producto crítico (esencial)</div>
+                <div style={{ fontSize: 12, color: "#556A7C" }}>Aparece marcado con ★ y prioriza la reposición cuando esté bajo el mínimo.</div>
+              </div>
             </div>
-          </div>
+          )}
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={labelStyle}>Imagen del producto (opcional)</label>
             <ImageUploader
