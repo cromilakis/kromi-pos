@@ -9,6 +9,12 @@ export interface CustomerRow {
   points: number;
   spent: number;
   visits: number;
+  is_company: boolean;
+  rut: string | null;
+  razon_social: string | null;
+  giro: string | null;
+  direccion: string | null;
+  comuna: string | null;
 }
 
 /** Filtro de búsqueda por nombre, teléfono o correo (case-insensitive). */
@@ -25,7 +31,7 @@ export function useCustomers(businessId?: string) {
     queryFn: async (): Promise<CustomerRow[]> => {
       const { data, error } = await supabase
         .from("customer")
-        .select("id,name,email,phone,points,spent,visits")
+        .select("id,name,email,phone,points,spent,visits,is_company,rut,razon_social,giro,direccion,comuna")
         .eq("business_id", businessId!)
         .is("deleted_at", null)
         .order("name");
@@ -41,17 +47,36 @@ export async function createCustomer(input: {
   email?: string | null;
   phone?: string | null;
   created_by?: string | null;
+  is_company?: boolean;
+  rut?: string | null;
+  razon_social?: string | null;
+  giro?: string | null;
+  direccion?: string | null;
+  comuna?: string | null;
 }): Promise<CustomerRow> {
   const { data, error } = await supabase
     .from("customer")
     .insert(input)
-    .select("id,name,email,phone,points,spent,visits")
+    .select("id,name,email,phone,points,spent,visits,is_company,rut,razon_social,giro,direccion,comuna")
     .single();
   if (error) throw error;
   return data;
 }
 
-export async function updateCustomer(id: string, input: Partial<{ name: string; email: string | null; phone: string | null }>) {
+export async function updateCustomer(
+  id: string,
+  input: Partial<{
+    name: string;
+    email: string | null;
+    phone: string | null;
+    is_company: boolean;
+    rut: string | null;
+    razon_social: string | null;
+    giro: string | null;
+    direccion: string | null;
+    comuna: string | null;
+  }>,
+) {
   const { error } = await supabase.from("customer").update(input).eq("id", id);
   if (error) throw error;
 }
