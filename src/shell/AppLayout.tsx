@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Home, ShoppingCart, Package, Users, Settings, LogOut, FileText, FileMinus, Menu, type LucideIcon } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
@@ -13,25 +13,15 @@ const ROLE_LABEL: Record<Role, string> = {
   cajero: "Cajero/a",
 };
 
-const NAV_ICON: Record<string, LucideIcon> = {
-  Inicio: Home,
-  Venta: ShoppingCart,
-  Cotizaciones: FileText,
-  Stock: Package,
-  Clientes: Users,
-  Administración: Settings,
-  "Notas de crédito": FileMinus,
-};
-
-/** Color propio de cada ícono del menú, para que la navegación sea colorida. */
-const NAV_COLOR: Record<string, string> = {
-  Inicio: "#2563EB",           // azul
-  Venta: "#16A34A",            // verde
-  Cotizaciones: "#7C3AED",     // violeta
-  Stock: "#D97706",            // ámbar
-  Clientes: "#0891B2",         // cyan
-  Administración: "#DB2777",   // rosa
-  "Notas de crédito": "#DC2626", // rojo
+/** Emoji a color de cada ítem del menú (estilo consistente con el carrito: 💾 🧹). */
+const NAV_EMOJI: Record<string, string> = {
+  Inicio: "🏠",
+  Venta: "🛒",
+  Cotizaciones: "📝",
+  Stock: "📦",
+  Clientes: "👥",
+  Administración: "⚙️",
+  "Notas de crédito": "🧾",
 };
 
 function initialsOf(name: string): string {
@@ -39,8 +29,7 @@ function initialsOf(name: string): string {
 }
 
 function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
-  const Icon = NAV_ICON[item.label] ?? Home;
-  const iconColor = NAV_COLOR[item.label] ?? "#2A3A2E";
+  const emoji = NAV_EMOJI[item.label] ?? "•";
   return (
     <NavLink to={item.to} end={item.to === "/"} title={collapsed ? item.label : undefined}>
       {({ isActive }) => (
@@ -51,7 +40,7 @@ function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
             background: isActive ? "color-mix(in srgb, var(--brand) 14%, transparent)" : "transparent",
           }}
         >
-          <Icon className="size-[18px] shrink-0" strokeWidth={1.9} style={{ color: iconColor }} />
+          <span className="w-[20px] shrink-0 text-center text-[16px] leading-none" aria-hidden>{emoji}</span>
           {!collapsed && <span className="truncate">{item.label}</span>}
         </span>
       )}
@@ -137,7 +126,7 @@ export function AppLayout() {
                     background: adminActive ? "color-mix(in srgb, var(--brand) 14%, transparent)" : "transparent",
                   }}
                 >
-                  <Settings className="size-[18px] shrink-0" strokeWidth={1.9} style={{ color: NAV_COLOR["Administración"] }} />
+                  <span className="w-[20px] shrink-0 text-center text-[16px] leading-none" aria-hidden>{NAV_EMOJI["Administración"]}</span>
                   {!collapsed && <span className="truncate">{adminItem.label}</span>}
                 </span>
               </NavLink>
