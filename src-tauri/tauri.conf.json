@@ -24,7 +24,8 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis"],
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -32,5 +33,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/cromilakis/kromi-pos/releases/latest/download/latest.json"
+      ],
+      "pubkey": "PLACEHOLDER_UPDATER_PUBKEY"
+    }
   }
 }
