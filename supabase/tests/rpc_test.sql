@@ -164,6 +164,39 @@ begin
   if v_nc.cod_ref <> 1 then raise exception 'NC no guardo cod_ref=1: %', v_nc.cod_ref; end if;
 end $$;
 
+-- emitir_nota_credito: NC por boleta rechaza devolver más de lo vendido.
+do $$
+declare
+  v_product uuid := 'eeeeeeee-0000-0000-0000-000000000003';
+  v_sale    public.sale;
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Suculenta','dddddddd-0000-0000-0000-000000000001',500);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',10);
+
+  -- Venta de qty=2 de ese producto.
+  v_sale := public.cobrar_venta(
+    'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+    ('[{"product_id":"'||v_product||'","qty":2}]')::jsonb,
+    'efectivo', 1000, null);
+
+  -- Intentar devolver qty=3 (más de lo vendido) debe ser rechazado.
+  begin
+    perform public.emitir_nota_credito(
+      'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+      v_sale.id, 'efectivo', 'anula',
+      ('[{"product_id":"'||v_product||'","qty":3,"restock":true}]')::jsonb,
+      1::smallint);
+    raise exception 'FALLO: NC devolvió más de lo vendido sin rechazar';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%excede la vendida%' then
+      raise exception 'error inesperado al validar over-return: %', sqlerrm;
+    end if;
+  end;
+end $$;
+
 -- handle_new_user: al insertar en auth.users se crea el espejo en app_user
 do $$
 declare v_uid uuid := '99999999-0000-0000-0000-000000000001'; v_name text;

@@ -37,6 +37,7 @@ declare
   v_nc       public.credit_note;
   ln         record;
   v_price    int;
+  v_sold     int;
 begin
   select business_id into v_business from public.branch where id = p_branch;
   if v_business is null then raise exception 'la sucursal no existe'; end if;
@@ -58,16 +59,21 @@ begin
       from jsonb_array_elements(p_lines) e
   loop
     if p_sale is not null then
-      select price_snapshot into v_price
+      select price_snapshot, qty into v_price, v_sold
         from public.sale_line
         where sale_id = p_sale and product_id = ln.product_id
         limit 1;
+      -- No se puede devolver más de lo vendido en esa línea de la boleta.
+      if ln.qty > coalesce(v_sold, 0) then
+        raise exception 'la cantidad a devolver excede la vendida';
+      end if;
     end if;
     if v_price is null then
       select price into v_price from public.product where id = ln.product_id;
     end if;
     v_total := v_total + ln.qty * v_price;
     v_price := null;
+    v_sold  := null;
   end loop;
 
   v_neto  := round(v_total / 1.19);
