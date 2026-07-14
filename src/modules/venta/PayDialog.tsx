@@ -13,12 +13,12 @@ interface PayDialogProps {
 
 /** Diálogo de cobro: método, efectivo recibido y vuelto. Clona el popup de cobro del prototipo. */
 export function PayDialog({ open, total, busy, onClose, onConfirm }: PayDialogProps) {
-  const [method, setMethod] = useState<PayMethod>("efectivo");
+  const [method, setMethod] = useState<PayMethod>("tarjeta");
   const [cashStr, setCashStr] = useState("");
 
   useEffect(() => {
     if (open) {
-      setMethod("efectivo");
+      setMethod("tarjeta");
       setCashStr("");
     }
   }, [open]);
@@ -110,8 +110,10 @@ export function PayDialog({ open, total, busy, onClose, onConfirm }: PayDialogPr
             </div>
           ) : (
             <div className="mx-6 mb-[18px] rounded-2xl border border-dashed border-[#cdd5e3] bg-[#F6F7FB] px-5 py-7 text-center">
-              <div className="text-[15px] font-bold text-[#0F2A1B]">Inserta o acerca la tarjeta</div>
-              <div className="mt-1 text-[13px] text-[#556A7C]">Esperando confirmación del terminal…</div>
+              <div className="text-[15px] font-bold text-[#0F2A1B]">Cobro en terminal externo</div>
+              <div className="mt-1.5 text-[13px] leading-relaxed text-[#556A7C]">
+                Realice el cobro en la terminal y, una vez finalizado, presione «Confirmar cobro».
+              </div>
             </div>
           )}
 

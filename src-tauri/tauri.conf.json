@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Kromi POS - Brota",
+        "title": "Kromi POS",
         "width": 1280,
         "height": 800
       }

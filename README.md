@@ -1,7 +1,7 @@
 # Mostrador POS
 
 Punto de venta (POS) **white-label** empaquetado como app de escritorio con **Tauri 2**
-(macOS/Windows). Configuración de demo: marca **Brota · Vivero**, CLP, IVA 19%.
+(macOS/Windows). Configuración de demo: marca de vivero, CLP, IVA 19%.
 
 Generado con el plugin **kromi-foundry** (`/kromi`, target `tauri`) y portado desde el
 prototipo funcional del diseño (`Mostrador POS.dc.html`).
