@@ -312,14 +312,14 @@ export interface SaleWithLines {
   dte_status: string | null;
   dte_folio: number | null;
   emitted_at: string | null;
-  lines: { product_id: string | null; name_snapshot: string; price_snapshot: number; qty: number }[];
+  lines: { product_id: string | null; name_snapshot: string; price_snapshot: number; qty: number; is_service: boolean }[];
 }
 
 /** Busca una venta por folio en la sucursal, con sus líneas (NC "por boleta"). */
 export async function buscarVentaPorFolio(branchId: string, folio: number): Promise<SaleWithLines | null> {
   const { data, error } = await supabase
     .from("sale")
-    .select("id,folio,method,total,neto,iva,sold_at,dte_status,dte_folio,emitted_at,sale_line(product_id,name_snapshot,price_snapshot,qty)")
+    .select("id,folio,method,total,neto,iva,sold_at,dte_status,dte_folio,emitted_at,sale_line(product_id,name_snapshot,price_snapshot,qty,product:product_id(is_service))")
     .eq("branch_id", branchId)
     .eq("folio", folio)
     .maybeSingle();
@@ -336,7 +336,14 @@ export async function buscarVentaPorFolio(branchId: string, folio: number): Prom
     dte_status: (data as any).dte_status ?? null,
     dte_folio: (data as any).dte_folio ?? null,
     emitted_at: (data as any).emitted_at ?? null,
-    lines: (data as any).sale_line ?? [],
+    lines: ((data as any).sale_line ?? []).map((l: any) => ({
+      product_id: l.product_id,
+      name_snapshot: l.name_snapshot,
+      price_snapshot: l.price_snapshot,
+      qty: l.qty,
+      // product_id puede ser null (producto borrado); null → no-servicio.
+      is_service: l.product?.is_service ?? false,
+    })),
   };
 }
 

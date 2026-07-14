@@ -31,6 +31,7 @@ interface NcLine {
   maxQty: number;
   restock: boolean;
   selected: boolean;
+  is_service: boolean;
 }
 
 type Modo = "anular" | "devolver";
@@ -95,8 +96,10 @@ export function NuevaNotaCredito() {
           price: l.price_snapshot,
           qty: l.qty,
           maxQty: l.qty,
-          restock: true,
+          // Los servicios no tienen stock: nunca se reponen.
+          restock: !l.is_service,
           selected: false,
+          is_service: l.is_service,
         })),
       );
     } catch (e) {
@@ -118,7 +121,8 @@ export function NuevaNotaCredito() {
     );
   }
   function toggleRestock(idx: number) {
-    setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, restock: !l.restock } : l)));
+    // Un servicio no repone stock: el toggle no aplica.
+    setLines((ls) => ls.map((l, i) => (i === idx && !l.is_service ? { ...l, restock: !l.restock } : l)));
   }
   function toggleSelected(idx: number) {
     setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, selected: !l.selected } : l)));
@@ -286,19 +290,21 @@ export function NuevaNotaCredito() {
                     inputMode="numeric"
                     className="w-14 rounded-lg border border-[#E1E5EE] px-2 py-2 text-center text-sm font-bold text-[#0F2A1B] outline-none disabled:bg-[#F8FAFC]"
                   />
-                  <button
-                    onClick={() => toggleRestock(idx)}
-                    title="Reponer stock"
-                    className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-[#5a6b7e]"
-                  >
-                    <span
-                      className="flex size-4 items-center justify-center rounded border"
-                      style={l.restock ? { background: "var(--brand)", borderColor: "var(--brand)", color: "#fff" } : { borderColor: "#cdd5e3" }}
+                  {!l.is_service && (
+                    <button
+                      onClick={() => toggleRestock(idx)}
+                      title="Reponer stock"
+                      className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-[#5a6b7e]"
                     >
-                      {l.restock ? "✓" : ""}
-                    </span>
-                    Stock
-                  </button>
+                      <span
+                        className="flex size-4 items-center justify-center rounded border"
+                        style={l.restock ? { background: "var(--brand)", borderColor: "var(--brand)", color: "#fff" } : { borderColor: "#cdd5e3" }}
+                      >
+                        {l.restock ? "✓" : ""}
+                      </span>
+                      Stock
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

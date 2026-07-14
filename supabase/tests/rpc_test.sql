@@ -407,4 +407,60 @@ begin
   end if;
 end $$;
 
+-- charge_sale: carrito MIXTO (producto físico + servicio) baja stock solo del
+-- físico y el servicio sigue sin fila de inventory.
+do $$
+declare
+  v_phys   uuid := '22222222-0000-0000-0000-000000000001';
+  v_svc    uuid := '11111111-0000-0000-0000-000000000001';
+  v_sale   public.sale;
+  v_stock  int;
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_phys,'aaaaaaaa-0000-0000-0000-000000000001','Maceta','dddddddd-0000-0000-0000-000000000001',5000);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_phys,'bbbbbbbb-0000-0000-0000-000000000001',10);
+
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001',
+    ('[{"product_id":"'||v_phys||'","qty":3},{"product_id":"'||v_svc||'","qty":1}]')::jsonb,
+    'efectivo', 35000, null);
+
+  if v_sale.total <> 35000 then raise exception 'mixta: total incorrecto: %', v_sale.total; end if;
+
+  select stock into v_stock from public.inventory
+    where product_id = v_phys and branch_id = 'bbbbbbbb-0000-0000-0000-000000000001';
+  if v_stock <> 7 then raise exception 'mixta: stock del físico no bajó a 7: %', v_stock; end if;
+
+  if exists (select 1 from public.inventory where product_id = v_svc) then
+    raise exception 'mixta: el servicio no debe tener fila de inventory';
+  end if;
+end $$;
+
+-- issue_credit_note: NC con restock=true sobre una venta que incluyó un
+-- servicio NO debe crear/incrementar fila de inventory para el servicio
+-- (guarda del invariante "servicio ⇒ sin fila en inventory").
+do $$
+declare
+  v_svc  uuid := '11111111-0000-0000-0000-000000000001';
+  v_sale public.sale;
+  v_nc   public.credit_note;
+begin
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', 'f0000000-0000-0000-0000-000000000001',
+    ('[{"product_id":"'||v_svc||'","qty":1}]')::jsonb,
+    'efectivo', 20000, null);
+
+  v_nc := public.issue_credit_note(
+    'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+    v_sale.id, 'efectivo', 'anula servicio',
+    ('[{"product_id":"'||v_svc||'","qty":1,"restock":true}]')::jsonb,
+    1::smallint);
+
+  if v_nc.total <> 20000 then raise exception 'NC servicio: total incorrecto: %', v_nc.total; end if;
+  if exists (select 1 from public.inventory where product_id = v_svc) then
+    raise exception 'NC servicio: restock=true creó fila de inventory para un servicio';
+  end if;
+end $$;
+
 rollback;
