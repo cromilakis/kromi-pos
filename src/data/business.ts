@@ -13,9 +13,12 @@ export interface BusinessRow {
   logo_url: string | null;
   social_red: string | null;
   social_url: string | null;
+  points_clp_per_point: number;
+  points_multiplier: number;
+  points_redeem_clp_per_point: number;
 }
 
-const COLS = "id,name,nombre_comercial,rut,giro,direccion,tagline,footer,logo_url,social_red,social_url";
+const COLS = "id,name,nombre_comercial,rut,giro,direccion,tagline,footer,logo_url,social_red,social_url,points_clp_per_point,points_multiplier,points_redeem_clp_per_point";
 
 export function useBusiness(businessId?: string) {
   return useQuery({

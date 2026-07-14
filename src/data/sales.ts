@@ -83,6 +83,8 @@ export interface Sale {
   change: number;
   sold_at: string;
   discount_amount: number;
+  points_redeemed: number;
+  points_discount: number;
 }
 
 /** Cobra la venta de forma atómica vía RPC. Descuentos (línea y total) los recalcula
@@ -96,6 +98,7 @@ export async function chargeSale(args: {
   p_customer?: string | null;
   p_total_disc?: DiscountInput;
   p_discount_id?: string | null;
+  p_points_redeem?: number;
 }): Promise<Sale> {
   const { data, error } = await supabase.rpc("charge_sale", {
     p_branch: args.p_branch,
@@ -106,6 +109,7 @@ export async function chargeSale(args: {
     p_customer: args.p_customer ?? null,
     p_total_disc: args.p_total_disc ?? null,
     p_discount_id: args.p_discount_id ?? null,
+    p_points_redeem: args.p_points_redeem ?? 0,
   });
   if (error) throw error;
   return data;
