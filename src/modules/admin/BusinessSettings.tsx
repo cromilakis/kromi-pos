@@ -8,7 +8,6 @@ import { ImageUploader } from "@/components/ImageUploader";
 import { uploadLogoImage } from "@/lib/image";
 import { PrinterSettings } from "@/shell/PrinterSettings";
 import { UpdateSettings } from "@/shell/UpdateSettings";
-import { getSkipPrint, setSkipPrint } from "@/lib/deviceConfig";
 
 type FormState = Omit<BusinessRow, "id">;
 
@@ -35,7 +34,6 @@ export function BusinessSettings() {
   const { data: business, isLoading } = useBusiness(businessId);
   const [form, setForm] = useState<FormState>(EMPTY);
   const [busy, setBusy] = useState(false);
-  const [skipPrint, setSkipPrintState] = useState(() => getSkipPrint());
 
   useEffect(() => {
     if (business) {
@@ -122,24 +120,8 @@ export function BusinessSettings() {
           </div>
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#F0F2F7] pt-4">
             <div>
-              <div className="text-[12.5px] font-bold text-[#5a6b7e]">Este dispositivo no imprime</div>
-              <div className="text-[11.5px] text-[#5E6E7E]">Para tablets que solo cobran: la venta se emite igual; la boleta se imprime luego en la caja.</div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={skipPrint}
-              onClick={() => { const v = !skipPrint; setSkipPrintState(v); setSkipPrint(v); toast.success(v ? "Modo sin impresión activado." : "Impresión reactivada en este equipo."); }}
-              className="relative h-[26px] w-[46px] shrink-0 rounded-full transition-colors"
-              style={{ background: skipPrint ? "var(--brand)" : "#CBD5E1" }}
-            >
-              <span className="absolute top-[3px] size-[20px] rounded-full bg-white transition-all" style={{ left: skipPrint ? "23px" : "3px" }} />
-            </button>
-          </div>
-          <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#F0F2F7] pt-4">
-            <div>
               <div className="text-[12.5px] font-bold text-[#5a6b7e]">Impresora de boletas</div>
-              <div className="text-[11.5px] text-[#5E6E7E]">Configura la impresora térmica de este equipo.</div>
+              <div className="text-[11.5px] text-[#5E6E7E]">Configura si este equipo imprime y qué impresora térmica usa.</div>
             </div>
             <PrinterSettings />
           </div>
