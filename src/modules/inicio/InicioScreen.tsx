@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { notifyError } from "@/lib/errors";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, AlertTriangle, PackageSearch } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -62,6 +62,7 @@ function AbrirCajaCard() {
 
 export function InicioScreen() {
   const { profile } = useAuth();
+  const nav = useNavigate();
   const { branch, register } = useWork();
   const { data: openSession } = useOpenSession(register?.id);
   const { data: stats } = useSalesToday(branch?.id);
@@ -114,12 +115,12 @@ export function InicioScreen() {
         </div>
 
         {/* caja + CTA venta */}
-        <div className="mb-[18px] flex flex-wrap items-stretch gap-[18px]">
+        <div className="mb-[18px] flex flex-wrap items-start gap-[18px]">
           <div className="min-w-[280px] flex-1 basis-[340px]">
             {openSession ? (
               <Link
                 to="/venta"
-                className="flex h-full items-center gap-[13px] rounded-[18px] p-5 text-white no-underline"
+                className="flex items-center gap-[13px] rounded-[18px] p-5 text-white no-underline"
                 style={{ background: "var(--brand)" }}
               >
                 <span className="flex size-[42px] shrink-0 items-center justify-center rounded-[12px] bg-white/20">
@@ -143,9 +144,15 @@ export function InicioScreen() {
             ) : (
               <div>
                 {recent.map((s) => (
-                  <div key={s.id} className="flex items-center gap-[13px] border-b border-[#F0F2F7] py-[11px] last:border-0">
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => nav("/historial", s.dte_folio ? { state: { folio: s.dte_folio } } : undefined)}
+                    title="Ver en el historial"
+                    className="flex w-full items-center gap-[13px] border-b border-[#F0F2F7] py-[11px] text-left last:border-0 hover:bg-[#F7FAF8]"
+                  >
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[14px] font-bold text-[#0F2A1B]">Venta #{s.folio ?? "—"}</div>
+                      <div className="truncate text-[14px] font-bold text-[#0F2A1B]">{s.dte_folio ? `#${s.dte_folio}` : "— pendiente"}</div>
                       <div className="text-xs text-[#5E6E7E]">
                         {s.method ? METHOD_LABEL[s.method] ?? s.method : ""} · {fmtHora(s.sold_at)}
                       </div>
@@ -153,7 +160,8 @@ export function InicioScreen() {
                     <span className="min-w-[74px] whitespace-nowrap text-right text-[14px] font-black text-[#0F2A1B]">
                       {fmtCLP(s.total)}
                     </span>
-                  </div>
+                    <span className="text-[#B7C0CC]">→</span>
+                  </button>
                 ))}
               </div>
             )}

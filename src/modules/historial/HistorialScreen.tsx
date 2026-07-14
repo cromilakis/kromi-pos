@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
 import { useSalesHistory, HISTORY_PAGE, type SaleHistoryRow } from "@/data/salesHistory";
@@ -46,6 +46,8 @@ export function HistorialScreen() {
   const { profile } = useAuth();
   const { branch } = useWork();
   const nav = useNavigate();
+  const location = useLocation();
+  const didInitFolio = useRef(false);
   const businessId = profile?.business_id;
   const branchId = branch?.id;
   const { data: business } = useBusiness(businessId);
@@ -79,6 +81,19 @@ export function HistorialScreen() {
     if (!data) return;
     setRows((prev) => (page === 0 ? data : [...prev, ...data]));
   }, [data, page]);
+
+  // Pre-carga del filtro por folio SII cuando se llega desde la actividad reciente
+  // del Inicio (navigate("/historial", { state: { folio } })). Disparo único.
+  useEffect(() => {
+    if (didInitFolio.current) return;
+    const folio = (location.state as { folio?: number } | null)?.folio;
+    if (!folio) return;
+    didInitFolio.current = true;
+    setFolioStr(String(folio));
+    setPage(0);
+    setRows([]);
+    setAppliedFolio(folio);
+  }, [location.state]);
 
   function handleBuscar() {
     setPage(0);

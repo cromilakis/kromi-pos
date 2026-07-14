@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
-export interface SaleRow { id?: string; folio?: number; total: number; method?: string; sold_at?: string; }
+export interface SaleRow { id?: string; folio?: number; total: number; method?: string; sold_at?: string; dte_folio?: number | null; }
 
 export function summarizeSales(rows: { total: number }[]): { total: number; count: number; avg: number } {
   const total = rows.reduce((s, r) => s + r.total, 0);
@@ -30,7 +30,7 @@ export function useRecentSales(branchId: string | undefined, limit = 8) {
     enabled: !!branchId,
     queryFn: async (): Promise<SaleRow[]> => {
       const { data, error } = await supabase
-        .from("sale").select("id,folio,total,method,sold_at").eq("branch_id", branchId!)
+        .from("sale").select("id,folio,total,method,sold_at,dte_folio").eq("branch_id", branchId!)
         .order("sold_at", { ascending: false }).limit(limit);
       if (error) throw error; return data ?? [];
     },
