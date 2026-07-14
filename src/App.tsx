@@ -9,12 +9,22 @@ import { VentaScreen } from "@/modules/venta/VentaScreen";
 import { CotizacionesScreen } from "@/modules/cotizaciones/CotizacionesScreen";
 import { ClientesScreen } from "@/modules/clientes/ClientesScreen";
 import { BusinessSettings } from "@/modules/admin/BusinessSettings";
+import { NotasCreditoScreen } from "@/modules/notas-credito/NotasCreditoScreen";
 
 function AdminRoute() {
   const { profile } = useAuth();
   return (
     <RequireRole role={profile?.role} allow={["admin", "kromi"]}>
       <BusinessSettings />
+    </RequireRole>
+  );
+}
+
+function NotasCreditoRoute() {
+  const { profile } = useAuth();
+  return (
+    <RequireRole role={profile?.role} allow={["admin", "kromi"]}>
+      <NotasCreditoScreen />
     </RequireRole>
   );
 }
@@ -29,6 +39,7 @@ export default function App() {
         <Route path="stock" element={<StockScreen />} />
         <Route path="clientes" element={<ClientesScreen />} />
         <Route path="admin" element={<AdminRoute />} />
+        <Route path="notas-credito" element={<NotasCreditoRoute />} />
       </Route>
     </Routes>
   );

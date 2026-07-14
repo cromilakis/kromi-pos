@@ -8,8 +8,11 @@ const BASE: NavItem[] = [
   { to: "/stock", label: "Stock" },
   { to: "/clientes", label: "Clientes" },
 ];
-const ADMIN: NavItem = { to: "/admin", label: "Administración" };
+const ADMIN: NavItem[] = [
+  { to: "/admin", label: "Administración" },
+  { to: "/notas-credito", label: "Notas de crédito" },
+];
 
 export function navForRole(role: Role): NavItem[] {
-  return role === "admin" || role === "kromi" ? [...BASE, ADMIN] : BASE;
+  return role === "admin" || role === "kromi" ? [...BASE, ...ADMIN] : BASE;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Home, ShoppingCart, Package, Users, Settings, LogOut, FileText, Menu, type LucideIcon } from "lucide-react";
+import { Home, ShoppingCart, Package, Users, Settings, LogOut, FileText, FileMinus, Menu, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
 import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
@@ -20,6 +20,7 @@ const NAV_ICON: Record<string, LucideIcon> = {
   Stock: Package,
   Clientes: Users,
   Administración: Settings,
+  "Notas de crédito": FileMinus,
 };
 
 function initialsOf(name: string): string {
