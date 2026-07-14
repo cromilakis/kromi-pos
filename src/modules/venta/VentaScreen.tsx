@@ -9,6 +9,7 @@ import { useProductsWithStock, useCategories, findByBarcode } from "@/data/stock
 import type { ProductRow } from "@/data/stock";
 import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
+import { useActiveDiscounts } from "@/data/discounts";
 import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data/heldSales";
 import { chargeSale, cartToLines, useSalesTodayDte, type SaleDteRow } from "@/data/sales";
 import { issueReceipt } from "@/data/sii";
@@ -80,6 +81,7 @@ export function VentaScreen() {
   const { data: customers } = useCustomers(businessId);
   const { data: business } = useBusiness(businessId);
   const { data: heldSales } = useHeldSales(branchId);
+  const { data: activeDiscounts } = useActiveDiscounts(businessId);
 
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string>("todas");
@@ -336,7 +338,7 @@ export function VentaScreen() {
     }
   }
 
-  async function handleConfirmPay(method: PayMethod, recv: number) {
+  async function handleConfirmPay(method: PayMethod, recv: number, discountId: string | null) {
     if (!branchId || !openSession) return;
     setBusy(true);
     try {
@@ -347,6 +349,7 @@ export function VentaScreen() {
         p_method: method,
         p_recv: recv,
         p_customer: customerId,
+        p_discount_id: discountId,
       });
 
       // Venta confirmada en BD: limpiar carrito, refrescar datos e imprimir la boleta.
@@ -677,7 +680,7 @@ export function VentaScreen() {
         <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} />
       )}
 
-      <PayDialog open={payOpen} total={totals.total} busy={busy} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />
+      <PayDialog open={payOpen} total={totals.total} busy={busy} discounts={activeDiscounts ?? []} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />
 
       <CustomerPickerDialog
         open={pickerOpen}

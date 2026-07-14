@@ -95,6 +95,7 @@ export async function chargeSale(args: {
   p_recv: number;
   p_customer?: string | null;
   p_total_disc?: DiscountInput;
+  p_discount_id?: string | null;
 }): Promise<Sale> {
   const { data, error } = await supabase.rpc("charge_sale", {
     p_branch: args.p_branch,
@@ -104,6 +105,7 @@ export async function chargeSale(args: {
     p_recv: args.p_recv,
     p_customer: args.p_customer ?? null,
     p_total_disc: args.p_total_disc ?? null,
+    p_discount_id: args.p_discount_id ?? null,
   });
   if (error) throw error;
   return data;

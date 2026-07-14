@@ -187,7 +187,7 @@ export function CotizacionesScreen() {
     setConverting(q);
   }
 
-  async function handleConfirmCobro(method: PayMethod, recv: number) {
+  async function handleConfirmCobro(method: PayMethod, recv: number, _discountId: string | null) {
     if (!converting || !openSession) return;
     setPayBusy(true);
     try {
@@ -549,6 +549,7 @@ export function CotizacionesScreen() {
         open={!!converting}
         total={converting?.total ?? 0}
         busy={payBusy}
+        discounts={[]}
         onClose={() => setConverting(null)}
         onConfirm={handleConfirmCobro}
       />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { fmtCLP } from "@/lib/money";
+import { fmtCLP, resolveDiscount } from "@/lib/money";
+import type { DiscountRow } from "@/data/discounts";
 
 export type PayMethod = "efectivo" | "tarjeta";
 
@@ -7,27 +8,34 @@ interface PayDialogProps {
   open: boolean;
   total: number;
   busy: boolean;
+  discounts: DiscountRow[];
   onClose: () => void;
-  onConfirm: (method: PayMethod, recv: number) => void;
+  onConfirm: (method: PayMethod, recv: number, discountId: string | null) => void;
 }
 
-/** Diálogo de cobro: método, efectivo recibido y vuelto. Clona el popup de cobro del prototipo. */
-export function PayDialog({ open, total, busy, onClose, onConfirm }: PayDialogProps) {
+/** Diálogo de cobro: método, descuento predefinido, efectivo recibido y vuelto. Clona el popup de cobro del prototipo. */
+export function PayDialog({ open, total, busy, discounts, onClose, onConfirm }: PayDialogProps) {
   const [method, setMethod] = useState<PayMethod>("tarjeta");
   const [cashStr, setCashStr] = useState("");
+  const [discountId, setDiscountId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setMethod("tarjeta");
       setCashStr("");
+      setDiscountId(null);
     }
   }, [open]);
 
   if (!open) return null;
 
-  const recv = method === "efectivo" ? Number(cashStr) || 0 : total;
-  const change = recv - total;
-  const canConfirm = method === "tarjeta" || recv >= total;
+  const selected = discounts.find((d) => d.id === discountId) ?? null;
+  const discAmount = selected ? resolveDiscount(total, "pct", selected.percent) : 0;
+  const effectiveTotal = total - discAmount;
+
+  const recv = method === "efectivo" ? Number(cashStr) || 0 : effectiveTotal;
+  const change = recv - effectiveTotal;
+  const canConfirm = method === "tarjeta" || recv >= effectiveTotal;
 
   function pushCash(k: string) {
     setCashStr((v) => {
@@ -49,13 +57,34 @@ export function PayDialog({ open, total, busy, onClose, onConfirm }: PayDialogPr
             </div>
             <div className="text-[19px] font-black text-[#0F2A1B]">Cobro de la venta</div>
           </div>
+          {discAmount > 0 && (
+            <div className="mb-2 flex items-baseline justify-between px-1 text-[13px] font-bold text-[#D02E2E]">
+              <span>Descuento ({selected?.name})</span>
+              <span>-{fmtCLP(discAmount)}</span>
+            </div>
+          )}
           <div className="flex items-baseline justify-between rounded-2xl border border-[#E1E5EE] bg-[#F6F7FB] px-4 py-3">
             <span className="text-sm font-semibold text-[#556A7C]">Total a cobrar</span>
-            <span className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(total)}</span>
+            <span className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(effectiveTotal)}</span>
           </div>
         </div>
 
         <div className="p-[22px_24px]">
+          <div className="mb-[18px] px-6">
+            <label className="mb-1 block text-[11px] font-semibold text-[#556A7C]">Descuento</label>
+            <select
+              value={discountId ?? ""}
+              onChange={(e) => setDiscountId(e.target.value || null)}
+              className="w-full rounded-xl border border-[#E1E5EE] bg-white px-3 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none"
+            >
+              <option value="">Sin descuento</option>
+              {discounts.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} (−{d.percent}%)
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="mb-[18px] flex gap-2.5 px-6 pt-1">
             <button
               onClick={() => setMethod("efectivo")}
@@ -126,7 +155,7 @@ export function PayDialog({ open, total, busy, onClose, onConfirm }: PayDialogPr
               Cancelar
             </button>
             <button
-              onClick={() => onConfirm(method, recv)}
+              onClick={() => onConfirm(method, recv, discountId)}
               disabled={busy || !canConfirm}
               className="flex-1 rounded-2xl py-3.5 text-[15px] font-bold text-white disabled:opacity-50"
               style={{ background: "var(--brand)" }}
