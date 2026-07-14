@@ -63,6 +63,8 @@ pub struct CreditNotePayload {
     pub neto: i64,
     pub iva: i64,
     pub total: i64,
+    #[serde(default)] pub dte_folio: Option<u32>,
+    #[serde(default)] pub timbre_png: Option<String>,
 }
 
 const COL: usize = 48;
@@ -533,6 +535,9 @@ pub fn build_credit_note(p: &CreditNotePayload) -> Vec<u8> {
     nl(&mut b);
 
     push_text(&mut b, &format!("Fecha: {} {}", p.fecha, p.hora)); nl(&mut b);
+    if let Some(f) = p.dte_folio {
+        push_text(&mut b, &format!("Folio SII: {}", f)); nl(&mut b);
+    }
     if let Some(sf) = p.sale_folio {
         push_text(&mut b, &format!("Ref. boleta: {}", sf)); nl(&mut b);
     }
@@ -559,8 +564,21 @@ pub fn build_credit_note(p: &CreditNotePayload) -> Vec<u8> {
     line_lr(&mut b, "Medio de devolucion", &metodo_label(&p.metodo), COL);
     rule(&mut b, b'-');
 
+    // pie: timbre SII si la NC ya fue emitida (tiene folio SII).
     b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    push_text(&mut b, "Documento no tributario"); nl(&mut b);
+    match (p.dte_folio, &p.timbre_png) {
+        // Emitida CON timbre renderizable: PDF417 + glosa SII.
+        (Some(_), Some(png)) if timbre_png(&mut b, png) => {
+            push_text(&mut b, "Timbre Electronico SII"); nl(&mut b);
+            push_text(&mut b, "Res. 80 de 2014 - www.sii.cl"); nl(&mut b);
+        }
+        // Emitida SIN timbre renderizable: sigue siendo tributaria (tiene folio SII).
+        (Some(folio), _) => {
+            push_text(&mut b, &format!("Nota de Credito Electronica SII - Folio {}", folio)); nl(&mut b);
+        }
+        // No emitida (NC local sin folio SII): documento no tributario.
+        _ => { push_text(&mut b, "Documento no tributario"); nl(&mut b); }
+    }
     push_text(&mut b, &p.negocio.footer); nl(&mut b);
     b.extend_from_slice(&[0x1B, 0x61, 0x00]);
 
@@ -742,6 +760,7 @@ mod tests {
             motivo: "Producto defectuoso".into(),
             items: vec![Item { nombre: "Sansevieria".into(), qty: 1, precio: 9990, descuento: 0 }],
             neto: 8395, iva: 1595, total: 9990,
+            dte_folio: None, timbre_png: None,
         }
     }
 
@@ -761,5 +780,20 @@ mod tests {
         assert!(contains(&b, b"Ref. boleta: 438"));
         assert!(contains(&b, b"Sansevieria"));
         assert!(contains(&b, b"Producto defectuoso"));
+    }
+
+    #[test]
+    fn credit_note_con_timbre_es_tributaria() {
+        let p = CreditNotePayload {
+            negocio: sample("efectivo", true).negocio, folio: 1, fecha: "2026-07-13".into(), hora: "20:19".into(),
+            sale_folio: Some(5001), metodo: "efectivo".into(), motivo: "anula".into(),
+            items: vec![], neto: 5, iva: 1, total: 6,
+            dte_folio: Some(1), timbre_png: None,
+        };
+        let bytes = build_credit_note(&p);
+        let txt = String::from_utf8_lossy(&bytes);
+        // Con dte_folio presente ya es tributaria: no debe decir "Documento no tributario".
+        assert!(!txt.contains("no tributario"));
+        assert!(txt.contains("No 1"));
     }
 }
