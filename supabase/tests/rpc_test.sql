@@ -120,12 +120,48 @@ begin
   v_nc := public.emitir_nota_credito(
     'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
     null, 'efectivo', 'devolución',
-    '[{"product_id":"eeeeeeee-0000-0000-0000-000000000001","qty":1,"restock":true}]'::jsonb);
+    '[{"product_id":"eeeeeeee-0000-0000-0000-000000000001","qty":1,"restock":true}]'::jsonb,
+    3::smallint);
   if v_nc.total <> 14990 then raise exception 'total NC incorrecto: %', v_nc.total; end if;
+  if v_nc.cod_ref <> 3 then raise exception 'NC no guardo cod_ref=3: %', v_nc.cod_ref; end if;
   select stock into v_stock from public.inventory
     where product_id = 'eeeeeeee-0000-0000-0000-000000000001'
       and branch_id  = 'bbbbbbbb-0000-0000-0000-000000000001';
   if v_stock <> 7 then raise exception 'NC no repuso stock (esperado 7): %', v_stock; end if;
+end $$;
+
+-- emitir_nota_credito: NC por boleta usa el precio de la venta (price_snapshot),
+-- no el precio actual del producto; y persiste cod_ref.
+do $$
+declare
+  v_product uuid := 'eeeeeeee-0000-0000-0000-000000000002';
+  v_sale    public.sale;
+  v_nc      public.credit_note;
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Cactus','dddddddd-0000-0000-0000-000000000001',800);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',5);
+
+  v_sale := public.cobrar_venta(
+    'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+    ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+    'efectivo', 800, null);
+
+  -- El precio del producto SUBE tras la venta (800 -> 1000). La NC por boleta
+  -- DEBE usar el precio congelado en la venta (price_snapshot = 800), no el nuevo.
+  update public.product set price = 1000 where id = v_product;
+
+  v_nc := public.emitir_nota_credito(
+    'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+    v_sale.id, 'efectivo', 'anula',
+    ('[{"product_id":"'||v_product||'","qty":1,"restock":true}]')::jsonb,
+    1::smallint);
+
+  if v_nc.total <> 800 then
+    raise exception 'NC por boleta no uso price_snapshot (esperado 800): %', v_nc.total;
+  end if;
+  if v_nc.cod_ref <> 1 then raise exception 'NC no guardo cod_ref=1: %', v_nc.cod_ref; end if;
 end $$;
 
 -- handle_new_user: al insertar en auth.users se crea el espejo en app_user
