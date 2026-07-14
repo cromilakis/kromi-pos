@@ -613,4 +613,70 @@ begin
   end;
 end $$;
 
+-- charge_sale: p_doc_type ('factura') exige cliente empresa con RUT.
+do $$
+declare
+  v_session   uuid := 'f0000000-0000-0000-0000-000000000001';
+  v_product   uuid := '77777777-0000-0000-0000-000000000006';
+  v_persona   uuid := 'c0000000-0000-0000-0000-000000000005';
+  v_empresa   uuid := 'c0000000-0000-0000-0000-000000000006';
+  v_sale      public.sale;
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Tijera de podar','dddddddd-0000-0000-0000-000000000001',5000);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',10);
+
+  insert into public.customer (id, business_id, name, is_company, rut) values
+    (v_persona,'aaaaaaaa-0000-0000-0000-000000000001','Persona Natural',false,null);
+  insert into public.customer (id, business_id, name, is_company, rut, razon_social) values
+    (v_empresa,'aaaaaaaa-0000-0000-0000-000000000001','Empresa SpA',true,'76.111.111-1','Empresa SpA');
+
+  -- (a) factura sin cliente -> excepción.
+  begin
+    perform public.charge_sale(
+      'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+      ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+      'efectivo', 5000, null, null, null, 0, 'factura');
+    raise exception 'FALLO: factura sin cliente no fue rechazada';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%la factura requiere un cliente%' then
+      raise exception 'error inesperado (factura sin cliente): %', sqlerrm;
+    end if;
+  end;
+
+  -- (b) factura con cliente persona (is_company=false) -> excepción.
+  begin
+    perform public.charge_sale(
+      'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+      ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+      'efectivo', 5000, v_persona, null, null, 0, 'factura');
+    raise exception 'FALLO: factura con cliente persona no fue rechazada';
+  exception when others then
+    if sqlerrm like 'FALLO:%' then raise; end if;
+    if sqlerrm not like '%la factura requiere un cliente empresa con RUT%' then
+      raise exception 'error inesperado (factura con persona): %', sqlerrm;
+    end if;
+  end;
+
+  -- (c) factura con cliente empresa (is_company=true, rut) -> ok, doc_type='factura'.
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+    ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+    'efectivo', 5000, v_empresa, null, null, 0, 'factura');
+  if v_sale.doc_type <> 'factura' then
+    raise exception 'sale.doc_type no quedo en factura: %', v_sale.doc_type;
+  end if;
+
+  -- (d) boleta (default) sigue funcionando con doc_type='boleta'.
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+    ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+    'efectivo', 5000, null);
+  if v_sale.doc_type <> 'boleta' then
+    raise exception 'sale.doc_type default no quedo en boleta: %', v_sale.doc_type;
+  end if;
+end $$;
+
 rollback;
