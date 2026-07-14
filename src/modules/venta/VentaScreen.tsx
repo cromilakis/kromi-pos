@@ -17,6 +17,7 @@ import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "@/lib/m
 import { errMsg, notifyError } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
+import { getSkipPrint } from "@/lib/deviceConfig";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -380,27 +381,31 @@ export function VentaScreen() {
 
       // Solo se imprime la boleta si fue emitida (con folio y timbre del SII).
       if (dteFolio) {
-        const soldAt = new Date(sale.sold_at);
-        const payload = {
-          negocio: businessToNegocio(business, getPrinterName()),
-          folio: sale.folio,
-          fecha: `${pad2(soldAt.getDate())}/${pad2(soldAt.getMonth() + 1)}/${soldAt.getFullYear()}`,
-          hora: `${pad2(soldAt.getHours())}:${pad2(soldAt.getMinutes())}`,
-          items: soldLines.map((l) => ({ nombre: l.product.name, qty: l.qty, precio: l.product.price, descuento: resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0) })),
-          neto: sale.neto,
-          iva: sale.iva,
-          total: sale.total,
-          descuento: soldLines.reduce((s, l) => s + resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0), 0),
-          dte_folio: dteFolio,
-          timbre_png: timbrePng ?? null,
-          reimpresion: false,
-          metodo: sale.method,
-          open_drawer: sale.method === "efectivo",
-        };
-        try {
-          await printReceipt(payload);
-        } catch (e) {
-          notifyError(`Boleta emitida (folio ${dteFolio}) pero no se pudo imprimir. Reimprime desde «Boletas del día».`, e instanceof Error ? e.message : e);
+        if (getSkipPrint()) {
+          toast.success(`Venta #${sale.folio} cobrada (boleta ${dteFolio}). Imprime desde «Boletas del día» en la caja.`);
+        } else {
+          const soldAt = new Date(sale.sold_at);
+          const payload = {
+            negocio: businessToNegocio(business, getPrinterName()),
+            folio: sale.folio,
+            fecha: `${pad2(soldAt.getDate())}/${pad2(soldAt.getMonth() + 1)}/${soldAt.getFullYear()}`,
+            hora: `${pad2(soldAt.getHours())}:${pad2(soldAt.getMinutes())}`,
+            items: soldLines.map((l) => ({ nombre: l.product.name, qty: l.qty, precio: l.product.price, descuento: resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0) })),
+            neto: sale.neto,
+            iva: sale.iva,
+            total: sale.total,
+            descuento: soldLines.reduce((s, l) => s + resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0), 0),
+            dte_folio: dteFolio,
+            timbre_png: timbrePng ?? null,
+            reimpresion: false,
+            metodo: sale.method,
+            open_drawer: sale.method === "efectivo",
+          };
+          try {
+            await printReceipt(payload);
+          } catch (e) {
+            notifyError(`Boleta emitida (folio ${dteFolio}) pero no se pudo imprimir. Reimprime desde «Boletas del día».`, e instanceof Error ? e.message : e);
+          }
         }
       }
     } catch (e) {

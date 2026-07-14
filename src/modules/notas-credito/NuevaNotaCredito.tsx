@@ -11,6 +11,7 @@ import { useBusiness, businessToNegocio } from "@/data/business";
 import { fmtCLP } from "@/lib/money";
 import { printCreditNote } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
+import { getSkipPrint } from "@/lib/deviceConfig";
 import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import type { PayMethod } from "@/modules/venta/PayDialog";
@@ -153,28 +154,32 @@ export function NuevaNotaCredito() {
         return;
       }
 
-      try {
-        const createdAt = new Date(nc.created_at);
-        await printCreditNote({
-          negocio: businessToNegocio(business, getPrinterName()),
-          folio: nc.folio,
-          fecha: fmtDate(createdAt),
-          hora: `${pad2(createdAt.getHours())}:${pad2(createdAt.getMinutes())}`,
-          sale_folio: foundSale.dte_folio ?? foundSale.folio,
-          metodo: nc.method,
-          motivo: nc.reason ?? "Sin motivo",
-          items: usable.map((l) => ({ nombre: l.name, qty: l.qty, precio: l.price })),
-          neto: nc.neto,
-          iva: nc.iva,
-          total: nc.total,
-          dte_folio: em.folio,
-          timbre_png: em.timbre_png ?? null,
-        });
-      } catch (e) {
-        notifyError(`La nota de crédito se emitió, pero no se pudo imprimir.`, e instanceof Error ? e.message : e);
-      }
+      if (getSkipPrint()) {
+        toast.success(`Nota de crédito #${em.folio} emitida. Imprime desde el listado en la caja.`);
+      } else {
+        try {
+          const createdAt = new Date(nc.created_at);
+          await printCreditNote({
+            negocio: businessToNegocio(business, getPrinterName()),
+            folio: nc.folio,
+            fecha: fmtDate(createdAt),
+            hora: `${pad2(createdAt.getHours())}:${pad2(createdAt.getMinutes())}`,
+            sale_folio: foundSale.dte_folio ?? foundSale.folio,
+            metodo: nc.method,
+            motivo: nc.reason ?? "Sin motivo",
+            items: usable.map((l) => ({ nombre: l.name, qty: l.qty, precio: l.price })),
+            neto: nc.neto,
+            iva: nc.iva,
+            total: nc.total,
+            dte_folio: em.folio,
+            timbre_png: em.timbre_png ?? null,
+          });
+        } catch (e) {
+          notifyError(`La nota de crédito se emitió, pero no se pudo imprimir.`, e instanceof Error ? e.message : e);
+        }
 
-      toast.success(`Nota de crédito ${em.folio} emitida`);
+        toast.success(`Nota de crédito ${em.folio} emitida`);
+      }
       navigate("/notas-credito");
     } catch (e) {
       notifyError(`No se pudo emitir la nota de crédito.`, e instanceof Error ? e.message : e);

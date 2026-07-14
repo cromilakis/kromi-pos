@@ -8,6 +8,7 @@ import { useOpenSession } from "@/data/work";
 import { useCierres, closeCashSession, contarVentasSesion, fetchSessionOpenedAt, type CierreResumen, type CierreRow } from "@/data/cash";
 import { printCierre } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
+import { getSkipPrint } from "@/lib/deviceConfig";
 import { fmtCLP } from "@/lib/money";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -151,7 +152,9 @@ export function CierrePanel({ onClosed }: CierrePanelProps) {
           nc_cash: r.nc_cash,
           nc_card: r.nc_card,
         };
-        await printCierre(payload);
+        if (!getSkipPrint()) {
+          await printCierre(payload);
+        }
       } catch (e) {
         notifyError(`La caja se cerró, pero no se pudo imprimir el comprobante.`, e instanceof Error ? e.message : e);
       }

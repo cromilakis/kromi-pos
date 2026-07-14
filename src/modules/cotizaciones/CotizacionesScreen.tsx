@@ -14,6 +14,7 @@ import { issueReceipt } from "@/data/sii";
 import { computeTotals, resolveDiscount, fmtCLP } from "@/lib/money";
 import { printQuote, printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
+import { getSkipPrint } from "@/lib/deviceConfig";
 import { errMsg, notifyError } from "@/lib/errors";
 import { PayDialog, type PayMethod } from "@/modules/venta/PayDialog";
 
@@ -137,21 +138,23 @@ export function CotizacionesScreen() {
       resetForm();
       setTab("lista");
       qc.invalidateQueries({ queryKey: ["quotes"] });
-      try {
-        await printQuote({
-          negocio,
-          folio: quote.folio,
-          fecha: fmtDate(new Date()),
-          valido_hasta: fmtIsoDate(quote.valid_until),
-          cliente: clienteSnap,
-          items: itemsSnap,
-          neto: quote.neto,
-          iva: quote.iva,
-          total: quote.total,
-          descuento: globalSnap,
-        });
-      } catch (e) {
-        notifyError(`La cotización se generó, pero no se pudo imprimir.`, errMsg(e));
+      if (!getSkipPrint()) {
+        try {
+          await printQuote({
+            negocio,
+            folio: quote.folio,
+            fecha: fmtDate(new Date()),
+            valido_hasta: fmtIsoDate(quote.valid_until),
+            cliente: clienteSnap,
+            items: itemsSnap,
+            neto: quote.neto,
+            iva: quote.iva,
+            total: quote.total,
+            descuento: globalSnap,
+          });
+        } catch (e) {
+          notifyError(`La cotización se generó, pero no se pudo imprimir.`, errMsg(e));
+        }
       }
     } catch (e) {
       notifyError(`No se pudo generar la cotización.`, errMsg(e));
@@ -217,26 +220,30 @@ export function CotizacionesScreen() {
       setConverting(null);
 
       if (dteFolio) {
-        toast.success(`Venta #${sale.folio} cobrada (boleta ${dteFolio}).`);
-        try {
-          await printReceipt({
-            negocio,
-            folio: sale.folio,
-            fecha: fmtDate(soldAt),
-            hora: `${pad2(soldAt.getHours())}:${pad2(soldAt.getMinutes())}`,
-            items: quoteSnap.lines.map((l) => ({ nombre: l.name_snapshot, qty: l.qty, precio: l.price_snapshot, descuento: l.discount_amount })),
-            neto: sale.neto,
-            iva: sale.iva,
-            total: sale.total,
-            descuento: quoteSnap.discount_amount,
-            dte_folio: dteFolio,
-            timbre_png: timbrePng ?? null,
-            reimpresion: false,
-            metodo: sale.method,
-            open_drawer: sale.method === "efectivo",
-          });
-        } catch (e) {
-          notifyError(`Boleta emitida (folio ${dteFolio}) pero no se pudo imprimir. Reimprime desde «Boletas del día».`, errMsg(e));
+        if (getSkipPrint()) {
+          toast.success(`Venta #${sale.folio} cobrada (boleta ${dteFolio}). Imprime desde «Boletas del día».`);
+        } else {
+          toast.success(`Venta #${sale.folio} cobrada (boleta ${dteFolio}).`);
+          try {
+            await printReceipt({
+              negocio,
+              folio: sale.folio,
+              fecha: fmtDate(soldAt),
+              hora: `${pad2(soldAt.getHours())}:${pad2(soldAt.getMinutes())}`,
+              items: quoteSnap.lines.map((l) => ({ nombre: l.name_snapshot, qty: l.qty, precio: l.price_snapshot, descuento: l.discount_amount })),
+              neto: sale.neto,
+              iva: sale.iva,
+              total: sale.total,
+              descuento: quoteSnap.discount_amount,
+              dte_folio: dteFolio,
+              timbre_png: timbrePng ?? null,
+              reimpresion: false,
+              metodo: sale.method,
+              open_drawer: sale.method === "efectivo",
+            });
+          } catch (e) {
+            notifyError(`Boleta emitida (folio ${dteFolio}) pero no se pudo imprimir. Reimprime desde «Boletas del día».`, errMsg(e));
+          }
         }
       }
     } catch (e) {
