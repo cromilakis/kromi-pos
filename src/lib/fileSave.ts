@@ -36,3 +36,17 @@ export async function saveUrlAs(url: string, suggestedName: string): Promise<boo
   document.body.removeChild(a);
   return true;
 }
+
+/** Guarda un PDF codificado en base64 (p.ej. el que devuelve la Edge Function `dte-pdf`)
+ *  reusando el mismo flujo de guardado que `saveUrlAs` (diálogo nativo en Tauri, descarga
+ *  por <a> en el navegador). */
+export async function savePdfBase64(base64: string, suggestedName: string): Promise<void> {
+  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  const blob = new Blob([bytes], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  try {
+    await saveUrlAs(url, suggestedName);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
