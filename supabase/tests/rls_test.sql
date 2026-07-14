@@ -184,6 +184,43 @@ begin
   end;
 end $$;
 
+-- g) discount (Task 2.1): admin del negocio A puede crear su propio descuento;
+-- cajero no puede escribir; A no ve descuentos del negocio B.
+reset role;
+insert into public.discount (id, business_id, name, percent) values
+  ('a9999999-0000-0000-0000-000000000009','a2222222-0000-0000-0000-000000000002','Desc B', 10);
+
+set local role authenticated;
+select set_config('request.jwt.claims',
+  json_build_object('sub','e1111111-0000-0000-0000-000000000001','role','authenticated')::text, true);
+
+do $$
+declare n int;
+begin
+  select count(*) into n from public.discount where business_id = 'a2222222-0000-0000-0000-000000000002';
+  if n <> 0 then raise exception 'FUGA: A ve % descuento(s) del negocio B', n; end if;
+
+  insert into public.discount (business_id, name, percent) values
+    ('a1111111-0000-0000-0000-000000000001','Desc A', 15);
+end $$;
+
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claims',
+  json_build_object('sub','e3333333-0000-0000-0000-000000000003','role','authenticated')::text, true);
+
+do $$
+begin
+  begin
+    insert into public.discount (business_id, name, percent) values
+      ('a1111111-0000-0000-0000-000000000001','Desc cajero', 20);
+    raise exception 'FUGA: cajero escribió discount';
+  exception
+    when sqlstate '42501' then
+      raise notice 'OK: cajero no pudo escribir discount (RLS 42501)';
+  end;
+end $$;
+
 reset role;
 \echo 'rls_test OK'
 rollback;

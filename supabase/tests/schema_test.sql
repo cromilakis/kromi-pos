@@ -64,7 +64,7 @@ declare t text;
 begin
   foreach t in array array[
     'cash_session','sale','sale_line','quote','quote_line',
-    'credit_note','credit_note_line','folio_counter'
+    'credit_note','credit_note_line','folio_counter','discount'
   ] loop
     if to_regclass('public.'||t) is null then
       raise exception 'FALTA tabla public.%', t;
@@ -98,6 +98,43 @@ begin
       values ('11111111-1111-1111-1111-111111111111', b, 1, 'efectivo', 1000, 840, 160, 1000, 0, null);
     raise exception 'FALLO: folio duplicado aceptado en la misma sucursal';
   exception when unique_violation then null;
+  end;
+end $$;
+
+-- discount: columnas + sale.discount_id (Task 2.1)
+do $$
+declare cols text[] := array['id','business_id','name','percent','active','valid_from','valid_until','created_at','updated_at','deleted_at'];
+       c text;
+begin
+  foreach c in array cols loop
+    if not exists(
+      select 1 from information_schema.columns
+      where table_schema='public' and table_name='discount' and column_name=c
+    ) then
+      raise exception 'FALTA columna public.discount.%', c;
+    end if;
+  end loop;
+  if not exists(
+    select 1 from information_schema.columns
+    where table_schema='public' and table_name='sale' and column_name='discount_id'
+  ) then
+    raise exception 'FALTA columna public.sale.discount_id';
+  end if;
+end $$;
+
+-- discount.percent: CHECK entre 1 y 100
+do $$ begin
+  begin
+    insert into public.discount (business_id, name, percent) values
+      ('11111111-1111-1111-1111-111111111111','D', 0);
+    raise exception 'FALLO: discount acepto percent=0';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.discount (business_id, name, percent) values
+      ('11111111-1111-1111-1111-111111111111','D', 101);
+    raise exception 'FALLO: discount acepto percent=101';
+  exception when check_violation then null;
   end;
 end $$;
 
