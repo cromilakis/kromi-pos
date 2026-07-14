@@ -13,6 +13,9 @@ const base: BusinessRow = {
   logo_url: null,
   social_red: "Instagram",
   social_url: "https://instagram.com/kromi",
+  points_clp_per_point: 1000,
+  points_multiplier: 1,
+  points_redeem_clp_per_point: 1,
 };
 
 describe("businessToNegocio", () => {

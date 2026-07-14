@@ -9,7 +9,7 @@ import { uploadLogoImage } from "@/lib/image";
 import { PrinterSettings } from "@/shell/PrinterSettings";
 import { UpdateSettings } from "@/shell/UpdateSettings";
 
-type FormState = Omit<BusinessRow, "id">;
+type FormState = Omit<BusinessRow, "id" | "points_clp_per_point" | "points_multiplier" | "points_redeem_clp_per_point">;
 
 const EMPTY: FormState = {
   name: "", nombre_comercial: "", rut: "", giro: "", direccion: "", tagline: "", footer: "",
