@@ -520,11 +520,18 @@ export function StockScreen() {
             <span className="text-[17px] font-black tracking-[-.01em] text-[#0F2A1B]">{g.label}</span>
             <span className="rounded-full bg-[#E7EFE8] px-2.5 py-0.5 text-xs font-bold text-[#0F2A1B]">{g.items.length}</span>
           </div>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3.5">
+          <div className="grid grid-cols-[repeat(auto-fill,196px)] justify-start gap-3.5">
             {g.items.map((p) => {
               const low = isLowStock(p);
               return (
                 <div key={p.id} className="flex flex-col overflow-hidden rounded-2xl border border-[#E1E5EE] bg-white">
+                  <div className="flex h-[140px] w-full items-center justify-center bg-[#EEF1F6]">
+                    {p.img_url ? (
+                      <img src={p.img_url} alt={p.name} className="size-full object-cover" />
+                    ) : (
+                      <span className="size-3 rounded-full" style={{ background: g.dot }} />
+                    )}
+                  </div>
                   <div className="flex flex-col px-3.5 py-3">
                     <div className="flex items-center gap-1.5">
                       <div className="min-w-0 flex-1 truncate text-[15px] font-bold text-[#0F2A1B]">{p.name}</div>
