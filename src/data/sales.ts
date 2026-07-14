@@ -301,6 +301,9 @@ export interface SaleWithLines {
   neto: number;
   iva: number;
   sold_at: string;
+  dte_status: string | null;
+  dte_folio: number | null;
+  emitted_at: string | null;
   lines: { product_id: string | null; name_snapshot: string; price_snapshot: number; qty: number }[];
 }
 
@@ -308,7 +311,7 @@ export interface SaleWithLines {
 export async function buscarVentaPorFolio(branchId: string, folio: number): Promise<SaleWithLines | null> {
   const { data, error } = await supabase
     .from("sale")
-    .select("id,folio,method,total,neto,iva,sold_at,sale_line(product_id,name_snapshot,price_snapshot,qty)")
+    .select("id,folio,method,total,neto,iva,sold_at,dte_status,dte_folio,emitted_at,sale_line(product_id,name_snapshot,price_snapshot,qty)")
     .eq("branch_id", branchId)
     .eq("folio", folio)
     .maybeSingle();
@@ -322,6 +325,9 @@ export async function buscarVentaPorFolio(branchId: string, folio: number): Prom
     neto: data.neto,
     iva: data.iva,
     sold_at: data.sold_at,
+    dte_status: (data as any).dte_status ?? null,
+    dte_folio: (data as any).dte_folio ?? null,
+    emitted_at: (data as any).emitted_at ?? null,
     lines: (data as any).sale_line ?? [],
   };
 }
