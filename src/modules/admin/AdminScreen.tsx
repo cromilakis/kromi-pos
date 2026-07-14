@@ -2,11 +2,12 @@ import { useState } from "react";
 import { BusinessSettings } from "@/modules/admin/BusinessSettings";
 import { DiscountsSettings } from "@/modules/admin/DiscountsSettings";
 import { PointsSettings } from "@/modules/admin/PointsSettings";
+import { SecuritySettings } from "@/modules/admin/SecuritySettings";
 
 export function AdminScreen() {
-  const [tab, setTab] = useState<"negocio" | "descuentos" | "puntos">("negocio");
+  const [tab, setTab] = useState<"negocio" | "descuentos" | "puntos" | "seguridad">("negocio");
 
-  const tabBtn = (id: "negocio" | "descuentos" | "puntos", label: string) => (
+  const tabBtn = (id: "negocio" | "descuentos" | "puntos" | "seguridad", label: string) => (
     <button
       onClick={() => setTab(id)}
       className="relative px-1 pb-2.5 text-[14.5px] font-bold"
@@ -23,9 +24,18 @@ export function AdminScreen() {
         {tabBtn("negocio", "Negocio")}
         {tabBtn("descuentos", "Descuentos")}
         {tabBtn("puntos", "Puntos")}
+        {tabBtn("seguridad", "Seguridad")}
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
-        {tab === "negocio" ? <BusinessSettings /> : tab === "descuentos" ? <DiscountsSettings /> : <PointsSettings />}
+        {tab === "negocio" ? (
+          <BusinessSettings />
+        ) : tab === "descuentos" ? (
+          <DiscountsSettings />
+        ) : tab === "puntos" ? (
+          <PointsSettings />
+        ) : (
+          <SecuritySettings />
+        )}
       </div>
     </div>
   );
