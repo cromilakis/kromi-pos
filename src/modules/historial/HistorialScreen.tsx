@@ -294,6 +294,12 @@ export function HistorialScreen() {
               {detail.discount_amount > 0 && (
                 <div className="flex justify-between"><span>Descuento</span><span className="text-[#0F2A1B]">{fmtCLP(detail.discount_amount)}</span></div>
               )}
+              {detail.points_redeemed > 0 && (
+                <div className="flex justify-between">
+                  <span>Canje de puntos ({detail.points_redeemed} pts)</span>
+                  <span className="text-[#0F2A1B]">−{fmtCLP(detail.points_discount)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-[15px]"><span>Total</span><span className="text-[#0F2A1B]">{fmtCLP(detail.total)}</span></div>
             </div>
           </div>
