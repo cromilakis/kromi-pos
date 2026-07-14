@@ -121,9 +121,9 @@ export function cartToLines(cart: { id: string; qty: number; disc_kind?: "pct" |
 // migración 20260707120000_crear_cotizacion.sql). No mueven caja ni stock.
 // ----------------------------------------------------------------------------
 
-export interface QuoteLineInput { product_id: string; qty: number; }
+export interface QuoteLineInput { product_id: string; qty: number; discount_pct?: number; }
 
-export interface QuoteLineRow { product_id: string | null; name_snapshot: string; price_snapshot: number; qty: number; }
+export interface QuoteLineRow { product_id: string | null; name_snapshot: string; price_snapshot: number; qty: number; discount_amount: number; }
 
 export interface QuoteRow {
   id: string;
@@ -135,6 +135,7 @@ export interface QuoteRow {
   total: number;
   neto: number;
   iva: number;
+  discount_amount: number;
   converted: boolean;
   sale_id: string | null;
   created_at: string;
@@ -153,13 +154,15 @@ export async function crearCotizacion(args: {
   customer_id?: string | null;
   valid_until: string;
   lines: QuoteLineInput[];
+  discount_pct?: number;
 }) {
   if (!args.lines.length) throw new Error("La cotización no tiene líneas.");
   const { data: quote, error } = await supabase.rpc("crear_cotizacion", {
     p_branch: args.branch_id,
     p_customer: args.customer_id ?? null,
     p_valid_until: args.valid_until,
-    p_lines: args.lines.map((l) => ({ product_id: l.product_id, qty: l.qty })),
+    p_lines: args.lines.map((l) => ({ product_id: l.product_id, qty: l.qty, discount_pct: l.discount_pct ?? 0 })),
+    p_discount_pct: args.discount_pct ?? 0,
   });
   if (error) throw error;
   return quote as { id: string; folio: number; valid_until: string; total: number; neto: number; iva: number };
@@ -174,8 +177,8 @@ export function useQuotes(branchId: string | undefined) {
       const { data, error } = await supabase
         .from("quote")
         .select(
-          "id,folio,branch_id,customer_id,valid_until,total,neto,iva,converted,sale_id,created_at," +
-            "customer:customer_id(name),quote_line(product_id,name_snapshot,price_snapshot,qty)",
+          "id,folio,branch_id,customer_id,valid_until,total,neto,iva,discount_amount,converted,sale_id,created_at," +
+            "customer:customer_id(name),quote_line(product_id,name_snapshot,price_snapshot,qty,discount_amount)",
         )
         .eq("branch_id", branchId!)
         .order("created_at", { ascending: false });
@@ -190,6 +193,7 @@ export function useQuotes(branchId: string | undefined) {
         total: q.total,
         neto: q.neto,
         iva: q.iva,
+        discount_amount: q.discount_amount ?? 0,
         converted: q.converted,
         sale_id: q.sale_id,
         created_at: q.created_at,

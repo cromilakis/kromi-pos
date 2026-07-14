@@ -47,6 +47,7 @@ pub struct QuotePayload {
     pub neto: i64,
     pub iva: i64,
     pub total: i64,
+    #[serde(default)] pub descuento: i64,
 }
 
 #[derive(Deserialize, Clone)]
@@ -93,9 +94,23 @@ fn metodo_label(m: &str) -> String {
     }
 }
 
+/// Transli­tera a ASCII las letras del español que la impresora térmica no puede
+/// representar (imprimiría '?'). Mapeo 1 char → 1 byte para no alterar el ancho.
+fn ascii_fold(ch: char) -> u8 {
+    match ch {
+        'ñ' => b'n', 'Ñ' => b'N',
+        'á' | 'à' | 'ä' | 'â' => b'a', 'Á' | 'À' | 'Ä' | 'Â' => b'A',
+        'é' | 'è' | 'ë' | 'ê' => b'e', 'É' | 'È' | 'Ë' | 'Ê' => b'E',
+        'í' | 'ì' | 'ï' | 'î' => b'i', 'Í' | 'Ì' | 'Ï' | 'Î' => b'I',
+        'ó' | 'ò' | 'ö' | 'ô' => b'o', 'Ó' | 'Ò' | 'Ö' | 'Ô' => b'O',
+        'ú' | 'ù' | 'ü' | 'û' => b'u', 'Ú' | 'Ù' | 'Ü' | 'Û' => b'U',
+        _ if ch.is_ascii() => ch as u8,
+        _ => b'?',
+    }
+}
+
 fn push_text(buf: &mut Vec<u8>, s: &str) {
-    // ASCII puro: cualquier no-ASCII se reemplaza por '?'
-    for ch in s.chars() { buf.push(if ch.is_ascii() { ch as u8 } else { b'?' }); }
+    for ch in s.chars() { buf.push(ascii_fold(ch)); }
 }
 fn nl(buf: &mut Vec<u8>) { buf.push(0x0A); }
 
@@ -442,17 +457,16 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
     nl(&mut b);
     if !p.negocio.nombre_comercial.is_empty() { line_center(&mut b, &format!("* {} *", p.negocio.nombre_comercial)); }
     line_center(&mut b, &p.negocio.razon_social);
+    line_center(&mut b, &p.negocio.rut);
     line_center(&mut b, &p.negocio.giro);
     nl(&mut b);
 
-    box_ascii(&mut b, &[
-        &format!("R.U.T.: {}", p.negocio.rut),
-        "COTIZACION",
-        &format!("No {}", p.folio),
-    ], 32);
+    // Cotización no es documento tributario: solo un recuadro con el rótulo.
+    box_ascii(&mut b, &["COTIZACION"], 32);
     nl(&mut b);
 
     push_text(&mut b, &format!("Fecha: {}", p.fecha)); nl(&mut b);
+    push_text(&mut b, &format!("Cotizacion No: {}", p.folio)); nl(&mut b);
     push_text(&mut b, &format!("Valido hasta: {}", p.valido_hasta)); nl(&mut b);
     push_text(&mut b, &format!("Cliente: {}", p.cliente)); nl(&mut b);
     rule(&mut b, b'-');
@@ -464,10 +478,18 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
     for it in &p.items {
         line_lr(&mut b, &it.nombre, &money(it.precio * it.qty as i64), COL);
         push_text(&mut b, &format!("   {} x {}", it.qty, money(it.precio))); nl(&mut b);
+        if it.descuento > 0 {
+            let base = it.precio * it.qty as i64;
+            let pct = if base > 0 { ((it.descuento as f64 * 100.0) / base as f64).round() as i64 } else { 0 };
+            line_lr(&mut b, &format!("   Descuento {}%", pct), &format!("-{}", money(it.descuento)), COL);
+        }
     }
     rule(&mut b, b'=');
 
     line_lr(&mut b, "Neto", &money(p.neto), COL);
+    if p.descuento > 0 {
+        line_lr(&mut b, "Descuento", &format!("-{}", money(p.descuento)), COL);
+    }
     line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
     nl(&mut b);
     b.extend_from_slice(&[0x1D, 0x21, 0x11]);
@@ -475,10 +497,16 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1D, 0x21, 0x00]);
     nl(&mut b);
     rule(&mut b, b'-');
-    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    push_text(&mut b, "Documento no tributario"); nl(&mut b);
-    push_text(&mut b, &p.negocio.footer); nl(&mut b);
-    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+
+    // red social (QR) — solo si esta configurada
+    if let Some(s) = &p.negocio.social {
+        b.extend_from_slice(&[0x1B, 0x61, 0x01]);
+        push_text(&mut b, "Siguenos en redes sociales"); nl(&mut b);
+        qr_native(&mut b, &s.url);
+        nl(&mut b);
+        push_text(&mut b, &s.etiqueta); nl(&mut b);
+        b.extend_from_slice(&[0x1B, 0x61, 0x00]);
+    }
 
     b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
     b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x60]); // corte, sin gaveta
@@ -675,7 +703,7 @@ mod tests {
             valido_hasta: "13/07/2026".into(),
             cliente: "Juan Pérez".into(),
             items: vec![Item { nombre: "Monstera".into(), qty: 2, precio: 14990, descuento: 0 }],
-            neto: 25193, iva: 4787, total: 29980,
+            neto: 25193, iva: 4787, total: 29980, descuento: 0,
         }
     }
 
@@ -685,17 +713,22 @@ mod tests {
         assert_eq!(&b[0..2], &[0x1B, 0x40]);
         assert!(contains(&b, &[0x1D, 0x56, 0x42, 0x60]));                 // corte
         assert!(!contains(&b, &[0x1B, 0x70, 0x00, 0x19, 0xFA]));         // sin gaveta
-        assert!(!contains(&b, &[0x1D, 0x28, 0x6B]));                     // sin QR/timbre
+        assert!(!contains(&b, b"Timbre Electronico SII"));               // sin timbre SII
+        assert!(!contains(&b, b"BOLETA"));                               // no es boleta
     }
 
     #[test]
     fn quote_incluye_textos() {
         let b = build_quote(&sample_quote());
         assert!(contains(&b, b"COTIZACION"));
-        assert!(contains(&b, b"No 1001"));
+        assert!(contains(&b, b"Cotizacion No: 1001"));
+        assert!(contains(&b, b"78.123.456-7"));                          // rut bajo razon social (sin rotulo)
         assert!(contains(&b, b"Valido hasta: 13/07/2026"));
         assert!(contains(&b, b"Monstera"));
         assert!(contains(&b, b"TOTAL"));
+        assert!(!contains(&b, b"Documento no tributario"));             // ya no va
+        assert!(contains(&b, b"Siguenos en redes sociales"));           // bloque de redes/QR
+        assert!(contains(&b, &[0x1D, 0x28, 0x6B]));                      // QR presente
     }
 
     fn sample_nc() -> CreditNotePayload {
