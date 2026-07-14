@@ -63,8 +63,9 @@ Deno.serve(async (req) => {
     const token = await sfToken();
     const lines = (sale as { sale_line?: Array<{ name_snapshot: string; price_snapshot: number; qty: number; discount_amount?: number }> }).sale_line ?? [];
     const detalle = lines.map((l, i) => {
-      const monto = l.price_snapshot * l.qty - (l.discount_amount ?? 0);
-      return {
+      const desc = l.discount_amount ?? 0;
+      const monto = l.price_snapshot * l.qty - desc;
+      const d: Record<string, string | number> = {
         NroLinDet: String(i + 1),
         NmbItem: l.name_snapshot,
         QtyItem: String(l.qty),
@@ -72,6 +73,11 @@ Deno.serve(async (req) => {
         PrcItem: String(l.price_snapshot),
         MontoItem: String(monto),
       };
+      // Declarar el descuento por línea: sin esto el DTE queda inconsistente
+      // (QtyItem×PrcItem ≠ MontoItem) y la boleta muestra DESCUENTO -0. Con DescuentoMonto,
+      // SimpleFactura/SII cuadran QtyItem×PrcItem − DescuentoMonto = MontoItem y lo reflejan.
+      if (desc > 0) d.DescuentoMonto = desc;
+      return d;
     });
     const body = {
       Documento: {
