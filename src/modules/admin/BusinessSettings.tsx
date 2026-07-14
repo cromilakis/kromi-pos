@@ -7,6 +7,7 @@ import { useBusiness, updateBusiness, type BusinessRow } from "@/data/business";
 import { ImageUploader } from "@/components/ImageUploader";
 import { uploadLogoImage } from "@/lib/image";
 import { PrinterSettings } from "@/shell/PrinterSettings";
+import { UpdateSettings } from "@/shell/UpdateSettings";
 import { getSkipPrint, setSkipPrint } from "@/lib/deviceConfig";
 
 type FormState = Omit<BusinessRow, "id">;
@@ -141,6 +142,10 @@ export function BusinessSettings() {
               <div className="text-[11.5px] text-[#5E6E7E]">Configura la impresora térmica de este equipo.</div>
             </div>
             <PrinterSettings />
+          </div>
+          <div className="mt-4 border-t border-[#F0F2F7] pt-4">
+            <div className="mb-2 text-[12.5px] font-bold text-[#5a6b7e]">Actualizaciones</div>
+            <UpdateSettings />
           </div>
           <div className="mt-6 flex justify-end">
             <button
