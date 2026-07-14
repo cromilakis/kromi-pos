@@ -70,21 +70,23 @@ export function PayDialog({ open, total, busy, discounts, onClose, onConfirm }: 
         </div>
 
         <div className="p-[22px_24px]">
-          <div className="mb-[18px] px-6">
-            <label className="mb-1 block text-[11px] font-semibold text-[#556A7C]">Descuento</label>
-            <select
-              value={discountId ?? ""}
-              onChange={(e) => setDiscountId(e.target.value || null)}
-              className="w-full rounded-xl border border-[#E1E5EE] bg-white px-3 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none"
-            >
-              <option value="">Sin descuento</option>
-              {discounts.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name} (−{d.percent}%)
-                </option>
-              ))}
-            </select>
-          </div>
+          {discounts.length > 0 && (
+            <div className="mb-[18px] px-6">
+              <label className="mb-1 block text-[11px] font-semibold text-[#556A7C]">Descuento</label>
+              <select
+                value={discountId ?? ""}
+                onChange={(e) => setDiscountId(e.target.value || null)}
+                className="w-full rounded-xl border border-[#E1E5EE] bg-white px-3 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none"
+              >
+                <option value="">Sin descuento</option>
+                {discounts.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} (−{d.percent}%)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="mb-[18px] flex gap-2.5 px-6 pt-1">
             <button
               onClick={() => setMethod("efectivo")}

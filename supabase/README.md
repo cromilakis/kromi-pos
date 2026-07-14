@@ -13,7 +13,7 @@ Admin demo local: RUT `11.111.111-1`, PIN `123456`.
 ## Estructura
 - `migrations/…_catalog.sql` — maestros, tenancy, inventario, módulos.
 - `migrations/…_operations.sql` — caja, ventas, cotizaciones, notas de crédito, folios.
-- `migrations/…_functions.sql` — RPC (cobrar_venta, abrir/cerrar caja, NC, cotización).
+- `migrations/…_functions.sql` — RPC (charge_sale, open_cash_session/close_cash_session, NC, cotización).
 - `migrations/…_auth.sql` — espejo auth.users→app_user, helpers de sesión.
 - `migrations/…_rls.sql` — políticas RLS + índices.
 - `seed.sql` — seed mínimo local.
