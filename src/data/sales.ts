@@ -220,6 +220,12 @@ export async function convertirCotizacion(
   return data as Sale;
 }
 
+/** Elimina una cotización (hard-delete vía RPC). Falla si ya fue convertida en venta. */
+export async function eliminarCotizacion(quoteId: string): Promise<void> {
+  const { error } = await supabase.rpc("eliminar_cotizacion", { p_quote: quoteId });
+  if (error) throw error;
+}
+
 // ----------------------------------------------------------------------------
 // Notas de crédito (por boleta o manual): RPC atómica repone stock si corresponde.
 // ----------------------------------------------------------------------------

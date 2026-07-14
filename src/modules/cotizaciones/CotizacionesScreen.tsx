@@ -9,7 +9,7 @@ import { useProductsWithStock, useCategories } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
 import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
-import { crearCotizacion, convertirCotizacion, useQuotes, isQuoteVigente, type QuoteRow } from "@/data/sales";
+import { crearCotizacion, convertirCotizacion, eliminarCotizacion, useQuotes, isQuoteVigente, type QuoteRow } from "@/data/sales";
 import { emitirBoleta } from "@/data/sii";
 import { computeTotals, resolveDiscount, fmtCLP } from "@/lib/money";
 import { printQuote, printReceipt } from "@/lib/print";
@@ -54,6 +54,8 @@ export function CotizacionesScreen() {
   const [creating, setCreating] = useState(false);
   const [converting, setConverting] = useState<QuoteRow | null>(null);
   const [payBusy, setPayBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<QuoteRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const allProducts = products ?? [];
   const allCategories = categories ?? [];
@@ -244,6 +246,20 @@ export function CotizacionesScreen() {
     }
   }
 
+  async function handleDelete(q: QuoteRow) {
+    setDeleting(true);
+    try {
+      await eliminarCotizacion(q.id);
+      toast.success(`Cotización #${q.folio} eliminada.`);
+      setConfirmDelete(null);
+      qc.invalidateQueries({ queryKey: ["quotes"] });
+    } catch (e) {
+      notifyError(`No se pudo eliminar la cotización.`, errMsg(e));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const rows = quotes ?? [];
 
   const tabBtn = (id: "lista" | "nueva", label: string) => (
@@ -321,6 +337,14 @@ export function CotizacionesScreen() {
                     style={{ background: "var(--brand)" }}
                   >
                     Cobrar
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(q)}
+                    disabled={q.converted}
+                    title={q.converted ? "No se puede eliminar una cotización convertida" : "Eliminar cotización"}
+                    className="flex size-[36px] shrink-0 items-center justify-center rounded-[10px] border border-[#F5C2C2] bg-white text-[#D02E2E] hover:bg-[#FDECEC] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Trash2 className="size-[15px]" strokeWidth={1.9} />
                   </button>
                 </div>
               );
@@ -528,6 +552,34 @@ export function CotizacionesScreen() {
         onClose={() => setConverting(null)}
         onConfirm={handleConfirmCobro}
       />
+
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6"
+          onMouseDown={(e) => { if (e.target === e.currentTarget && !deleting) setConfirmDelete(null); }}
+        >
+          <div className="w-[400px] max-w-full rounded-[20px] bg-white p-5" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-1.5 text-[15px] font-extrabold text-[#0F2A1B]">¿Eliminar la cotización #{confirmDelete.folio}?</div>
+            <div className="mb-4 text-[13px] text-[#556A7C]">Esta acción no se puede deshacer.</div>
+            <div className="flex justify-end gap-2.5">
+              <button
+                onClick={() => setConfirmDelete(null)}
+                disabled={deleting}
+                className="rounded-[11px] border border-[#E1E5EE] bg-white px-[18px] py-2.5 text-sm font-bold text-[#2A3A2E] disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => handleDelete(confirmDelete)}
+                disabled={deleting}
+                className="rounded-[11px] bg-[#D02E2E] px-[18px] py-2.5 text-sm font-bold text-white disabled:opacity-50"
+              >
+                {deleting ? "Eliminando…" : "Eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
