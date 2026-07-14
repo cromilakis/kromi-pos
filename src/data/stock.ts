@@ -14,6 +14,7 @@ export interface ProductRow {
   barcode: string | null;
   discount_pct: number;
   stock: number;
+  is_service: boolean;
 }
 
 export interface CategoryRow {
@@ -49,7 +50,7 @@ export function useProductsWithStock(businessId?: string, branchId?: string) {
       const [{ data: products, error: e1 }, { data: inv, error: e2 }] = await Promise.all([
         supabase
           .from("product")
-          .select("id,name,category_id,price,min_stock,critical,img_url,supplier_id,internal_code,barcode,discount_pct")
+          .select("id,name,category_id,price,min_stock,critical,img_url,supplier_id,internal_code,barcode,discount_pct,is_service")
           .eq("business_id", businessId!)
           .is("deleted_at", null)
           .order("name"),
@@ -114,6 +115,7 @@ export async function createProduct(input: {
   supplier_id: string | null;
   barcode: string | null;
   discount_pct: number;
+  is_service: boolean;
 }) {
   const { data, error } = await supabase.from("product").insert(input).select().single();
   if (error) throw error;
@@ -132,6 +134,7 @@ export async function updateProduct(
     supplier_id: string | null;
     barcode: string | null;
     discount_pct: number;
+    is_service: boolean;
   }>,
 ) {
   const { error } = await supabase.from("product").update(input).eq("id", id);

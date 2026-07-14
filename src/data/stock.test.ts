@@ -8,10 +8,15 @@ describe("mapProductsWithStock", () => {
     expect(mapProductsWithStock(products as any, inv as any)[0].stock).toBe(5);
     expect(mapProductsWithStock(products as any, [] as any)[0].stock).toBe(0);
   });
+
+  it("propaga is_service", () => {
+    const products = [{ id: "s1", name: "Visita", category_id: null, price: 20000, min_stock: 0, critical: false, img_url: null, supplier_id: null, internal_code: null, barcode: null, discount_pct: 0, is_service: true }];
+    expect(mapProductsWithStock(products as any, [] as any)[0].is_service).toBe(true);
+  });
 });
 
 function p(id: string, barcode: string | null): ProductRow {
-  return { id, name: id, category_id: null, price: 0, min_stock: 0, critical: false, img_url: null, supplier_id: null, internal_code: null, barcode, discount_pct: 0, stock: 0 };
+  return { id, name: id, category_id: null, price: 0, min_stock: 0, critical: false, img_url: null, supplier_id: null, internal_code: null, barcode, discount_pct: 0, stock: 0, is_service: false };
 }
 
 describe("findByBarcode", () => {
