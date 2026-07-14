@@ -7,3 +7,11 @@ export function normRut(rut: string): string {
 export function rutToEmail(rut: string): string {
   return `${normRut(rut)}@pos.kromi.local`;
 }
+
+/** Formatea un RUT (normalizado o no) como "cuerpo-DV", con el DV en mayúscula. */
+export function formatRutDashed(rut: string): string {
+  const limpio = normRut(rut);
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1).toUpperCase();
+  return `${cuerpo}-${dv}`;
+}

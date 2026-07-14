@@ -18,6 +18,7 @@ import { errMsg, notifyError } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
 import { getSkipPrint } from "@/lib/deviceConfig";
+import { formatRutDashed } from "@/lib/rut";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -421,7 +422,7 @@ export function VentaScreen() {
             metodo: sale.method,
             open_drawer: sale.method === "efectivo",
             doc_type: sale.doc_type,
-            recep_rut: sale.doc_type === "factura" ? soldCustomer?.rut ?? undefined : undefined,
+            recep_rut: sale.doc_type === "factura" && soldCustomer?.rut ? formatRutDashed(soldCustomer.rut) : undefined,
             recep_razon: sale.doc_type === "factura" ? soldCustomer?.razon_social ?? soldCustomer?.name ?? undefined : undefined,
             recep_giro: sale.doc_type === "factura" ? soldCustomer?.giro ?? undefined : undefined,
             recep_dir: sale.doc_type === "factura" ? soldCustomer?.direccion ?? undefined : undefined,

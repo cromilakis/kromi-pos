@@ -54,6 +54,16 @@ async function sfToken(): Promise<string> {
 function pad2(n: number) { return String(n).padStart(2, "0"); }
 function isoDate(d: Date) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
 
+// El RUT se guarda normalizado sin puntos ni guion (ver normRut en el frontend); el SII
+// exige el formato cuerpo-DV en RUTRecep. Se limpia por robustez y se inserta el guion
+// antes del DV, dejando el DV en mayúscula si es "k".
+function formatRutDashed(rut: string): string {
+  const limpio = rut.replace(/[.\-]/g, "");
+  const cuerpo = limpio.slice(0, -1);
+  const dv = limpio.slice(-1).toUpperCase();
+  return `${cuerpo}-${dv}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -85,6 +95,9 @@ Deno.serve(async (req) => {
         .select("rut,razon_social,giro,direccion,comuna")
         .eq("id", sale.customer_id).single();
       if (e2 || !cust) return json({ status: "error", message: "cliente no encontrado" }, 404);
+      if (!cust.razon_social || !cust.giro || !cust.direccion || !cust.comuna) {
+        return json({ status: "error", message: "el cliente empresa no tiene datos tributarios completos para factura" }, 400);
+      }
       customer = cust;
     }
 
@@ -96,8 +109,11 @@ Deno.serve(async (req) => {
     const detalle = lines.map((l, i) => {
       const desc = l.discount_amount ?? 0;
       const prc = esFactura ? Math.round(l.price_snapshot / 1.19) : l.price_snapshot;
-      const montoBruto = esFactura ? Math.round((l.price_snapshot * l.qty) / 1.19) : l.price_snapshot * l.qty;
       const descNeto = esFactura ? Math.round(desc / 1.19) : desc;
+      // Identidad exigida por el SII: QtyItem*PrcItem - DescuentoMonto = MontoItem.
+      // MontoItem se DERIVA de PrcItem (no se recalcula por separado) para que cuadre
+      // siempre exacto, incluso cuando price_snapshot/1.19 no es entero.
+      const montoBruto = esFactura ? prc * l.qty : l.price_snapshot * l.qty;
       const monto = montoBruto - descNeto;
       const d: Record<string, string | number> = {
         NroLinDet: String(i + 1),
@@ -145,7 +161,7 @@ Deno.serve(async (req) => {
       idDoc = { TipoDTE: 33, FchEmis: isoDate(new Date()), FchVenc: isoDate(new Date()), FmaPago: 1 };
       emisor = EMISOR_FACTURA;
       receptor = {
-        RUTRecep: customer!.rut,
+        RUTRecep: formatRutDashed(customer!.rut!),
         RznSocRecep: customer!.razon_social,
         GiroRecep: customer!.giro,
         DirRecep: customer!.direccion,
