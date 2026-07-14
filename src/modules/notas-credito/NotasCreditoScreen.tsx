@@ -39,13 +39,15 @@ export function NotasCreditoScreen() {
         folio: nc.folio,
         fecha: fmtDate(createdAt),
         hora: `${pad2(createdAt.getHours())}:${pad2(createdAt.getMinutes())}`,
-        sale_folio: null,
+        sale_folio: nc.boleta_folio,
         metodo: nc.method,
         motivo: nc.reason ?? "Sin motivo",
         items: nc.lines.map((l) => ({ nombre: l.name_snapshot, qty: l.qty, precio: l.price_snapshot })),
         neto,
         iva: nc.total - neto,
         total: nc.total,
+        dte_folio: nc.dte_folio ?? undefined,
+        timbre_png: nc.dte_timbre,
       });
     } catch (e) {
       notifyError(`No se pudo imprimir la nota de crédito.`, e instanceof Error ? e.message : e);
