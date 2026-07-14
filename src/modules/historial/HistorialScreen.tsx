@@ -9,6 +9,7 @@ import { useBusiness, businessToNegocio } from "@/data/business";
 import { getPrinterName } from "@/lib/printerConfig";
 import { printReceipt } from "@/lib/print";
 import { notifyError, errMsg } from "@/lib/errors";
+import { Eye, Printer, Undo2 } from "lucide-react";
 
 function todayLocalIso(): string {
   const d = new Date();
@@ -18,10 +19,16 @@ function todayLocalIso(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+/** Estado de emisión (sin el número SII, que ahora se muestra como título de la venta). */
 function dteBadge(row: SaleHistoryRow): { label: string; bg: string; fg: string } {
-  if (row.dte_status === "emitida") return { label: `SII ${row.dte_folio}`, bg: "#E6F7EE", fg: "#0a6e36" };
+  if (row.dte_status === "emitida") return { label: "Emitida", bg: "#E6F7EE", fg: "#0a6e36" };
   if (row.dte_status === "rechazada") return { label: "Rechazada", bg: "#FCECEC", fg: "#c0392b" };
   return { label: "Pendiente", bg: "#FBF1E0", fg: "#9A6F12" };
+}
+
+/** Identificador visible de la venta: folio SII (#dte_folio) o marca de pendiente. */
+function folioSii(row: { dte_folio: number | null }): string {
+  return row.dte_folio ? `#${row.dte_folio}` : "— pendiente";
 }
 
 function pad2(n: number): string {
@@ -164,7 +171,7 @@ export function HistorialScreen() {
           value={folioStr}
           onChange={(e) => setFolioStr(e.target.value.replace(/[^\d]/g, ""))}
           inputMode="numeric"
-          placeholder="N° folio"
+          placeholder="N° folio SII"
           className="w-28 rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[13px] font-bold text-[#0F2A1B] outline-none focus:border-[var(--brand)]"
         />
 
@@ -192,7 +199,7 @@ export function HistorialScreen() {
             return (
               <div key={r.id} className="flex items-center gap-4 rounded-2xl border border-[#E1E5EE] bg-white px-[18px] py-4">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[14.5px] font-extrabold text-[#0F2A1B]">Venta #{r.folio}</div>
+                  <div className="truncate text-[14.5px] font-extrabold text-[#0F2A1B]">{folioSii(r)}</div>
                   <div className="mt-0.5 text-[12.5px] text-[#556A7C]">
                     {new Date(r.sold_at).toLocaleString("es-CL")} · {r.customer_name ?? "Sin cliente"} · {r.method}
                   </div>
@@ -202,25 +209,29 @@ export function HistorialScreen() {
                 <div className="flex flex-none items-center gap-1.5">
                   <button
                     onClick={() => setDetail(r)}
-                    className="rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[12.5px] font-bold text-[#5a6b7e]"
+                    title="Ver detalle"
+                    className="flex size-9 items-center justify-center rounded-lg text-[#2563EB] hover:brightness-95"
+                    style={{ background: "#EAF1FE" }}
                   >
-                    Detalle
+                    <Eye className="size-[18px]" strokeWidth={2} />
                   </button>
                   <button
                     onClick={() => reimprimirBoleta(r)}
                     disabled={!r.dte_folio}
-                    title={!r.dte_folio ? "La boleta no está emitida en el SII" : undefined}
-                    className="rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[12.5px] font-bold text-[#5a6b7e] disabled:opacity-40"
+                    title={!r.dte_folio ? "La boleta no está emitida en el SII" : "Reimprimir boleta"}
+                    className="flex size-9 items-center justify-center rounded-lg hover:brightness-95 disabled:opacity-40"
+                    style={{ background: "#E6F7EE", color: "var(--brand)" }}
                   >
-                    Reimprimir
+                    <Printer className="size-[18px]" strokeWidth={2} />
                   </button>
                   <button
                     onClick={() => emitirNotaCredito(r)}
                     disabled={!r.dte_folio}
-                    title={!r.dte_folio ? "La boleta no está emitida en el SII" : undefined}
-                    className="rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[12.5px] font-bold text-[#5a6b7e] disabled:opacity-40"
+                    title={!r.dte_folio ? "La boleta no está emitida en el SII" : "Emitir nota de crédito"}
+                    className="flex size-9 items-center justify-center rounded-lg text-[#D02E2E] hover:brightness-95 disabled:opacity-40"
+                    style={{ background: "#FDECEC" }}
                   >
-                    Nota de crédito
+                    <Undo2 className="size-[18px]" strokeWidth={2} />
                   </button>
                 </div>
               </div>
@@ -262,7 +273,7 @@ export function HistorialScreen() {
             style={{ boxShadow: "0 24px 70px rgba(0,0,64,.35)" }}
           >
             <div className="mb-4 flex items-center justify-between">
-              <div className="text-[19px] font-black text-[#0F2A1B]">Venta #{detail.folio}</div>
+              <div className="text-[19px] font-black text-[#0F2A1B]">{folioSii(detail)}</div>
               <button onClick={() => setDetail(null)} className="text-[13px] font-bold text-[#5a6b7e]">
                 Cerrar
               </button>
@@ -270,7 +281,6 @@ export function HistorialScreen() {
 
             <div className="mb-3 text-[12.5px] text-[#556A7C]">
               {new Date(detail.sold_at).toLocaleString("es-CL")} · {detail.customer_name ?? "Sin cliente"} · {detail.method}
-              {detail.dte_folio ? ` · SII ${detail.dte_folio}` : ""}
             </div>
 
             <div className="mb-4 flex flex-col gap-2">

@@ -67,7 +67,9 @@ export function useSalesHistory(branchId: string | undefined, filters: SalesHist
         .lt("sold_at", end);
 
       if (filters.customerId) query = query.eq("customer_id", filters.customerId);
-      if (filters.folio) query = query.eq("folio", filters.folio);
+      // Búsqueda por folio SII (dte_folio), que es el número visible al usuario;
+      // el folio interno (sale.folio) no se expone en la UI.
+      if (filters.folio) query = query.eq("dte_folio", filters.folio);
 
       const { data, error } = await query
         .order("sold_at", { ascending: false })
