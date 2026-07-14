@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Bookmark, Undo2, Lock, Grid3x3, ScanLine, Trash2, FileText } from "lucide-react";
+import { Bookmark, Lock, Grid3x3, ScanLine, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -21,7 +21,6 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Cart, type CartLine } from "./Cart";
 import { PayDialog, type PayMethod } from "./PayDialog";
-import { CreditNoteDialog } from "./CreditNoteDialog";
 import { CierrePanel } from "@/modules/cierre/CierrePanel";
 
 interface CartItem {
@@ -85,7 +84,6 @@ export function VentaScreen() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [payOpen, setPayOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [ncOpen, setNcOpen] = useState(false);
   const [cierreOpen, setCierreOpen] = useState(false);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [heldOpen, setHeldOpen] = useState(false);
@@ -484,12 +482,6 @@ export function VentaScreen() {
             <FileText className="size-4" strokeWidth={1.9} /> Boletas del día
           </button>
           <button
-            onClick={() => setNcOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
-          >
-            <Undo2 className="size-4" strokeWidth={1.9} /> Nota de crédito
-          </button>
-          <button
             onClick={() => setCierreOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
           >
@@ -675,19 +667,6 @@ export function VentaScreen() {
       )}
 
       <PayDialog open={payOpen} total={totals.total} busy={busy} onClose={() => setPayOpen(false)} onConfirm={handleConfirmPay} />
-
-      <CreditNoteDialog
-        open={ncOpen}
-        branchId={branchId}
-        sessionId={openSession?.id ?? null}
-        products={allProducts}
-        business={business}
-        onClose={() => setNcOpen(false)}
-        onEmitted={() => {
-          qc.invalidateQueries({ queryKey: ["products-with-stock"] });
-          qc.invalidateQueries({ queryKey: ["critical-stock"] });
-        }}
-      />
 
       {heldOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) setHeldOpen(false); }}>
