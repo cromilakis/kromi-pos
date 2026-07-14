@@ -20,6 +20,7 @@ const NAV_EMOJI: Record<string, string> = {
   Cotizaciones: "📝",
   Stock: "📦",
   Clientes: "👥",
+  Historial: "📜",
   Administración: "⚙️",
   "Notas de crédito": "🧾",
 };
