@@ -87,6 +87,10 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
     const stockNum = parseInt(stock || "0", 10) || 0;
     const minStockNum = parseInt(minStock || "0", 10) || 0;
     const discountNum = Math.min(100, Math.max(0, parseInt(discountPct || "0", 10) || 0));
+    // Un servicio no lleva stock: min_stock/critical no deben quedar pegados
+    // a los valores de un producto físico previo.
+    const minStockToSave = isService ? 0 : minStockNum;
+    const criticalToSave = isService ? false : critical;
     setBusy(true);
     try {
       if (!product) {
@@ -95,8 +99,8 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           name: trimmed,
           category_id: categoryId || null,
           price: priceNum,
-          min_stock: minStockNum,
-          critical,
+          min_stock: minStockToSave,
+          critical: criticalToSave,
           img_url: imgUrl.trim() || null,
           supplier_id: supplierId || null,
           barcode: barcode.trim() || null,
@@ -110,8 +114,8 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           name: trimmed,
           category_id: categoryId || null,
           price: priceNum,
-          min_stock: minStockNum,
-          critical,
+          min_stock: minStockToSave,
+          critical: criticalToSave,
           img_url: imgUrl.trim() || null,
           supplier_id: supplierId || null,
           barcode: barcode.trim() || null,

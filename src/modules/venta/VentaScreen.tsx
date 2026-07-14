@@ -271,7 +271,7 @@ export function VentaScreen() {
     for (const item of h.cart) {
       const p = productById.get(item.product_id);
       if (!p) { ajustes++; continue; }
-      const qty = Math.min(item.qty, p.is_service ? item.qty : p.stock);
+      const qty = p.is_service ? item.qty : Math.min(item.qty, p.stock);
       if (qty <= 0) { ajustes++; continue; }
       if (qty !== item.qty) ajustes++;
       next.push({ id: item.product_id, qty });
