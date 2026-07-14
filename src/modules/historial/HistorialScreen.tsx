@@ -108,6 +108,10 @@ export function HistorialScreen() {
       reimpresion: true,
       metodo: row.method,
       open_drawer: false,
+      doc_type: row.doc_type,
+      // Nota: SaleHistoryRow no trae razón social/RUT/giro/dirección del receptor;
+      // en reimpresión de factura desde el historial esos datos quedan en blanco
+      // (concern no bloqueante, documentado en el reporte de la tarea).
     };
     try {
       await printReceipt(payload);

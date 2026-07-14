@@ -337,6 +337,9 @@ export function VentaScreen() {
       reimpresion: true,
       metodo: h.method,
       open_drawer: false,
+      doc_type: h.doc_type,
+      // Nota: SaleDteRow (boletas del día) no trae razón social/RUT/giro/dirección del
+      // receptor; en reimpresión de factura esos datos quedan en blanco (concern no bloqueante).
     };
     try {
       await printReceipt(payload);
@@ -371,6 +374,7 @@ export function VentaScreen() {
       // El diálogo de cobro se cierra al FINAL (en finally), para que el botón quede
       // en estado "Cobrando…" durante toda la emisión SII + impresión de la boleta.
       const soldLines = cartLines;
+      const soldCustomer = selectedCustomer;
       setCart([]);
       qc.invalidateQueries({ queryKey: ["sales-today"] });
       qc.invalidateQueries({ queryKey: ["recent-sales"] });
@@ -416,6 +420,11 @@ export function VentaScreen() {
             reimpresion: false,
             metodo: sale.method,
             open_drawer: sale.method === "efectivo",
+            doc_type: sale.doc_type,
+            recep_rut: sale.doc_type === "factura" ? soldCustomer?.rut ?? undefined : undefined,
+            recep_razon: sale.doc_type === "factura" ? soldCustomer?.razon_social ?? soldCustomer?.name ?? undefined : undefined,
+            recep_giro: sale.doc_type === "factura" ? soldCustomer?.giro ?? undefined : undefined,
+            recep_dir: sale.doc_type === "factura" ? soldCustomer?.direccion ?? undefined : undefined,
           };
           try {
             await printReceipt(payload);

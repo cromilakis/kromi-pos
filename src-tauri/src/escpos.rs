@@ -36,6 +36,11 @@ pub struct ReceiptPayload {
     #[serde(default)] pub reimpresion: bool,
     pub metodo: String,
     pub open_drawer: bool,
+    #[serde(default)] pub doc_type: String,
+    #[serde(default)] pub recep_rut: Option<String>,
+    #[serde(default)] pub recep_razon: Option<String>,
+    #[serde(default)] pub recep_giro: Option<String>,
+    #[serde(default)] pub recep_dir: Option<String>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -251,16 +256,27 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     nl(&mut b);
 
     // recuadro de folio — número del SII si la boleta ya fue emitida; si no, PENDIENTE.
+    let es_factura = p.doc_type == "factura";
     let folio_txt = match p.dte_folio {
         Some(f) => format!("No {}", f),
         None => "PENDIENTE DE EMISION".to_string(),
     };
     box_ascii(&mut b, &[
         &format!("R.U.T.: {}", p.negocio.rut),
-        "BOLETA ELECTRONICA",
+        if es_factura { "FACTURA ELECTRONICA" } else { "BOLETA ELECTRONICA" },
         &folio_txt,
     ], 32);
     nl(&mut b);
+
+    // bloque de receptor — solo en factura (la boleta no identifica al comprador).
+    if es_factura {
+        if let Some(razon) = &p.recep_razon { push_text(&mut b, &format!("Sr(es): {}", razon)); nl(&mut b); }
+        if let Some(rut) = &p.recep_rut { push_text(&mut b, &format!("R.U.T.: {}", rut)); nl(&mut b); }
+        if let Some(giro) = &p.recep_giro { push_text(&mut b, &format!("Giro: {}", giro)); nl(&mut b); }
+        if let Some(dir) = &p.recep_dir { push_text(&mut b, &format!("Direccion: {}", dir)); nl(&mut b); }
+        rule(&mut b, b'-');
+    }
+
     if p.reimpresion {
         b.extend_from_slice(&[0x1B, 0x61, 0x01]);
         push_text(&mut b, "** REIMPRESION **"); nl(&mut b);
@@ -615,6 +631,8 @@ mod tests {
             canje_pts: 0, canje_monto: 0,
             dte_folio: None, timbre_png: None, reimpresion: false,
             metodo: metodo.into(), open_drawer: drawer,
+            doc_type: "boleta".into(),
+            recep_rut: None, recep_razon: None, recep_giro: None, recep_dir: None,
         }
     }
 
@@ -652,6 +670,30 @@ mod tests {
         p.negocio.social = None;
         let b = build(&p);
         assert!(!contains(&b, &[0x1D, 0x28, 0x6B]));
+    }
+
+    #[test]
+    fn factura_incluye_encabezado_y_receptor() {
+        let mut p = sample("efectivo", true);
+        p.doc_type = "factura".into();
+        p.recep_razon = Some("Cliente SpA".into());
+        p.recep_rut = Some("11.111.111-1".into());
+        p.recep_giro = Some("Comercio".into());
+        p.recep_dir = Some("Calle Falsa 123".into());
+        let b = build(&p);
+        assert!(contains(&b, b"FACTURA ELECTRONICA"));
+        assert!(!contains(&b, b"BOLETA ELECTRONICA"));
+        assert!(contains(&b, b"Cliente SpA"));
+        assert!(contains(&b, b"11.111.111-1"));
+        assert!(contains(&b, b"Comercio"));
+        assert!(contains(&b, b"Calle Falsa 123"));
+    }
+
+    #[test]
+    fn boleta_no_incluye_bloque_receptor() {
+        let b = build(&sample("efectivo", true));
+        assert!(contains(&b, b"BOLETA ELECTRONICA"));
+        assert!(!contains(&b, b"Sr(es):"));
     }
 
     fn sample_cierre(contado: i64) -> CierrePayload {
