@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { LogOut, Menu } from "lucide-react";
 import { useAuth } from "@/auth/AuthProvider";
@@ -55,9 +55,18 @@ function SidebarLink({ item, collapsed }: { item: NavItem; collapsed: boolean })
 export function AppLayout() {
   const { profile, profileLoading, profileError, signOut } = useAuth();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const isVenta = location.pathname === "/venta";
-  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
+  // Estado del menú (contraído/expandido) global y persistente: se mantiene al
+  // navegar entre módulos y entre sesiones. El usuario lo controla con el botón.
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try { return localStorage.getItem("kromi.menuCollapsed") === "1"; } catch { return false; }
+  });
+  function toggleCollapsed() {
+    setCollapsed((c) => {
+      const next = !c;
+      try { localStorage.setItem("kromi.menuCollapsed", next ? "1" : "0"); } catch { /* no-op */ }
+      return next;
+    });
+  }
 
   const { data: business } = useBusiness(profile?.business_id);
   const { locked, unlock } = useIdleLock(business?.lock_timeout_min ?? 0);
@@ -81,9 +90,6 @@ export function AppLayout() {
   const adminActive = adminItem ? location.pathname.startsWith(adminItem.to) : false;
   const brandName = import.meta.env.VITE_STORE_NAME || "Mi Tienda";
 
-  // En Venta el menú arranca colapsado a un rail de iconos (nunca desaparece del todo).
-  const collapsed = isVenta && !sidebarOpen;
-
   return (
     <div className="h-full flex">
       {locked && <LockScreen onUnlock={unlock} />}
@@ -100,17 +106,15 @@ export function AppLayout() {
           )}
         </div>
 
-        {isVenta && (
-          <button
-            type="button"
-            onClick={() => setSidebarOpen((o) => !o)}
-            title={collapsed ? "Expandir menú" : "Contraer menú"}
-            className={`mb-2 flex items-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#556A7C] hover:bg-[#F7F8FA] ${collapsed ? "size-[38px] self-center justify-center" : "gap-2 px-3 py-2 text-[13px] font-bold"}`}
-          >
-            <Menu className="size-[17px] shrink-0" strokeWidth={1.9} />
-            {!collapsed && <span>Contraer menú</span>}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          title={collapsed ? "Expandir menú" : "Contraer menú"}
+          className={`mb-2 flex items-center rounded-[10px] border border-[#E1E5EE] bg-white text-[#556A7C] hover:bg-[#F7F8FA] ${collapsed ? "size-[38px] self-center justify-center" : "gap-2 px-3 py-2 text-[13px] font-bold"}`}
+        >
+          <Menu className="size-[17px] shrink-0" strokeWidth={1.9} />
+          {!collapsed && <span>Contraer menú</span>}
+        </button>
 
         <nav className="flex flex-col gap-[3px]">
           {baseItems.map((item) => (
