@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "desktop-only",
+  "description": "Permisos disponibles solo en escritorio (updater y process no existen en Android/iOS).",
+  "platforms": ["macOS", "windows", "linux"],
+  "windows": ["main"],
+  "permissions": [
+    "updater:default",
+    "process:default"
+  ]
+}
