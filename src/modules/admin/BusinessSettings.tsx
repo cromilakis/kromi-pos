@@ -8,6 +8,7 @@ import { ImageUploader } from "@/components/ImageUploader";
 import { uploadLogoImage } from "@/lib/image";
 import { PrinterSettings } from "@/shell/PrinterSettings";
 import { UpdateSettings } from "@/shell/UpdateSettings";
+import { isAndroid } from "@/lib/platform";
 
 type FormState = Omit<BusinessRow, "id" | "points_clp_per_point" | "points_multiplier" | "points_redeem_clp_per_point" | "lock_timeout_min">;
 
@@ -126,10 +127,12 @@ export function BusinessSettings() {
             </div>
             <PrinterSettings />
           </div>
-          <div className="mt-4 border-t border-[#F0F2F7] pt-4">
-            <div className="mb-2 text-[12.5px] font-bold text-[#5a6b7e]">Actualizaciones</div>
-            <UpdateSettings />
-          </div>
+          {!isAndroid && (
+            <div className="mt-4 border-t border-[#F0F2F7] pt-4">
+              <div className="mb-2 text-[12.5px] font-bold text-[#5a6b7e]">Actualizaciones</div>
+              <UpdateSettings />
+            </div>
+          )}
           <div className="mt-6 flex justify-end">
             <button
               onClick={save}
