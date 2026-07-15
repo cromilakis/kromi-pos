@@ -134,7 +134,7 @@ export function CotizacionesScreen() {
         descuento: resolveDiscount(l.qty * l.product.price, "pct", l.disc),
       }));
       const globalSnap = globalDiscAmount;
-      const clienteSnap = customerId ? (allCustomers.find((c) => c.id === customerId)?.name ?? "Sin cliente") : "Sin cliente";
+      const clienteSnap = customerId ? (allCustomers.find((c) => c.id === customerId)?.name ?? "No registrado") : "No registrado";
       resetForm();
       setTab("lista");
       qc.invalidateQueries({ queryKey: ["quotes"] });
@@ -150,7 +150,8 @@ export function CotizacionesScreen() {
             neto: quote.neto,
             iva: quote.iva,
             total: quote.total,
-            descuento: globalSnap,
+            // Total de descuentos = descuentos por línea + descuento global (como en la boleta de venta).
+            descuento: itemsSnap.reduce((s, i) => s + (i.descuento ?? 0), 0) + globalSnap,
           });
         } catch (e) {
           notifyError(`La cotización se generó, pero no se pudo imprimir.`, errMsg(e));
@@ -170,12 +171,13 @@ export function CotizacionesScreen() {
         folio: q.folio,
         fecha: fmtIsoDate(q.created_at.slice(0, 10)),
         valido_hasta: fmtIsoDate(q.valid_until),
-        cliente: q.customer_name ?? "Sin cliente",
+        cliente: q.customer_name ?? "No registrado",
         items: q.lines.map((l) => ({ nombre: l.name_snapshot, qty: l.qty, precio: l.price_snapshot, descuento: l.discount_amount })),
         neto: q.neto,
         iva: q.iva,
         total: q.total,
-        descuento: q.discount_amount,
+        // Total de descuentos = descuentos por línea + descuento global (como en la boleta de venta).
+        descuento: q.lines.reduce((s, l) => s + (l.discount_amount ?? 0), 0) + q.discount_amount,
       });
     } catch (e) {
       notifyError(`No se pudo imprimir la cotización.`, errMsg(e));

@@ -511,7 +511,7 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
 
     line_lr(&mut b, "Neto", &money(p.neto), COL);
     if p.descuento > 0 {
-        line_lr(&mut b, "Descuento", &format!("-{}", money(p.descuento)), COL);
+        line_lr(&mut b, "Total descuentos", &format!("-{}", money(p.descuento)), COL);
     }
     line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
     nl(&mut b);
