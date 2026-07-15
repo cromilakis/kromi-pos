@@ -11,7 +11,7 @@ import { useCustomers } from "@/data/customers";
 import { useBusiness, businessToNegocio } from "@/data/business";
 import { useActiveDiscounts } from "@/data/discounts";
 import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data/heldSales";
-import { chargeSale, cartToLines, useSalesTodayDte, type SaleDteRow } from "@/data/sales";
+import { chargeSale, cartToLines, useSalesTodayDte, markSalePrinted, type SaleDteRow } from "@/data/sales";
 import { issueReceipt, getDtePdf } from "@/data/sii";
 import { savePdfBase64 } from "@/lib/fileSave";
 import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "@/lib/money";
@@ -100,6 +100,7 @@ export function VentaScreen() {
   const { data: salesDte } = useSalesTodayDte(branchId);
   const [dteBusy, setDteBusy] = useState<string | null>(null);
   const [pdfBusy, setPdfBusy] = useState<string | null>(null);
+  const [folioModal, setFolioModal] = useState<number | null>(null);
   const [mode, setMode] = useState<"catalogo" | "lectura">("catalogo");
   const [scanQty, setScanQty] = useState(1);
   const scanRef = useRef<HTMLInputElement>(null);
@@ -354,7 +355,7 @@ export function VentaScreen() {
       canje_monto: h.points_discount ?? 0,
       dte_folio: h.dte_folio ?? undefined,
       timbre_png: h.dte_timbre ?? null,
-      reimpresion: true,
+      reimpresion: !!h.printed_at,
       metodo: h.method,
       open_drawer: false,
       doc_type: h.doc_type,
@@ -363,6 +364,13 @@ export function VentaScreen() {
     };
     try {
       await printReceipt(payload);
+      try {
+        await markSalePrinted(h.id);
+        qc.invalidateQueries({ queryKey: ["sales-today-dte", branchId] });
+      } catch (e) {
+        // No romper el flujo de impresión si el marcado falla: la boleta ya se imprimió.
+        console.error("markSalePrinted falló", e);
+      }
     } catch (e) {
       notifyError(`No se pudo imprimir.`, errMsg(e));
     }
@@ -420,7 +428,7 @@ export function VentaScreen() {
       // Solo se imprime la boleta si fue emitida (con folio y timbre del SII).
       if (dteFolio) {
         if (getSkipPrint()) {
-          toast.success(`Venta #${sale.folio} cobrada (boleta ${dteFolio}). Imprime desde «Boletas del día» en la caja.`);
+          setFolioModal(dteFolio);
         } else {
           const soldAt = new Date(sale.sold_at);
           const payload = {
@@ -448,6 +456,13 @@ export function VentaScreen() {
           };
           try {
             await printReceipt(payload);
+            try {
+              await markSalePrinted(sale.id);
+              qc.invalidateQueries({ queryKey: ["sales-today-dte", branchId] });
+            } catch (e) {
+              // No romper el flujo de cobro si el marcado falla: la venta ya se cobró e imprimió.
+              console.error("markSalePrinted falló", e);
+            }
           } catch (e) {
             notifyError(`Boleta emitida (folio ${dteFolio}) pero no se pudo imprimir. Reimprime desde «Boletas del día».`, e instanceof Error ? e.message : e);
           }
@@ -820,7 +835,7 @@ export function VentaScreen() {
                     {emitida ? (
                       <>
                         <button onClick={() => reimprimirBoleta(h)} className="rounded-[10px] border border-[#E1E5EE] bg-white px-3.5 py-2 text-[13px] font-bold text-[#5a6b7e]">
-                          Reimprimir
+                          {h.printed_at ? "Reimprimir" : "Imprimir"}
                         </button>
                         <button
                           onClick={() => descargarPdf(h)}
@@ -839,6 +854,25 @@ export function VentaScreen() {
                 );
               })
             )}
+          </div>
+        </div>
+      )}
+
+      {folioModal !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,64,.45)] p-6" onMouseDown={(e) => { if (e.target === e.currentTarget) setFolioModal(null); }}>
+          <div className="w-[400px] max-w-full rounded-[22px] bg-white p-6 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-2 text-[16px] font-black text-[#0F2A1B]">Boleta lista para imprimir</div>
+            <div className="my-4 text-[42px] font-black" style={{ color: "var(--brand)" }}>#{folioModal}</div>
+            <div className="mb-5 text-[13.5px] text-[#556A7C]">
+              Este dispositivo no imprime. Lleva este folio a la caja para imprimir la boleta.
+            </div>
+            <button
+              onClick={() => setFolioModal(null)}
+              className="w-full rounded-[10px] px-3.5 py-2.5 text-[13px] font-bold text-white"
+              style={{ background: "var(--brand)" }}
+            >
+              Entendido
+            </button>
           </div>
         </div>
       )}

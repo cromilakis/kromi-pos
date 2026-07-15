@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
 import { useSalesHistory, HISTORY_PAGE, type SaleHistoryRow } from "@/data/salesHistory";
+import { markSalePrinted } from "@/data/sales";
 import { CustomerPickerDialog } from "@/modules/venta/CustomerPickerDialog";
 import { fmtCLP } from "@/lib/money";
 import { useBusiness, businessToNegocio } from "@/data/business";
@@ -47,6 +49,7 @@ function pad2(n: number): string {
 export function HistorialScreen() {
   const { profile } = useAuth();
   const { branch } = useWork();
+  const qc = useQueryClient();
   const nav = useNavigate();
   const location = useLocation();
   const didInitFolio = useRef(false);
@@ -146,7 +149,7 @@ export function HistorialScreen() {
       canje_monto: row.points_discount ?? 0,
       dte_folio: row.dte_folio ?? undefined,
       timbre_png: row.dte_timbre ?? null,
-      reimpresion: true,
+      reimpresion: !!row.printed_at,
       metodo: row.method,
       open_drawer: false,
       doc_type: row.doc_type,
@@ -156,6 +159,13 @@ export function HistorialScreen() {
     };
     try {
       await printReceipt(payload);
+      try {
+        await markSalePrinted(row.id);
+        qc.invalidateQueries({ queryKey: ["sales-history"] });
+      } catch (e) {
+        // No romper el flujo de impresión si el marcado falla: la boleta ya se imprimió.
+        console.error("markSalePrinted falló", e);
+      }
     } catch (e) {
       notifyError(`No se pudo imprimir.`, errMsg(e));
     }
@@ -284,7 +294,7 @@ export function HistorialScreen() {
                   <button
                     onClick={() => reimprimirBoleta(r)}
                     disabled={!r.dte_folio}
-                    title={!r.dte_folio ? "La boleta no está emitida en el SII" : "Reimprimir boleta"}
+                    title={!r.dte_folio ? "La boleta no está emitida en el SII" : r.printed_at ? "Reimprimir boleta" : "Imprimir boleta"}
                     className="flex size-9 items-center justify-center rounded-lg hover:brightness-95 disabled:opacity-40"
                     style={{ background: "#E6F7EE", color: "var(--brand)" }}
                   >
