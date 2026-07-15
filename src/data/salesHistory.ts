@@ -63,14 +63,18 @@ export function useSalesHistory(branchId: string | undefined, filters: SalesHist
           "id,folio,total,neto,iva,discount_amount,method,sold_at,customer_id,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,doc_type," +
             "customer:customer_id(name),sale_line(name_snapshot,price_snapshot,qty,discount_amount)",
         )
-        .eq("branch_id", branchId!)
-        .gte("sold_at", start)
-        .lt("sold_at", end);
+        .eq("branch_id", branchId!);
 
-      if (filters.customerId) query = query.eq("customer_id", filters.customerId);
-      // Búsqueda por folio SII (dte_folio), que es el número visible al usuario;
-      // el folio interno (sale.folio) no se expone en la UI.
-      if (filters.folio) query = query.eq("dte_folio", filters.folio);
+      if (filters.folio) {
+        // Búsqueda por folio SII (dte_folio): es único, así que se busca en TODO el
+        // historial, sin acotar por rango de fechas ni cliente. Así se encuentra la
+        // venta aunque sea de otro día (p. ej. al abrir el detalle desde el Inicio).
+        query = query.eq("dte_folio", filters.folio);
+      } else {
+        // Búsqueda normal: acotada por rango de fechas y, opcionalmente, cliente.
+        query = query.gte("sold_at", start).lt("sold_at", end);
+        if (filters.customerId) query = query.eq("customer_id", filters.customerId);
+      }
 
       const { data, error } = await query
         .order("sold_at", { ascending: false })
