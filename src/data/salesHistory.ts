@@ -26,6 +26,7 @@ export interface SaleHistoryRow {
   points_redeemed: number;
   points_discount: number;
   doc_type: string;
+  printed_at: string | null;
   lines: { name_snapshot: string; price_snapshot: number; qty: number; discount_amount: number }[];
 }
 
@@ -60,7 +61,7 @@ export function useSalesHistory(branchId: string | undefined, filters: SalesHist
       let query = supabase
         .from("sale")
         .select(
-          "id,folio,total,neto,iva,discount_amount,method,sold_at,customer_id,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,doc_type," +
+          "id,folio,total,neto,iva,discount_amount,method,sold_at,customer_id,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,doc_type,printed_at," +
             "customer:customer_id(name),sale_line(name_snapshot,price_snapshot,qty,discount_amount)",
         )
         .eq("branch_id", branchId!);
@@ -98,6 +99,7 @@ export function useSalesHistory(branchId: string | undefined, filters: SalesHist
         points_redeemed: s.points_redeemed ?? 0,
         points_discount: s.points_discount ?? 0,
         doc_type: s.doc_type ?? "boleta",
+        printed_at: s.printed_at ?? null,
         lines: s.sale_line ?? [],
       }));
     },

@@ -88,6 +88,41 @@ begin
   if v_stock <> 29 then raise exception 'puntos cliente no sumaron: %', v_stock; end if;
 end $$;
 
+-- mark_sale_printed: setea printed_at una vez y es idempotente (Task 1,
+-- impresión diferida en caja). Producto/stock propios para no alterar los
+-- conteos de stock que asumen los tests siguientes.
+do $$
+declare
+  v_product uuid := 'eeeeeeee-0000-0000-0000-000000000099';
+  v_sale public.sale; v_printed_1 timestamptz; v_printed_2 timestamptz;
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Suculenta test','dddddddd-0000-0000-0000-000000000001',20000);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',5);
+
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000001',
+    ('[{"product_id":"' || v_product || '","qty":1}]')::jsonb,
+    'efectivo', 20000);
+
+  if v_sale.printed_at is not null then
+    raise exception 'printed_at debería nacer null: %', v_sale.printed_at;
+  end if;
+
+  perform public.mark_sale_printed(v_sale.id);
+  select printed_at into v_printed_1 from public.sale where id = v_sale.id;
+  if v_printed_1 is null then raise exception 'mark_sale_printed no seteó printed_at'; end if;
+
+  -- pequeña espera para poder detectar si una segunda llamada lo pisara
+  perform pg_sleep(0.05);
+  perform public.mark_sale_printed(v_sale.id);
+  select printed_at into v_printed_2 from public.sale where id = v_sale.id;
+  if v_printed_2 <> v_printed_1 then
+    raise exception 'mark_sale_printed no es idempotente: % vs %', v_printed_1, v_printed_2;
+  end if;
+end $$;
+
 -- charge_sale: stock insuficiente revierte todo (atomicidad)
 do $$
 declare v_folio_antes int; v_folio_despues int;

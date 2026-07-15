@@ -42,6 +42,7 @@ export interface SaleDteRow {
   dte_status: string; dte_folio: number | null; dte_timbre: string | null;
   points_redeemed: number; points_discount: number;
   doc_type: string;
+  printed_at: string | null;
   lines: { name_snapshot: string; price_snapshot: number; qty: number; discount_amount: number }[];
 }
 
@@ -55,7 +56,7 @@ export function useSalesTodayDte(branchId: string | undefined) {
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const { data, error } = await supabase
         .from("sale")
-        .select("id,folio,total,sold_at,method,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,doc_type,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
+        .select("id,folio,total,sold_at,method,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,doc_type,printed_at,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
         .eq("branch_id", branchId!)
         .gte("sold_at", start.toISOString())
         .order("sold_at", { ascending: false })
@@ -66,6 +67,7 @@ export function useSalesTodayDte(branchId: string | undefined) {
         dte_status: s.dte_status, dte_folio: s.dte_folio, dte_timbre: s.dte_timbre,
         points_redeemed: s.points_redeemed ?? 0, points_discount: s.points_discount ?? 0,
         doc_type: s.doc_type ?? "boleta",
+        printed_at: s.printed_at ?? null,
         lines: s.sale_line ?? [],
       }));
     },
@@ -90,6 +92,7 @@ export interface Sale {
   points_redeemed: number;
   points_discount: number;
   doc_type: string;
+  printed_at: string | null;
 }
 
 /** Cobra la venta de forma atómica vía RPC. Descuentos (línea y total) los recalcula
@@ -120,6 +123,14 @@ export async function chargeSale(args: {
   });
   if (error) throw error;
   return data;
+}
+
+/** Marca la venta como impresa (idempotente: solo la primera llamada setea
+ *  `printed_at`). Necesario porque el cliente no tiene UPDATE directo sobre
+ *  `sale` por RLS — ver migración 20260714220000_sale_printed_at.sql. */
+export async function markSalePrinted(saleId: string): Promise<void> {
+  const { error } = await supabase.rpc("mark_sale_printed", { p_sale: saleId });
+  if (error) throw error;
 }
 
 /** Convierte el carrito (con qty y descuento) a las líneas que espera la RPC. */
