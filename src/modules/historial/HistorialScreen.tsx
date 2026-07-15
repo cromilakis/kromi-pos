@@ -386,9 +386,15 @@ export function HistorialScreen() {
             <div className="flex flex-col gap-1.5 rounded-xl border border-[#E1E5EE] bg-[#F8FAFC] px-3.5 py-3 text-[13px] font-bold text-[#556A7C]">
               <div className="flex justify-between"><span>Neto</span><span className="text-[#0F2A1B]">{fmtCLP(detail.neto)}</span></div>
               <div className="flex justify-between"><span>IVA</span><span className="text-[#0F2A1B]">{fmtCLP(detail.iva)}</span></div>
-              {detail.discount_amount > 0 && (
-                <div className="flex justify-between"><span>Total descuentos</span><span className="text-[#0F2A1B]">{fmtCLP(detail.discount_amount)}</span></div>
-              )}
+              {(() => {
+                // Total de descuentos = suma de los descuentos por línea + el descuento
+                // global (comercial). Los descuentos suelen ser por línea (product.discount_pct),
+                // que no viven en sale.discount_amount; hay que sumarlos desde las líneas.
+                const totalDescuentos = detail.lines.reduce((s, l) => s + (l.discount_amount ?? 0), 0) + (detail.discount_amount ?? 0);
+                return totalDescuentos > 0 ? (
+                  <div className="flex justify-between"><span>Total descuentos</span><span className="text-[#0F2A1B]">-{fmtCLP(totalDescuentos)}</span></div>
+                ) : null;
+              })()}
               {detail.points_redeemed > 0 && (
                 <div className="flex justify-between">
                   <span>Canje de puntos ({detail.points_redeemed} pts)</span>
