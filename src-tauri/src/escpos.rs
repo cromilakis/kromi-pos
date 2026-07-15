@@ -308,7 +308,7 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     // totales — orden: Neto, Descuento (si aplica) y luego IVA, para que se lea Total → Descuento → IVA.
     line_lr(&mut b, "Neto", &money(p.neto), COL);
     if p.descuento > 0 {
-        line_lr(&mut b, "Descuento", &format!("-{}", money(p.descuento)), COL);
+        line_lr(&mut b, "Total descuentos", &format!("-{}", money(p.descuento)), COL);
     }
     if p.canje_monto > 0 {
         line_lr(&mut b, &format!("Canje de puntos ({} pts)", p.canje_pts), &format!("-{}", money(p.canje_monto)), COL);

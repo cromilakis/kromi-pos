@@ -377,7 +377,7 @@ export function HistorialScreen() {
               <div className="flex justify-between"><span>Neto</span><span className="text-[#0F2A1B]">{fmtCLP(detail.neto)}</span></div>
               <div className="flex justify-between"><span>IVA</span><span className="text-[#0F2A1B]">{fmtCLP(detail.iva)}</span></div>
               {detail.discount_amount > 0 && (
-                <div className="flex justify-between"><span>Descuento</span><span className="text-[#0F2A1B]">{fmtCLP(detail.discount_amount)}</span></div>
+                <div className="flex justify-between"><span>Total descuentos</span><span className="text-[#0F2A1B]">{fmtCLP(detail.discount_amount)}</span></div>
               )}
               {detail.points_redeemed > 0 && (
                 <div className="flex justify-between">
