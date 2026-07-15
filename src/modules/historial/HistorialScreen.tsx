@@ -45,6 +45,12 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
+/** Método de pago con mayúscula inicial (Efectivo / Tarjeta). */
+const METHOD_LABEL: Record<string, string> = { efectivo: "Efectivo", tarjeta: "Tarjeta" };
+function metodoLabel(m: string): string {
+  return METHOD_LABEL[m] ?? (m ? m.charAt(0).toUpperCase() + m.slice(1) : m);
+}
+
 /** Historial de ventas de la sucursal: filtros por fecha/cliente/folio y paginación. */
 export function HistorialScreen() {
   const { profile } = useAuth();
@@ -276,7 +282,7 @@ export function HistorialScreen() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[14.5px] font-extrabold text-[#0F2A1B]">{folioSii(r)}</div>
                   <div className="mt-0.5 text-[12.5px] text-[#556A7C]">
-                    {new Date(r.sold_at).toLocaleString("es-CL")} · {r.customer_name ?? "Sin cliente"} · {r.method}
+                    {new Date(r.sold_at).toLocaleString("es-CL")} · {r.customer_name ?? "Cliente No Registrado"} · {metodoLabel(r.method)}
                   </div>
                 </div>
                 <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold" style={{ background: typeBadge.bg, color: typeBadge.fg }}>{typeBadge.label}</span>
@@ -365,7 +371,7 @@ export function HistorialScreen() {
             </div>
 
             <div className="mb-3 text-[12.5px] text-[#556A7C]">
-              {new Date(detail.sold_at).toLocaleString("es-CL")} · {detail.customer_name ?? "Sin cliente"} · {detail.method}
+              {new Date(detail.sold_at).toLocaleString("es-CL")} · {detail.customer_name ?? "Cliente No Registrado"} · {metodoLabel(detail.method)}
             </div>
 
             <div className="mb-4 flex flex-col gap-2">
