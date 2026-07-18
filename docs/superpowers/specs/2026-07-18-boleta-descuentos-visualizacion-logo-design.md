@@ -110,7 +110,38 @@ conteo: `descuento` = Σ líneas + global). Se alinea a la nueva semántica.
 
 `build_credit_note()`: la NC no muestra descuentos (solo ítems) → sin cambios.
 
-### 3. Logo / header
+### 3. DTE — `issue-receipt/index.ts` (fix del reparo SII)
+
+**Evidencia (cuenta demo, ambiente 0):** el `DscRcgGlobal` en una boleta con
+montos brutos genera **siempre** el reparo `Monto Total No Cuadra con Parciales`,
+tanto en **monto ($)** (folio 6371) como en **porcentaje (%)** (folio 6385). La
+única estructura **Aceptada limpia** es **distribuir el descuento en las líneas**
+(folio 6373). El SII no reconcilia un descuento global en boleta bruta.
+
+Cambio: **eliminar `DscRcgGlobal`** y **prorratear el descuento global entre las
+líneas** del `Detalle`, de modo que `Σ MontoItem = MntTotal` (cuadratura trivial).
+
+- El descuento global a distribuir es `sale.discount_amount` (incluye canje o
+  comercial; los descuentos por línea ya viven en `sale_line.discount_amount`).
+- Base de prorrateo por línea: `base_i = price*qty − line_discount_i`.
+- `extra_i = round(global × base_i / Σ base)`; el **remanente** de redondeo se
+  ajusta en la última línea para que `Σ extra_i = global` exacto.
+- Cada línea: `DescuentoMonto = line_discount_i + extra_i`,
+  `MontoItem = price*qty − DescuentoMonto`.
+- Resultado boleta: `Σ MontoItem = v_bruto − global = sale.total`; `MntNeto`/`IVA`/
+  `MntTotal` siguen derivándose de `sale` (ya descontados). Se quita el bloque
+  `DscRcgGlobal`.
+- Factura (33): mismo prorrateo pero en **neto** (los importes se llevan a neto
+  con `/1.19`), aplicado sobre el descuento global neto; se elimina igualmente el
+  `DscRcgGlobal`. (El reparo se confirmó en boletas; se unifica el criterio para
+  no arrastrar el `DscRcgGlobal` en ningún tipo.)
+
+Nota: este cambio es **solo** del cuerpo del DTE que va al SII. **No afecta** la
+boleta impresa, que sigue mostrando el "Descuento global" como línea de totales
+(§2), porque el ticket se arma desde el payload (`sale` + líneas), no desde el
+DTE.
+
+### 4. Logo / header
 
 - Regenerar `src-tauri/assets/logo.escpos` a ~mitad de tamaño (ancho objetivo
   ~180 px, alto proporcional → ~¼ de los bytes), manteniendo el prefijo
@@ -121,8 +152,9 @@ conteo: `descuento` = Σ líneas + global). Se alinea a la nueva semántica.
   versionado para regenerar el asset a futuro.
 - Header sigue centrado con los datos del negocio como texto (sin cambios).
 
-### 4. Testing / verificación
+### 5. Testing / verificación
 
+**Boleta impresa (§2) + payloads (§1):**
 - Tests unitarios en `escpos.rs`:
   - Con descuento global: el output contiene `Subtotal` y `Descuento global`.
   - Con canje: contiene `Canje de puntos`.
@@ -134,17 +166,31 @@ conteo: `descuento` = Σ líneas + global). Se alinea a la nueva semántica.
   vista previa** del ticket (dump del ESC/POS a texto/imagen) para validar el
   layout y el nuevo logo antes de cerrar.
 
+**DTE (§3) — sin tocar producción:**
+- Test unitario/determinista del armado del body de `issue-receipt`: `Σ MontoItem
+  = MntTotal`, sin `DscRcgGlobal`, y el prorrateo cuadra al peso (incl. remanente
+  en la última línea) para 1 línea, N líneas, y descuento que no divide exacto.
+- Validación end-to-end contra la **cuenta demo (ambiente 0)**: script aparte que
+  arme el body idéntico al de `issue-receipt` (con el fix) y lo emita en demo →
+  confirmar estado **Aceptado** (sin reparo), como se hizo con folio 6373.
+- ⚠️ **NO** repuntar los secrets de la Edge Function productiva a la demo. La
+  validación va con un script independiente; la función productiva queda intacta.
+- `/dte/preview` **no** sirve para esto (es más permisivo y no detecta el reparo
+  de cuadratura, que solo aparece tras emisión real al SII).
+- Producción: la estructura ya está confirmada en demo. Un "canary" opcional
+  tras desplegar (una venta real chica con descuento, corregible con NC) queda a
+  criterio del usuario, no es parte obligatoria del plan.
+
 ## Fuera de alcance
 
 - Header compuesto (logo izq + datos der).
-- Cambios al reparo del SII por `DscRcgGlobal` en boletas (tema separado; en
-  verificación aparte).
 - Visualización de descuentos en la pantalla de Venta (carrito on-screen); el
   reporte es sobre la boleta impresa.
 
 ## Restricción operativa
 
-La app está en **producción**. Todo el trabajo aquí es sobre la representación
-impresa (ESC/POS) y armado de payload: **no** emite DTE ni toca el SII. Las
-pruebas de emisión (si hicieran falta) van solo contra la cuenta demo
-(ambiente 0). Ver memoria `produccion-no-emitir-dte`.
+La app está en **producción**. El cambio §3 modifica el **cuerpo del DTE** que
+arma `issue-receipt`, pero **no** se emiten DTE reales para probar: toda emisión
+de validación va contra la **cuenta demo (ambiente 0)** con un script aparte,
+dejando la Edge Function productiva intacta. No se cambia `SIMPLEFACTURA_AMBIENTE`
+ni se emite en producción para testear. Ver memoria `produccion-no-emitir-dte`.
