@@ -96,7 +96,6 @@ function FolioRow({ tipoDte, label }: { tipoDte: number; label: string }) {
                 inputMode="numeric"
                 placeholder="Ej: 50"
                 value={state.cantidad}
-                max={max ?? undefined}
                 onChange={(e) => {
                   const digits = e.target.value.replace(/[^\d]/g, "");
                   setState((s) => ({ ...s, cantidad: digits }));

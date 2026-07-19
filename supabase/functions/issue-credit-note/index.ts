@@ -86,7 +86,8 @@ Deno.serve(async (req) => {
 
     const codRef = nc.cod_ref ?? 1;
     const fchRef = sale.emitted_at ? isoDate(new Date(sale.emitted_at)) : isoDate(new Date());
-    const razon = codRef === 1 ? "ANULA BOLETA ELECTRONICA" : "DEVOLUCION MERCADERIA";
+    const docLabel = esFactura ? "FACTURA ELECTRONICA" : "BOLETA ELECTRONICA";
+    const razon = codRef === 1 ? `ANULA ${docLabel}` : "DEVOLUCION MERCADERIA";
 
     const body = {
       Documento: {
