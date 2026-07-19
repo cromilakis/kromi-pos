@@ -316,7 +316,7 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
 
     // encabezado de columnas (negrita)
     b.extend_from_slice(&[0x1B, 0x45, 0x01]);
-    line_lr(&mut b, "Item", "Importe", COL);
+    line_lr(&mut b, "Item", "Subtotal", COL);
     b.extend_from_slice(&[0x1B, 0x45, 0x00]);
     rule(&mut b, b'=');
 
@@ -510,7 +510,7 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
     rule(&mut b, b'-');
 
     b.extend_from_slice(&[0x1B, 0x45, 0x01]);
-    line_lr(&mut b, "Item", "Importe", COL);
+    line_lr(&mut b, "Item", "Subtotal", COL);
     b.extend_from_slice(&[0x1B, 0x45, 0x00]);
     rule(&mut b, b'=');
     for it in &p.items {
@@ -646,6 +646,10 @@ mod tests {
         haystack.windows(needle.len()).any(|w| w == needle)
     }
 
+    fn count(haystack: &[u8], needle: &[u8]) -> usize {
+        haystack.windows(needle.len()).filter(|w| *w == needle).count()
+    }
+
     #[test]
     fn boleta_descuento_global_muestra_subtotal_y_descuento() {
         let mut p = sample("efectivo", true);
@@ -653,7 +657,8 @@ mod tests {
         p.descuento = 1799;
         p.neto = 13606; p.iva = 2585; p.total = 16191;
         let b = build(&p);
-        assert!(contains(&b, b"Subtotal"));
+        // "Subtotal" aparece 2 veces: encabezado de columna + linea de totales.
+        assert_eq!(count(&b, b"Subtotal"), 2);
         assert!(contains(&b, b"Descuento global"));
     }
 
@@ -665,13 +670,14 @@ mod tests {
         p.neto = 7563; p.iva = 1437; p.total = 9000;
         let b = build(&p);
         assert!(contains(&b, b"Canje de puntos (5 pts)"));
-        assert!(contains(&b, b"Subtotal"));
+        assert_eq!(count(&b, b"Subtotal"), 2);
     }
 
     #[test]
     fn boleta_sin_descuento_no_muestra_subtotal() {
-        let b = build(&sample("efectivo", true)); // descuento 0, canje 0
-        assert!(!contains(&b, b"Subtotal"));
+        let b = build(&sample("efectivo", true)); // sin descuento
+        // Solo el encabezado de columna contiene "Subtotal"; no hay linea de totales.
+        assert_eq!(count(&b, b"Subtotal"), 1);
     }
 
     #[test]
