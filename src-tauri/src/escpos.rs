@@ -28,6 +28,8 @@ pub struct ReceiptPayload {
     pub neto: i64,
     pub iva: i64,
     pub total: i64,
+    #[serde(default)] pub recv: i64,
+    #[serde(default)] pub change: i64,
     pub descuento: i64,
     #[serde(default)] pub canje_pts: i64,
     #[serde(default)] pub canje_monto: i64,
@@ -334,6 +336,19 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
 
     totales_block(&mut b, &p.items, p.descuento, p.canje_pts, p.canje_monto, p.neto, p.iva, p.total);
 
+    // Ley 20.956: en efectivo, el monto a pagar se redondea a la decena. El TOTAL
+    // fiscal (arriba) NO cambia; acá se muestra el redondeo, lo pagado y el vuelto.
+    if p.metodo == "efectivo" && p.recv > 0 {
+        let pagado = p.recv - p.change; // = total redondeado
+        let redondeo = p.total - pagado;
+        if redondeo != 0 {
+            line_lr(&mut b, "Redondeo", &format!("-{}", money(redondeo)), COL);
+        }
+        line_lr(&mut b, "Total a pagar", &money(pagado), COL);
+        line_lr(&mut b, "Paga con", &money(p.recv), COL);
+        line_lr(&mut b, "Vuelto", &money(p.change), COL);
+    }
+
     line_lr(&mut b, "Forma de pago", &metodo_label(&p.metodo), COL);
     rule(&mut b, b'-');
 
@@ -395,11 +410,12 @@ pub struct CierrePayload {
     pub contado: i64,
     pub nc_cash: i64,
     pub nc_card: i64,
+    #[serde(default)] pub rounding: i64,
 }
 
 pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
     let total = p.cash + p.card;
-    let esperado = p.fondo + p.cash - p.nc_cash;
+    let esperado = p.fondo + p.cash - p.nc_cash - p.rounding;
     let diff = p.contado - esperado;
     let pct = if esperado != 0 { (diff as f64) / (esperado as f64) * 100.0 } else { 0.0 };
     let estado = if diff == 0 {
@@ -456,6 +472,9 @@ pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
     line_lr(&mut b, "Ventas en efectivo", &money(p.cash), COL);
     if p.nc_cash != 0 { line_lr(&mut b, "Notas de credito (efectivo)", &format!("-{}", money(p.nc_cash)), COL); }
     if p.nc_card != 0 { line_lr(&mut b, "Reversos tarjeta", &format!("-{}", money(p.nc_card)), COL); }
+    if p.rounding != 0 {
+        line_lr(&mut b, "Ajuste por redondeo", &format!("-{}", money(p.rounding)), COL);
+    }
     line_lr(&mut b, "Esperado en caja", &money(esperado), COL);
     line_lr(&mut b, "Efectivo contado", &money(p.contado), COL);
     rule(&mut b, b'-');
@@ -589,6 +608,16 @@ pub fn build_credit_note(p: &CreditNotePayload) -> Vec<u8> {
     b.extend_from_slice(&[0x1D, 0x21, 0x00]);
     nl(&mut b);
     line_lr(&mut b, "Medio de devolucion", &metodo_label(&p.metodo), COL);
+
+    // Ley 20.956: la devolución en efectivo se paga redondeada a la decena; la
+    // DEVOLUCION (fiscal) de arriba NO cambia.
+    if p.metodo == "efectivo" {
+        let round = ((p.total + 4) / 10) * 10;
+        if p.total != round {
+            line_lr(&mut b, "Redondeo", &format!("-{}", money(p.total - round)), COL);
+        }
+        line_lr(&mut b, "Efectivo devuelto", &money(round), COL);
+    }
     rule(&mut b, b'-');
 
     // pie: timbre SII si la NC ya fue emitida (tiene folio SII).
@@ -633,7 +662,7 @@ mod tests {
             folio: 1234,
             fecha: "27/06/2026".into(), hora: "14:32".into(),
             items: vec![Item { nombre: "Echeveria".into(), qty: 1, precio: 3990, descuento: 0 }],
-            neto: 3353, iva: 637, total: 3990, descuento: 0,
+            neto: 3353, iva: 637, total: 3990, recv: 0, change: 0, descuento: 0,
             canje_pts: 0, canje_monto: 0,
             dte_folio: None, timbre_png: None, reimpresion: false,
             metodo: metodo.into(), open_drawer: drawer,
@@ -751,6 +780,7 @@ mod tests {
             contado,
             nc_cash: 0,
             nc_card: 0,
+            rounding: 0,
         }
     }
 
@@ -883,5 +913,44 @@ mod tests {
         // Con dte_folio presente ya es tributaria: no debe decir "Documento no tributario".
         assert!(!txt.contains("no tributario"));
         assert!(txt.contains("No 1"));
+    }
+
+    #[test]
+    fn boleta_efectivo_muestra_redondeo_y_vuelto() {
+        let mut p = sample("efectivo", true);
+        p.total = 16191; p.neto = 13606; p.iva = 2585;
+        p.recv = 20000; p.change = 3810; // paga 16190 (redondeado), vuelto 3810
+        let b = build(&p);
+        assert!(contains(&b, b"Total a pagar"));
+        assert!(contains(&b, b"Paga con"));
+        assert!(contains(&b, b"Vuelto"));
+        assert!(contains(&b, b"Redondeo"));
+        // el TOTAL fiscal exacto sigue presente
+        assert!(contains(&b, b"16.191"));
+    }
+
+    #[test]
+    fn boleta_tarjeta_no_muestra_bloque_efectivo() {
+        let mut p = sample("tarjeta", false);
+        p.recv = 0; p.change = 0;
+        let b = build(&p);
+        assert!(!contains(&b, b"Paga con"));
+    }
+
+    #[test]
+    fn cierre_muestra_ajuste_por_redondeo() {
+        let mut p = sample_cierre(192282);
+        p.rounding = 18;
+        let b = build_cierre(&p);
+        assert!(contains(&b, b"Ajuste por redondeo"));
+    }
+
+    #[test]
+    fn nc_efectivo_muestra_redondeo() {
+        let mut p = sample_nc();
+        p.total = 9991; p.neto = 8396; p.iva = 1595; p.metodo = "efectivo".into();
+        let b = build_credit_note(&p);
+        assert!(contains(&b, b"Efectivo devuelto"));
+        assert!(contains(&b, b"9.991")); // DEVOLUCION fiscal exacta
     }
 }
