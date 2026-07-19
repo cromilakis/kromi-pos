@@ -492,11 +492,6 @@ pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
     push_text(&mut b, "________________________________"); nl(&mut b);
     nl(&mut b);
 
-    // pie
-    b.extend_from_slice(&[0x1B, 0x61, 0x01]);
-    push_text(&mut b, &p.negocio.footer); nl(&mut b);
-    b.extend_from_slice(&[0x1B, 0x61, 0x00]);
-
     // feed + corte (sin gaveta, sin timbre SII: no es documento tributario)
     b.extend_from_slice(&[0x0A, 0x0A, 0x0A, 0x0A]);
     b.extend_from_slice(&[0x1D, 0x56, 0x42, 0x60]);
@@ -953,6 +948,12 @@ mod tests {
         p.rounding = 18;
         let b = build_cierre(&p);
         assert!(contains(&b, b"Ajuste por redondeo"));
+    }
+
+    #[test]
+    fn cierre_no_incluye_gracias_por_compra() {
+        let b = build_cierre(&sample_cierre(192300));
+        assert!(!contains(&b, b"Gracias"));
     }
 
     #[test]
