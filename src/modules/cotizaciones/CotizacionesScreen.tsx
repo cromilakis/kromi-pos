@@ -150,7 +150,7 @@ export function CotizacionesScreen() {
             neto: quote.neto,
             iva: quote.iva,
             total: quote.total,
-            // Total de descuentos = descuentos por línea + descuento global (como en la boleta de venta).
+            // Descuento global (descuentos por línea se muestran en los ítems).
             descuento: globalSnap,
           });
         } catch (e) {
@@ -176,7 +176,7 @@ export function CotizacionesScreen() {
         neto: q.neto,
         iva: q.iva,
         total: q.total,
-        // Total de descuentos = descuentos por línea + descuento global (como en la boleta de venta).
+        // Descuento global (descuentos por línea se muestran en los ítems).
         descuento: q.discount_amount,
       });
     } catch (e) {
