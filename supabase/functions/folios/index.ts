@@ -44,7 +44,9 @@ Deno.serve(async (req) => {
         headers: auth,
         body: JSON.stringify({ rutEmpresa: RUT_EMISOR, tipoDTE: t, ambiente: SF_AMBIENTE }),
       });
-      const jSin = JSON.parse(await rSin.text());
+      const txtSin = await rSin.text();
+      if (!rSin.ok) return json({ status: "error", message: `folios sin-uso ${rSin.status}: ${txtSin}` }, 502);
+      const jSin = JSON.parse(txtSin);
       const sinUso = Array.isArray(jSin?.data)
         ? jSin.data.reduce((s: number, x: { cantidad?: number }) => s + (x.cantidad ?? 0), 0)
         : 0;
@@ -54,7 +56,9 @@ Deno.serve(async (req) => {
         headers: auth,
         body: JSON.stringify({ rutEmpresa: RUT_EMISOR, tipoDTE: t, ambiente: SF_AMBIENTE }),
       });
-      const jDisp = JSON.parse(await rDisp.text());
+      const txtDisp = await rDisp.text();
+      if (!rDisp.ok) return json({ status: "error", message: `folios disponibles ${rDisp.status}: ${txtDisp}` }, 502);
+      const jDisp = JSON.parse(txtDisp);
       const raw = Number(jDisp?.data ?? 0);
       const maxRequestable = SIN_LIMITE.has(t) ? null : raw; // null = sin límite
       return json({ status: "ok", sinUso, maxRequestable });
