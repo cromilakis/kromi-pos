@@ -714,4 +714,58 @@ begin
   end if;
 end $$;
 
+-- Ley 20.956 (Task 2): _register_sale redondea el monto a pagar en efectivo a
+-- la decena; el total fiscal (para el DTE) queda exacto. En tarjeta no hay
+-- redondeo. close_cash_session expone 'rounding' y arma el arqueo con lo
+-- realmente cobrado (identidad: expected = float + cash - nc_cash - rounding).
+do $$
+declare
+  v_product   uuid := 'eeeeeeee-0000-0000-0000-000000000901';
+  v_register  uuid := 'cccccccc-0000-0000-0000-000000000901';
+  v_session   uuid := 'f0000000-0000-0000-0000-000000000901';
+  v_sale      public.sale;
+  v_res       jsonb;
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Redondeo test','dddddddd-0000-0000-0000-000000000001',16191);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',5);
+  insert into public.register (id, branch_id, name) values
+    (v_register,'bbbbbbbb-0000-0000-0000-000000000001','Caja redondeo');
+  insert into public.cash_session (id, business_id, branch_id, register_id, status, float_amount) values
+    (v_session,'aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000001',v_register,'open',50000);
+
+  -- venta en efectivo: total fiscal EXACTO (no redondeado), recv-change = redondeado a la decena.
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+    ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+    'efectivo', 16200);
+  if v_sale.total <> 16191 then
+    raise exception 'venta efectivo: total fiscal no quedo exacto: %', v_sale.total;
+  end if;
+  if v_sale.recv - v_sale.change <> 16190 then
+    raise exception 'venta efectivo: recv-change no quedo redondeado: %', v_sale.recv - v_sale.change;
+  end if;
+
+  -- venta en tarjeta: sin redondeo, recv-change = total.
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+    ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+    'tarjeta', 16191);
+  if v_sale.total <> 16191 then
+    raise exception 'venta tarjeta: total no quedo exacto: %', v_sale.total;
+  end if;
+  if v_sale.recv - v_sale.change <> 16191 then
+    raise exception 'venta tarjeta: recv-change no debia redondearse: %', v_sale.recv - v_sale.change;
+  end if;
+
+  -- arqueo: expected_cash = float + cash (fiscal) - nc_cash (fiscal) - rounding.
+  v_res := public.close_cash_session(v_session, 0);
+  if (v_res->>'expected_cash')::int <>
+     (v_res->>'float')::int + (v_res->>'cash')::int - (v_res->>'nc_cash')::int - (v_res->>'rounding')::int
+  then
+    raise exception 'arqueo: identidad expected = float + cash - nc_cash - rounding no se cumple: %', v_res;
+  end if;
+end $$;
+
 rollback;
