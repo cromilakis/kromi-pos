@@ -1,4 +1,4 @@
-mod escpos;
+pub mod escpos;
 mod printing;
 
 use escpos::{CierrePayload, CreditNotePayload, QuotePayload, ReceiptPayload};
