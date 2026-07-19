@@ -37,12 +37,12 @@ export function buildDetalle(lines: DteLine[], globalDiscount: number, esFactura
   });
   const sumBase = calc.reduce((s, c) => s + c.base, 0);
 
-  let asignado = 0;
+  let assigned = 0;
   return calc.map((c, i) => {
     const extra = i === calc.length - 1
-      ? globalWork - asignado
+      ? globalWork - assigned
       : (sumBase > 0 ? Math.round((globalWork * c.base) / sumBase) : 0);
-    if (i < calc.length - 1) asignado += extra;
+    if (i < calc.length - 1) assigned += extra;
 
     const desc = c.lineDesc + extra;
     const monto = c.prc * c.l.qty - desc;
