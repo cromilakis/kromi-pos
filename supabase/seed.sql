@@ -39,6 +39,10 @@ on conflict (business_id, module_key) do nothing;
 -- El trigger handle_new_user crea el espejo en app_user con los metadatos.
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,
+  -- GoTrue exige estas columnas de token como string vacío, NO NULL; si quedan
+  -- NULL el login falla con 500 "converting NULL to string is unsupported".
+  confirmation_token, recovery_token, email_change, email_change_token_new,
+  email_change_token_current, phone_change, phone_change_token, reauthentication_token,
   email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
   created_at, updated_at
 )
@@ -47,6 +51,7 @@ values (
   '00000000-0000-0000-0000-0000000000a1',
   'authenticated','authenticated','111111111@pos.kromi.local',
   crypt('123456', gen_salt('bf')),
+  '', '', '', '', '', '', '', '',
   now(),
   '{"provider":"email","providers":["email"]}'::jsonb,
   jsonb_build_object(
