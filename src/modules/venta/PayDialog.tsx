@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fmtCLP, resolveDiscount } from "@/lib/money";
+import { fmtCLP, resolveDiscount, roundCashCLP } from "@/lib/money";
 import type { DiscountRow } from "@/data/discounts";
 
 export type PayMethod = "efectivo" | "tarjeta";
@@ -50,9 +50,10 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
   const effectiveTotal = total - discAmount - pointsDiscount;
   const maxPointsRedeem = Math.max(0, Math.min(customerPoints, Math.ceil(total / pointsRedeemRate)));
 
+  const payTotal = method === "efectivo" ? roundCashCLP(effectiveTotal) : effectiveTotal;
   const recv = method === "efectivo" ? Number(cashStr) || 0 : effectiveTotal;
-  const change = recv - effectiveTotal;
-  const canConfirm = method === "tarjeta" || recv >= effectiveTotal;
+  const change = recv - payTotal;
+  const canConfirm = method === "tarjeta" || recv >= payTotal;
 
   function pushCash(k: string) {
     setCashStr((v) => {
@@ -90,6 +91,12 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
             <span className="text-sm font-semibold text-[#556A7C]">Total a cobrar</span>
             <span className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(effectiveTotal)}</span>
           </div>
+          {method === "efectivo" && payTotal !== effectiveTotal && (
+            <div className="mt-2 flex items-baseline justify-between px-1 text-[13px] font-bold text-[#556A7C]">
+              <span>Redondeo (efectivo) · Total a pagar</span>
+              <span>{fmtCLP(payTotal)}</span>
+            </div>
+          )}
         </div>
 
         <div className="p-[22px_24px]">
