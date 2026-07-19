@@ -532,7 +532,7 @@ export function StockScreen() {
             {g.items.map((p) => {
               const low = isLowStock(p);
               return (
-                <div key={p.id} className="flex flex-col overflow-hidden rounded-2xl border border-[#E1E5EE] bg-white">
+                <div key={p.id} className="flex flex-col overflow-hidden rounded-2xl border border-[#E1E5EE] bg-white" onDoubleClick={canManage ? () => { setEditing(p); setFormOpen(true); } : undefined}>
                   <div className="flex h-[140px] w-full items-center justify-center bg-[#EEF1F6]">
                     {p.img_url ? (
                       <img src={p.img_url} alt={p.name} className="size-full object-cover" />
