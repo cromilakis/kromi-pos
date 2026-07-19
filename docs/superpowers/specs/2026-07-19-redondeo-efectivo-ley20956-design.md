@@ -24,9 +24,13 @@ cobros en **efectivo** de kromi-pos, y reflejarla en el arqueo del cierre de caj
    de menor riesgo sobre la emisión ya certificada.)
 2. **Ticket impreso (efectivo):** bajo el `TOTAL` fiscal, mostrar `Redondeo`,
    `Total a pagar`, `Paga con`, `Vuelto`.
-3. **Cierre/arqueo:** el efectivo esperado se calcula con lo realmente cobrado
-   (redondeado), y se muestra una línea **"Ajuste por redondeo"** para que la caja
-   cuadre de forma transparente.
+3. **Cierre/arqueo:** el efectivo esperado se calcula con lo realmente cobrado y
+   pagado (redondeado), **incluyendo las notas de crédito en efectivo**, y se
+   muestra una línea **"Ajuste por redondeo"** para que la caja cuadre de forma
+   transparente.
+4. **Notas de crédito alineadas:** la NC en efectivo aplica el mismo redondeo (DTE
+   61 con monto exacto; efectivo devuelto redondeado) en el ticket y en el arqueo.
+   NC con tarjeta = exacta.
 
 ## Fórmula
 
@@ -52,15 +56,24 @@ Invariante: `recv - change = v_pay` (lo que queda en caja) para efectivo.
 `v_points` y `customer.spent` siguen sobre `v_total` (fiscal). El resto de la RPC
 (descuentos, canje, líneas) sin cambios.
 
-### 3. `close_cash_session` (misma migración) — arqueo con redondeo
-- `v_cash` (ventas efectivo, fiscal) = `sum(total) filter (method='efectivo')` (se
-  mantiene, es la cifra fiscal).
-- `v_cash_collected` = `sum(recv - change) filter (method='efectivo')` (lo
-  realmente cobrado, redondeado).
-- `v_cash_rounding` = `v_cash - v_cash_collected` (ajuste neto por redondeo; ± ).
-- `v_expected := v_float + v_cash_collected - v_nc_cash;`
-- El JSON de retorno agrega **`rounding`** (= `v_cash_rounding`). `cash` sigue
-  siendo la venta fiscal en efectivo. (`card`/`nc_*` sin cambios.)
+### 3. `close_cash_session` (misma migración) — arqueo con redondeo (ventas + NC)
+Considera el redondeo tanto en las **ventas** (cash que entra) como en las **notas
+de crédito** (cash que sale). Las NC no tienen `recv/change`, así que el efectivo
+devuelto se redondea inline sobre su `total`.
+- `v_cash` (ventas efectivo, fiscal) = `sum(total) filter (method='efectivo')`.
+- `v_cash_collected` = `sum(recv - change) filter (method='efectivo')` (cash que
+  ENTRA, ya redondeado).
+- `v_nc_cash` (NC efectivo, fiscal) = `sum(total) filter (method='efectivo')` sobre
+  `credit_note`.
+- `v_nc_paid` = `sum(((total + 4) / 10) * 10) filter (method='efectivo')` sobre
+  `credit_note` (cash que SALE, redondeado).
+- `v_rounding` = `(v_cash - v_cash_collected) - (v_nc_cash - v_nc_paid)` (ajuste
+  neto por redondeo; ±).
+- `v_expected := v_float + v_cash_collected - v_nc_paid;`
+- El JSON de retorno agrega **`rounding`** (= `v_rounding`). `cash` y `nc_cash`
+  siguen siendo las cifras **fiscales**; `expected_cash` usa lo cobrado/pagado
+  redondeado. Identidad: `expected = float + cash - nc_cash - rounding`. (`card`/
+  `nc_card` sin cambios.)
 
 ### 4. `data/cash.ts` — tipo
 `CierreResumen` agrega `rounding: number`.
@@ -84,11 +97,21 @@ Invariante: `recv - change = v_pay` (lo que queda en caja) para efectivo.
 
 ### 7. `escpos.rs` — comprobante de cierre + panel
 - `CierrePayload` agrega `rounding: i64`.
-- `build_cierre()`: en el arqueo, entre "Ventas en efectivo" y "Esperado en caja",
-  imprimir "Ajuste por redondeo" = `-rounding` (si != 0). `esperado` ya viene
-  calculado con lo cobrado.
+- `build_cierre()`: hoy recalcula `esperado = fondo + cash - nc_cash`; pasa a
+  `esperado = fondo + cash - nc_cash - rounding` (así coincide con `expected_cash`
+  de la RPC). En el arqueo, imprimir la línea "Ajuste por redondeo" = `-rounding`
+  (si != 0), entre "Notas de crédito (efectivo)" y "Esperado en caja".
 - `CierrePanel.tsx`: mostrar la línea "Ajuste por redondeo" (`resumen.rounding`) en
   el bloque de arqueo, y pasar `rounding` al `build_cierre`.
+
+### 7b. `escpos.rs` — ticket de nota de crédito (efectivo)
+- `build_credit_note()`: si `metodo == "efectivo"`, bajo la `DEVOLUCION` (fiscal,
+  exacta) mostrar `Redondeo` = `-(total - round)` (si != 0) y `Efectivo devuelto`
+  = `round`, donde `round = ((total + 4) / 10) * 10` (mismo redondeo, calculado en
+  Rust; la NC no tiene `recv/change`). La `DEVOLUCION` grande fiscal no cambia.
+  Tarjeta: sin bloque. No se agregan campos al `CreditNotePayload` (se deriva de
+  `total`).
+- El DTE 61 (`issue-credit-note`) NO se toca: mantiene el monto exacto.
 
 ### 8. Payloads de impresión — pasar `recv`/`change`
 - Venta en vivo (`VentaScreen`): pasar `recv`/`change` del `sale` devuelto.
@@ -99,11 +122,12 @@ Invariante: `recv - change = v_pay` (lo que queda en caja) para efectivo.
 - `money.test`: `roundCashCLP` (1–5 abajo, 6–9 arriba, 5 abajo, exactos, 0).
 - `test:db` (pgTAP): `charge_sale` efectivo redondea (`recv-change` = pago
   redondeado, `total` exacto), tarjeta no redondea; `close_cash_session` con ventas
-  en efectivo redondeadas → `expected_cash` usa lo cobrado y `rounding` cuadra
-  (`cash - rounding = sum(recv-change)`).
-- `escpos` (Rust): con efectivo aparece el bloque Redondeo/Total a pagar/Paga
-  con/Vuelto y el `TOTAL` fiscal se mantiene; con tarjeta no aparece; el cierre
-  muestra "Ajuste por redondeo".
+  Y notas de crédito en efectivo redondeadas → `expected_cash` usa lo
+  cobrado/pagado redondeado y se cumple `expected = float + cash - nc_cash -
+  rounding`.
+- `escpos` (Rust): venta efectivo → bloque Redondeo/Total a pagar/Paga con/Vuelto
+  con `TOTAL` fiscal intacto; tarjeta → sin bloque; NC efectivo → Redondeo/Efectivo
+  devuelto con `DEVOLUCION` fiscal intacta; cierre → línea "Ajuste por redondeo".
 - Verificación manejando la app (opcional) y validación de emisión solo en demo.
 
 ## Nota de producción
@@ -113,7 +137,6 @@ avisa al usuario y NO se aplica sin su OK. Localmente se valida con `pnpm db:res
 + `pnpm test:db`.
 
 ## Fuera de alcance
-- Redondeo en tarjeta u otros medios electrónicos (no aplica por ley).
-- Redondeo en notas de crédito / devoluciones en efectivo (el `nc_cash` del arqueo
-  se mantiene fiscal; se puede abordar después).
+- Redondeo en tarjeta u otros medios electrónicos (no aplica por ley), tanto en
+  ventas como en NC (reversos de tarjeta = exactos).
 - Cotizaciones (no son cobro en efectivo).
