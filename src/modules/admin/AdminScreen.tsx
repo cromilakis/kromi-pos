@@ -3,11 +3,12 @@ import { BusinessSettings } from "@/modules/admin/BusinessSettings";
 import { DiscountsSettings } from "@/modules/admin/DiscountsSettings";
 import { PointsSettings } from "@/modules/admin/PointsSettings";
 import { SecuritySettings } from "@/modules/admin/SecuritySettings";
+import { FoliosPanel } from "@/modules/admin/FoliosPanel";
 
 export function AdminScreen() {
-  const [tab, setTab] = useState<"negocio" | "descuentos" | "puntos" | "seguridad">("negocio");
+  const [tab, setTab] = useState<"negocio" | "descuentos" | "puntos" | "seguridad" | "folios">("negocio");
 
-  const tabBtn = (id: "negocio" | "descuentos" | "puntos" | "seguridad", label: string) => (
+  const tabBtn = (id: "negocio" | "descuentos" | "puntos" | "seguridad" | "folios", label: string) => (
     <button
       onClick={() => setTab(id)}
       className="relative px-1 pb-2.5 text-[14.5px] font-bold"
@@ -25,6 +26,7 @@ export function AdminScreen() {
         {tabBtn("descuentos", "Descuentos")}
         {tabBtn("puntos", "Puntos")}
         {tabBtn("seguridad", "Seguridad")}
+        {tabBtn("folios", "Folios")}
       </div>
       <div className="min-h-0 flex-1 overflow-auto">
         {tab === "negocio" ? (
@@ -33,8 +35,10 @@ export function AdminScreen() {
           <DiscountsSettings />
         ) : tab === "puntos" ? (
           <PointsSettings />
-        ) : (
+        ) : tab === "seguridad" ? (
           <SecuritySettings />
+        ) : (
+          <FoliosPanel />
         )}
       </div>
     </div>
