@@ -243,8 +243,8 @@ fn set_bit(bits: &mut [u8], bpr: usize, x: usize, y0: usize, row_h: usize, width
 /// Subtotal − descuento − canje = total = neto + iva.
 fn totales_block(b: &mut Vec<u8>, items: &[Item], descuento: i64, canje_pts: i64, canje_monto: i64, neto: i64, iva: i64, total: i64) {
     let subtotal: i64 = items.iter().map(|it| it.precio * it.qty as i64 - it.descuento).sum();
-    let hay_desc = items.iter().any(|it| it.descuento > 0) || descuento > 0 || canje_monto > 0;
-    if hay_desc {
+    let has_discount = items.iter().any(|it| it.descuento > 0) || descuento > 0 || canje_monto > 0;
+    if has_discount {
         line_lr(b, "Subtotal", &money(subtotal), COL);
         if descuento > 0 {
             let pct = if subtotal > 0 { ((descuento as f64 * 100.0) / subtotal as f64).round() as i64 } else { 0 };
