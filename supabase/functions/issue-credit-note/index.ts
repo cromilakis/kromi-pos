@@ -73,7 +73,9 @@ Deno.serve(async (req) => {
       if (!sale.customer_id) return json({ status: "error", message: "la factura no tiene cliente para la NC" }, 400);
       const { data: cust, error: e3 } = await admin
         .from("customer").select("rut,razon_social,giro,direccion,comuna").eq("id", sale.customer_id).single();
-      if (e3 || !cust || !cust.rut) return json({ status: "error", message: "cliente de la factura sin datos tributarios" }, 400);
+      if (e3 || !cust || !cust.rut || !cust.razon_social || !cust.giro || !cust.direccion || !cust.comuna) {
+        return json({ status: "error", message: "el cliente de la factura no tiene datos tributarios completos para la NC" }, 400);
+      }
       const rutDashed = (() => { const l = cust.rut.replace(/[.\-]/g, ""); return `${l.slice(0, -1)}-${l.slice(-1).toUpperCase()}`; })();
       receptor = {
         RUTRecep: rutDashed, RznSocRecep: cust.razon_social, GiroRecep: cust.giro,
