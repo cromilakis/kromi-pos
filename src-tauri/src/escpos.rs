@@ -342,7 +342,7 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
         let pagado = p.recv - p.change; // = total redondeado
         let redondeo = p.total - pagado;
         if redondeo != 0 {
-            line_lr(&mut b, "Redondeo", &format!("-{}", money(redondeo)), COL);
+            line_lr(&mut b, "Redondeo", &money(-redondeo), COL);
         }
         line_lr(&mut b, "Total a pagar", &money(pagado), COL);
         line_lr(&mut b, "Paga con", &money(p.recv), COL);
@@ -473,7 +473,7 @@ pub fn build_cierre(p: &CierrePayload) -> Vec<u8> {
     if p.nc_cash != 0 { line_lr(&mut b, "Notas de credito (efectivo)", &format!("-{}", money(p.nc_cash)), COL); }
     if p.nc_card != 0 { line_lr(&mut b, "Reversos tarjeta", &format!("-{}", money(p.nc_card)), COL); }
     if p.rounding != 0 {
-        line_lr(&mut b, "Ajuste por redondeo", &format!("-{}", money(p.rounding)), COL);
+        line_lr(&mut b, "Ajuste por redondeo", &money(-p.rounding), COL);
     }
     line_lr(&mut b, "Esperado en caja", &money(esperado), COL);
     line_lr(&mut b, "Efectivo contado", &money(p.contado), COL);
@@ -614,7 +614,7 @@ pub fn build_credit_note(p: &CreditNotePayload) -> Vec<u8> {
     if p.metodo == "efectivo" {
         let round = ((p.total + 4) / 10) * 10;
         if p.total != round {
-            line_lr(&mut b, "Redondeo", &format!("-{}", money(p.total - round)), COL);
+            line_lr(&mut b, "Redondeo", &money(round - p.total), COL);
         }
         line_lr(&mut b, "Efectivo devuelto", &money(round), COL);
     }
@@ -927,6 +927,16 @@ mod tests {
         assert!(contains(&b, b"Redondeo"));
         // el TOTAL fiscal exacto sigue presente
         assert!(contains(&b, b"16.191"));
+    }
+
+    #[test]
+    fn boleta_efectivo_redondeo_arriba_sin_doble_negativo() {
+        let mut p = sample("efectivo", true);
+        p.total = 16196; p.neto = 13611; p.iva = 2585;
+        p.recv = 20000; p.change = 3800; // pagado = 16200 (redondeo hacia arriba)
+        let b = build(&p);
+        assert!(contains(&b, b"Redondeo"));
+        assert!(!contains(&b, b"--$")); // sin doble negativo (las lineas separadoras de '-' no cuentan)
     }
 
     #[test]

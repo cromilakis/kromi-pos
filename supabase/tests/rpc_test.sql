@@ -780,6 +780,38 @@ begin
   end if;
 end $$;
 
+-- Ley 20.956 (Task 2): redondeo hacia ARRIBA (terminación 6-9). El total fiscal
+-- queda exacto y recv-change sube a la decena superior (no debe generar doble
+-- negativo ni ningun otro efecto colateral en el arqueo).
+do $$
+declare
+  v_product   uuid := 'eeeeeeee-0000-0000-0000-000000000903';
+  v_register  uuid := 'cccccccc-0000-0000-0000-000000000903';
+  v_session   uuid := 'f0000000-0000-0000-0000-000000000903';
+  v_sale      public.sale;
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Redondeo arriba test','dddddddd-0000-0000-0000-000000000001',16196);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',5);
+  insert into public.register (id, branch_id, name) values
+    (v_register,'bbbbbbbb-0000-0000-0000-000000000001','Caja redondeo arriba');
+  insert into public.cash_session (id, business_id, branch_id, register_id, status, float_amount) values
+    (v_session,'aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000001',v_register,'open',50000);
+
+  -- venta en efectivo: total fiscal EXACTO (16196), recv-change redondea HACIA ARRIBA a 16200.
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+    ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+    'efectivo', 20000);
+  if v_sale.total <> 16196 then
+    raise exception 'venta efectivo (redondeo arriba): total fiscal no quedo exacto: %', v_sale.total;
+  end if;
+  if v_sale.recv - v_sale.change <> 16200 then
+    raise exception 'venta efectivo (redondeo arriba): recv-change no quedo redondeado hacia arriba: %', v_sale.recv - v_sale.change;
+  end if;
+end $$;
+
 -- Ley 20.956 (Task 2): rama de nota de crédito en el redondeo de close_cash_session.
 -- credit_note en efectivo se paga redondeado a la decena
 -- (sum(((total+4)/10)*10) filter method='efectivo'); el total fiscal de la NC queda exacto.
