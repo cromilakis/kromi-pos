@@ -6,6 +6,7 @@ export interface SalesHistoryFilters {
   to?: string;
   customerId?: string | null;
   folio?: number | null;
+  method?: "efectivo" | "tarjeta" | null;
   page?: number;
 }
 
@@ -77,6 +78,8 @@ export function useSalesHistory(branchId: string | undefined, filters: SalesHist
         query = query.gte("sold_at", start).lt("sold_at", end);
         if (filters.customerId) query = query.eq("customer_id", filters.customerId);
       }
+
+      if (filters.method) query = query.eq("method", filters.method);
 
       const { data, error } = await query
         .order("sold_at", { ascending: false })

@@ -72,6 +72,7 @@ export function HistorialScreen() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState<string | null>(null);
   const [folioStr, setFolioStr] = useState("");
+  const [method, setMethod] = useState<"efectivo" | "tarjeta" | null>(null);
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState<SaleHistoryRow[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -80,12 +81,14 @@ export function HistorialScreen() {
   const [appliedTo, setAppliedTo] = useState(today);
   const [appliedCustomerId, setAppliedCustomerId] = useState<string | null>(null);
   const [appliedFolio, setAppliedFolio] = useState<number | null>(null);
+  const [appliedMethod, setAppliedMethod] = useState<"efectivo" | "tarjeta" | null>(null);
 
   const { data, isFetching } = useSalesHistory(branchId, {
     from: appliedFrom,
     to: appliedTo,
     customerId: appliedCustomerId,
     folio: appliedFolio,
+    method: appliedMethod,
     page,
   });
 
@@ -131,6 +134,7 @@ export function HistorialScreen() {
     setAppliedTo(to);
     setAppliedCustomerId(customerId);
     setAppliedFolio(folioStr.trim() ? Number(folioStr.trim()) : null);
+    setAppliedMethod(method);
   }
 
   function handleCargarMas() {
@@ -256,6 +260,16 @@ export function HistorialScreen() {
           placeholder="N° folio SII"
           className="w-28 rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[13px] font-bold text-[#0F2A1B] outline-none focus:border-[var(--brand)]"
         />
+
+        <select
+          value={method ?? ""}
+          onChange={(e) => setMethod(e.target.value ? (e.target.value as "efectivo" | "tarjeta") : null)}
+          className="rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[13px] font-bold text-[#0F2A1B] outline-none focus:border-[var(--brand)]"
+        >
+          <option value="">Medio de pago: Todos</option>
+          <option value="efectivo">Efectivo</option>
+          <option value="tarjeta">Tarjeta</option>
+        </select>
 
         <button
           onClick={handleBuscar}
