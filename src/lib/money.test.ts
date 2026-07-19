@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeTotals, resolveDiscount, discountedPrice, fmtCLP, globalDiscount } from "./money";
+import { computeTotals, resolveDiscount, discountedPrice, fmtCLP, globalDiscount, roundCashCLP } from "./money";
 
 describe("discountedPrice", () => {
   it("aplica el % de descuento al precio unitario", () => {
@@ -63,5 +63,21 @@ describe("globalDiscount", () => {
   });
   it("nunca negativo", () => {
     expect(globalDiscount(0, 0)).toBe(0);
+  });
+});
+
+describe("roundCashCLP (Ley 20.956)", () => {
+  it("1-5 redondea hacia abajo (el 5 baja)", () => {
+    expect(roundCashCLP(16191)).toBe(16190);
+    expect(roundCashCLP(16192)).toBe(16190);
+    expect(roundCashCLP(16195)).toBe(16190);
+  });
+  it("6-9 redondea hacia arriba", () => {
+    expect(roundCashCLP(16196)).toBe(16200);
+    expect(roundCashCLP(16199)).toBe(16200);
+  });
+  it("múltiplos de 10 y 0 quedan igual", () => {
+    expect(roundCashCLP(16190)).toBe(16190);
+    expect(roundCashCLP(0)).toBe(0);
   });
 });
