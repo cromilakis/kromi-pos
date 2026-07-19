@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
+import { useSaleDraft, type CartItem } from "@/session/SaleDraftContext";
 import { useOpenSession, rpcOpenCashSession } from "@/data/work";
 import { useProductsWithStock, useCategories, findByBarcode } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
@@ -28,11 +29,6 @@ import { PayDialog, type PayMethod } from "./PayDialog";
 import { CustomerPickerDialog } from "./CustomerPickerDialog";
 import { shouldPromptCustomer } from "./customerPrompt";
 import { CierrePanel } from "@/modules/cierre/CierrePanel";
-
-interface CartItem {
-  id: string;
-  qty: number;
-}
 
 /** Gate local de caja: si no hay sesión abierta en esta caja, ofrece abrirla en vez de mostrar el carrito. */
 function AbrirCajaGate() {
@@ -88,11 +84,10 @@ export function VentaScreen() {
 
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string>("todas");
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const { cart, setCart, customerId, setCustomerId } = useSaleDraft();
   const [payOpen, setPayOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [cierreOpen, setCierreOpen] = useState(false);
-  const [customerId, setCustomerId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [askedForCustomer, setAskedForCustomer] = useState(false);
   const [heldOpen, setHeldOpen] = useState(false);
