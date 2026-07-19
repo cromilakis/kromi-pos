@@ -14,7 +14,7 @@ import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data
 import { chargeSale, cartToLines, useSalesTodayDte, markSalePrinted, type SaleDteRow } from "@/data/sales";
 import { issueReceipt, getDtePdf } from "@/data/sii";
 import { savePdfBase64 } from "@/lib/fileSave";
-import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "@/lib/money";
+import { computeTotals, resolveDiscount, discountedPrice, fmtCLP, globalDiscount } from "@/lib/money";
 import { errMsg, notifyError } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
@@ -350,7 +350,7 @@ export function VentaScreen() {
       neto,
       iva: h.total - neto,
       total: h.total,
-      descuento: h.lines.reduce((s, l) => s + (l.discount_amount ?? 0), 0),
+      descuento: globalDiscount(h.discount_amount, h.points_discount),
       canje_pts: h.points_redeemed ?? 0,
       canje_monto: h.points_discount ?? 0,
       dte_folio: h.dte_folio ?? undefined,
@@ -440,7 +440,7 @@ export function VentaScreen() {
             neto: sale.neto,
             iva: sale.iva,
             total: sale.total,
-            descuento: soldLines.reduce((s, l) => s + resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0), 0),
+            descuento: globalDiscount(sale.discount_amount, sale.points_discount),
             canje_pts: sale.points_redeemed ?? 0,
             canje_monto: sale.points_discount ?? 0,
             dte_folio: dteFolio,

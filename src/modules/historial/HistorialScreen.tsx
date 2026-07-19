@@ -6,7 +6,7 @@ import { useWork } from "@/session/WorkContext";
 import { useSalesHistory, HISTORY_PAGE, type SaleHistoryRow } from "@/data/salesHistory";
 import { markSalePrinted } from "@/data/sales";
 import { CustomerPickerDialog } from "@/modules/venta/CustomerPickerDialog";
-import { fmtCLP } from "@/lib/money";
+import { fmtCLP, globalDiscount } from "@/lib/money";
 import { useBusiness, businessToNegocio } from "@/data/business";
 import { getPrinterName } from "@/lib/printerConfig";
 import { printReceipt } from "@/lib/print";
@@ -150,7 +150,7 @@ export function HistorialScreen() {
       neto: row.neto,
       iva: row.iva,
       total: row.total,
-      descuento: row.lines.reduce((s, l) => s + (l.discount_amount ?? 0), 0),
+      descuento: globalDiscount(row.discount_amount, row.points_discount),
       canje_pts: row.points_redeemed ?? 0,
       canje_monto: row.points_discount ?? 0,
       dte_folio: row.dte_folio ?? undefined,
