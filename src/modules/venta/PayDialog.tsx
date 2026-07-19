@@ -14,12 +14,13 @@ interface PayDialogProps {
   customerPoints?: number;
   pointsRedeemRate?: number;
   canFactura?: boolean;
+  onPickCustomer?: () => void;
   onClose: () => void;
   onConfirm: (method: PayMethod, recv: number, discountId: string | null, pointsRedeem: number, docType: DocType) => void;
 }
 
 /** Diálogo de cobro: método, descuento predefinido, canje de puntos, efectivo recibido y vuelto. Clona el popup de cobro del prototipo. */
-export function PayDialog({ open, total, busy, discounts, customerPoints = 0, pointsRedeemRate = 1, canFactura = false, onClose, onConfirm }: PayDialogProps) {
+export function PayDialog({ open, total, busy, discounts, customerPoints = 0, pointsRedeemRate = 1, canFactura = false, onPickCustomer, onClose, onConfirm }: PayDialogProps) {
   const [method, setMethod] = useState<PayMethod>("tarjeta");
   const [cashStr, setCashStr] = useState("");
   const [discountId, setDiscountId] = useState<string | null>(null);
@@ -184,8 +185,18 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
               </button>
             </div>
             {!canFactura && (
-              <div className="mt-1.5 text-[12px] font-medium text-[#556A7C]">
+              <div className="mt-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#556A7C]">
                 Elige un cliente empresa para facturar
+                {onPickCustomer && (
+                  <button
+                    type="button"
+                    onClick={onPickCustomer}
+                    className="font-bold underline"
+                    style={{ color: "var(--brand)" }}
+                  >
+                    Elegir/crear cliente
+                  </button>
+                )}
               </div>
             )}
           </div>

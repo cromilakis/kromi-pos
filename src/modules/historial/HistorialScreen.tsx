@@ -362,6 +362,7 @@ export function HistorialScreen() {
       <CustomerPickerDialog
         open={pickerOpen}
         businessId={businessId}
+        createdBy={profile?.id ?? null}
         onSelect={(c) => { setCustomerId(c.id); setCustomerName(c.name); setPickerOpen(false); }}
         onContinueWithout={() => { setCustomerId(null); setCustomerName(null); setPickerOpen(false); }}
         onClose={() => setPickerOpen(false)}

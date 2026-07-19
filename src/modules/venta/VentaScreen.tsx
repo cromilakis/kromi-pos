@@ -789,6 +789,7 @@ export function VentaScreen() {
         customerPoints={selectedCustomer?.points ?? 0}
         pointsRedeemRate={business?.points_redeem_clp_per_point ?? 1}
         canFactura={canFactura}
+        onPickCustomer={() => setPickerOpen(true)}
         onClose={() => setPayOpen(false)}
         onConfirm={handleConfirmPay}
       />
@@ -796,6 +797,7 @@ export function VentaScreen() {
       <CustomerPickerDialog
         open={pickerOpen}
         businessId={businessId}
+        createdBy={profile?.id ?? null}
         onSelect={(c) => { setCustomerId(c.id); setPickerOpen(false); }}
         onContinueWithout={() => setPickerOpen(false)}
         onClose={() => setPickerOpen(false)}
