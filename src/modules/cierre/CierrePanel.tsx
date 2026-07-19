@@ -151,6 +151,7 @@ export function CierrePanel({ onClosed }: CierrePanelProps) {
           contado: r.counted,
           nc_cash: r.nc_cash,
           nc_card: r.nc_card,
+          rounding: r.rounding,
         };
         if (!getSkipPrint()) {
           await printCierre(payload);
@@ -193,6 +194,12 @@ export function CierrePanel({ onClosed }: CierrePanelProps) {
                   <div className="flex justify-between border-b border-[#F0F2F7] py-1.5 text-[13px] text-[#c0392b]">
                     <span>Notas de crédito (efectivo)</span>
                     <span>-{fmtCLP(resumen.nc_cash)}</span>
+                  </div>
+                )}
+                {resumen.rounding !== 0 && (
+                  <div className="flex items-baseline justify-between text-[13px]">
+                    <span>Ajuste por redondeo</span>
+                    <span>-{fmtCLP(resumen.rounding)}</span>
                   </div>
                 )}
                 <div className="mt-1 flex justify-between pt-1.5 text-sm font-bold text-[#0F2A1B]">

@@ -150,6 +150,8 @@ export function HistorialScreen() {
       neto: row.neto,
       iva: row.iva,
       total: row.total,
+      recv: row.recv,
+      change: row.change,
       descuento: globalDiscount(row.discount_amount, row.points_discount),
       canje_pts: row.points_redeemed ?? 0,
       canje_monto: row.points_discount ?? 0,

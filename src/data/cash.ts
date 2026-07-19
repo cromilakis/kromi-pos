@@ -32,6 +32,7 @@ export interface CierreResumen {
   card: number;
   nc_cash: number;
   nc_card: number;
+  rounding: number;
   expected_cash: number;
   counted: number;
   diff: number;

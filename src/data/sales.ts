@@ -44,6 +44,7 @@ export interface SaleDteRow {
   points_redeemed: number; points_discount: number;
   doc_type: string;
   printed_at: string | null;
+  recv: number; change: number;
   lines: { name_snapshot: string; price_snapshot: number; qty: number; discount_amount: number }[];
 }
 
@@ -57,7 +58,7 @@ export function useSalesTodayDte(branchId: string | undefined) {
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const { data, error } = await supabase
         .from("sale")
-        .select("id,folio,total,discount_amount,sold_at,method,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,doc_type,printed_at,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
+        .select("id,folio,total,discount_amount,sold_at,method,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,doc_type,printed_at,recv,change,sale_line(name_snapshot,price_snapshot,qty,discount_amount)")
         .eq("branch_id", branchId!)
         .gte("sold_at", start.toISOString())
         .order("sold_at", { ascending: false })
@@ -69,6 +70,7 @@ export function useSalesTodayDte(branchId: string | undefined) {
         points_redeemed: s.points_redeemed ?? 0, points_discount: s.points_discount ?? 0,
         doc_type: s.doc_type ?? "boleta",
         printed_at: s.printed_at ?? null,
+        recv: s.recv ?? 0, change: s.change ?? 0,
         lines: s.sale_line ?? [],
       }));
     },
