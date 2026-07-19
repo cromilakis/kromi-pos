@@ -25,6 +25,7 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
   const [discountId, setDiscountId] = useState<string | null>(null);
   const [pointsRedeem, setPointsRedeem] = useState(0);
   const [docType, setDocType] = useState<DocType>("boleta");
+  const [frozen, setFrozen] = useState<{ payTotal: number; recv: number; change: number } | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -33,6 +34,7 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
       setDiscountId(null);
       setPointsRedeem(0);
       setDocType("boleta");
+      setFrozen(null);
     }
   }, [open]);
 
@@ -54,6 +56,10 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
   const recv = method === "efectivo" ? Number(cashStr) || 0 : effectiveTotal;
   const change = recv - payTotal;
   const canConfirm = method === "tarjeta" || recv >= payTotal;
+
+  const showPayTotal = frozen?.payTotal ?? payTotal;
+  const showRecv = frozen?.recv ?? recv;
+  const showChange = frozen?.change ?? change;
 
   function pushCash(k: string) {
     setCashStr((v) => {
@@ -91,10 +97,10 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
             <span className="text-sm font-semibold text-[#556A7C]">Total a cobrar</span>
             <span className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(effectiveTotal)}</span>
           </div>
-          {method === "efectivo" && payTotal !== effectiveTotal && (
+          {method === "efectivo" && showPayTotal !== effectiveTotal && (
             <div className="mt-2 flex items-baseline justify-between px-1 text-[13px] font-bold text-[#556A7C]">
               <span>Redondeo (efectivo) · Total a pagar</span>
-              <span>{fmtCLP(payTotal)}</span>
+              <span>{fmtCLP(showPayTotal)}</span>
             </div>
           )}
         </div>
@@ -214,14 +220,14 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
               <div className="mb-3.5 flex gap-2.5">
                 <div className="flex-1 rounded-2xl border border-[#E1E5EE] bg-[#F6F7FB] px-3.5 py-2.5">
                   <div className="mb-0.5 text-[11px] font-semibold text-[#556A7C]">Recibido</div>
-                  <div className="text-[22px] font-black text-[#0F2A1B]">{fmtCLP(recv)}</div>
+                  <div className="text-[22px] font-black text-[#0F2A1B]">{fmtCLP(showRecv)}</div>
                 </div>
                 <div
                   className="flex-1 rounded-2xl px-3.5 py-2.5"
-                  style={{ background: change < 0 ? "#FDECEC" : "var(--brand)", color: change < 0 ? "#9a2533" : "#fff" }}
+                  style={{ background: showChange < 0 ? "#FDECEC" : "var(--brand)", color: showChange < 0 ? "#9a2533" : "#fff" }}
                 >
                   <div className="mb-0.5 text-[11px] font-semibold opacity-80">Vuelto</div>
-                  <div className="text-[22px] font-black">{fmtCLP(Math.max(0, change))}</div>
+                  <div className="text-[22px] font-black">{fmtCLP(Math.max(0, showChange))}</div>
                 </div>
               </div>
               <div className="mb-[18px] grid grid-cols-3 gap-2">
@@ -254,7 +260,10 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
               Cancelar
             </button>
             <button
-              onClick={() => onConfirm(method, recv, discountId, pointsRedeem, docType)}
+              onClick={() => {
+                setFrozen({ payTotal, recv, change });
+                onConfirm(method, recv, discountId, pointsRedeem, docType);
+              }}
               disabled={busy || !canConfirm}
               className="flex-1 rounded-2xl py-3.5 text-[15px] font-bold text-white disabled:opacity-50"
               style={{ background: "var(--brand)" }}
