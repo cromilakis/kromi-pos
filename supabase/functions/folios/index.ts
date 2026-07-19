@@ -28,43 +28,84 @@ async function sfToken(): Promise<string> {
   return raw.replace(/^"|"$/g, "");
 }
 
+// Tipos consultados por defecto cuando no se especifica `tipos` en la acción `consultar`.
+const TIPOS_DEFAULT = [39, 33, 61];
+
+interface FolioTipoResult {
+  tipoDte: number;
+  sinUso: number;
+  maxRequestable: number | null;
+  maxError?: string;
+  error?: string;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { action, tipoDte, cantidad } = await req.json();
-    const t = Number(tipoDte);
-    if (!t) return json({ status: "error", message: "tipoDte requerido" }, 400);
+    const { action, tipoDte, tipos, cantidad } = await req.json();
     const token = await sfToken();
     const auth = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
     if (action === "consultar") {
-      // Folios sin uso (disponibles para emitir).
-      const rSin = await fetch(`${SF_URL}/folios/consultar/sin-uso`, {
-        method: "POST",
-        headers: auth,
-        body: JSON.stringify({ rutEmpresa: RUT_EMISOR, tipoDTE: t, ambiente: SF_AMBIENTE }),
-      });
-      const txtSin = await rSin.text();
-      if (!rSin.ok) return json({ status: "error", message: `folios sin-uso ${rSin.status}: ${txtSin}` }, 502);
-      const jSin = JSON.parse(txtSin);
-      const sinUso = Array.isArray(jSin?.data)
-        ? jSin.data.reduce((s: number, x: { cantidad?: number }) => s + (x.cantidad ?? 0), 0)
-        : 0;
-      // Cantidad máxima a solicitar.
-      const rDisp = await fetch(`${SF_URL}/folios/consultar/disponibles`, {
-        method: "POST",
-        headers: auth,
-        body: JSON.stringify({ rutEmpresa: RUT_EMISOR, tipoDTE: t, ambiente: SF_AMBIENTE }),
-      });
-      const txtDisp = await rDisp.text();
-      if (!rDisp.ok) return json({ status: "error", message: `folios disponibles ${rDisp.status}: ${txtDisp}` }, 502);
-      const jDisp = JSON.parse(txtDisp);
-      const raw = Number(jDisp?.data ?? 0);
-      const maxRequestable = SIN_LIMITE.has(t) ? null : raw; // null = sin límite
-      return json({ status: "ok", sinUso, maxRequestable });
+      // Un solo token de SimpleFactura para todos los tipos consultados (evita 429).
+      const lista: number[] = Array.isArray(tipos) && tipos.length > 0
+        ? tipos.map((x: unknown) => Number(x)).filter((n: number) => !!n)
+        : TIPOS_DEFAULT;
+
+      const results: FolioTipoResult[] = [];
+      for (const t of lista) {
+        // Folios sin uso (disponibles para emitir).
+        const rSin = await fetch(`${SF_URL}/folios/consultar/sin-uso`, {
+          method: "POST",
+          headers: auth,
+          body: JSON.stringify({ rutEmpresa: RUT_EMISOR, tipoDTE: t, ambiente: SF_AMBIENTE }),
+        });
+        const txtSin = await rSin.text();
+        if (!rSin.ok) {
+          results.push({ tipoDte: t, sinUso: 0, maxRequestable: null, error: `sin-uso ${rSin.status}: ${txtSin}` });
+          continue;
+        }
+        let sinUso = 0;
+        try {
+          const jSin = JSON.parse(txtSin);
+          sinUso = Array.isArray(jSin?.data)
+            ? jSin.data.reduce((s: number, x: { cantidad?: number }) => s + (x.cantidad ?? 0), 0)
+            : 0;
+        } catch (e) {
+          results.push({ tipoDte: t, sinUso: 0, maxRequestable: null, error: `sin-uso parse: ${String(e)}` });
+          continue;
+        }
+
+        // Cantidad máxima a solicitar. Un fallo aquí no es fatal: se conserva sinUso.
+        let maxRequestable: number | null = null;
+        let maxError: string | undefined;
+        const rDisp = await fetch(`${SF_URL}/folios/consultar/disponibles`, {
+          method: "POST",
+          headers: auth,
+          body: JSON.stringify({ rutEmpresa: RUT_EMISOR, tipoDTE: t, ambiente: SF_AMBIENTE }),
+        });
+        const txtDisp = await rDisp.text();
+        if (!rDisp.ok) {
+          maxError = `disponibles ${rDisp.status}: ${txtDisp}`;
+        } else {
+          try {
+            const jDisp = JSON.parse(txtDisp);
+            const raw = Number(jDisp?.data ?? 0);
+            maxRequestable = SIN_LIMITE.has(t) ? null : raw; // null = sin límite
+          } catch (e) {
+            maxError = `disponibles parse: ${String(e)}`;
+          }
+        }
+
+        results.push({ tipoDte: t, sinUso, maxRequestable, ...(maxError ? { maxError } : {}) });
+      }
+
+      return json({ status: "ok", results });
     }
 
     if (action === "solicitar") {
+      const t = Number(tipoDte);
+      if (!t) return json({ status: "error", message: "tipoDte requerido" }, 400);
       const n = Number(cantidad);
       if (!n || n <= 0) return json({ status: "error", message: "cantidad debe ser mayor a 0" }, 400);
       const r = await fetch(`${SF_URL}/folios/solicitar`, {

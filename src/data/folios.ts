@@ -1,8 +1,14 @@
 import { supabase } from "@/lib/supabase";
 
-export interface FoliosInfo {
+/** Info de folios de un tipo de DTE devuelta por la consulta multi-tipo. `maxRequestable`
+ *  es `null` cuando el tipo no tiene límite. `error`/`maxError` reflejan fallos parciales
+ *  (sin-uso o disponibles respectivamente) que no abortan la consulta de los demás tipos. */
+export interface FolioTipoInfo {
+  tipoDte: number;
   sinUso: number;
   maxRequestable: number | null;
+  maxError?: string;
+  error?: string;
 }
 
 async function extractErrorMessage(error: { message: string; context?: Response }): Promise<string> {
@@ -17,12 +23,15 @@ async function extractErrorMessage(error: { message: string; context?: Response 
   return message;
 }
 
-/** Consulta folios sin uso y el máximo solicitable de un tipo de DTE, vía la
- *  Edge Function `folios`. `maxRequestable` es `null` cuando el tipo no tiene límite. */
-export async function consultarFolios(tipoDte: number): Promise<FoliosInfo> {
-  const { data, error } = await supabase.functions.invoke("folios", { body: { action: "consultar", tipoDte } });
+/** Consulta folios sin uso y el máximo solicitable para varios tipos de DTE en UNA sola
+ *  invocación de la Edge Function `folios` (reutiliza un único token de SimpleFactura para
+ *  todos los tipos). Por defecto consulta boleta (39), factura (33) y nota de crédito (61). */
+export async function consultarFolios(tipos?: number[]): Promise<FolioTipoInfo[]> {
+  const { data, error } = await supabase.functions.invoke("folios", {
+    body: { action: "consultar", tipos: tipos ?? [39, 33, 61] },
+  });
   if (error) throw new Error(await extractErrorMessage(error));
-  return { sinUso: data?.sinUso ?? 0, maxRequestable: data?.maxRequestable ?? null };
+  return Array.isArray(data?.results) ? data.results : [];
 }
 
 /** Solicita folios (CAF) para un tipo de DTE, vía la Edge Function `folios`. Lanza si

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { consultarFolios, solicitarFolios, type FoliosInfo } from "@/data/folios";
+import { consultarFolios, solicitarFolios, type FolioTipoInfo } from "@/data/folios";
 
 const TIPOS: { tipoDte: number; label: string }[] = [
   { tipoDte: 39, label: "Boleta electrónica" },
@@ -12,80 +12,74 @@ const TIPOS: { tipoDte: number; label: string }[] = [
   { tipoDte: 61, label: "Nota de crédito electrónica" },
 ];
 
-interface RowState {
-  info: FoliosInfo | null;
+const TIPO_IDS = TIPOS.map((t) => t.tipoDte);
+
+interface PanelState {
   loading: boolean;
   error: string | null;
-  cantidad: string;
-  busy: boolean;
+  infoByTipo: Record<number, FolioTipoInfo>;
 }
 
-const EMPTY_ROW: RowState = { info: null, loading: true, error: null, cantidad: "", busy: false };
+const EMPTY_STATE: PanelState = { loading: true, error: null, infoByTipo: {} };
 
-function FolioRow({ tipoDte, label }: { tipoDte: number; label: string }) {
-  const [state, setState] = useState<RowState>(EMPTY_ROW);
+function FolioRow({
+  tipoDte,
+  label,
+  info,
+  onSolicitado,
+}: {
+  tipoDte: number;
+  label: string;
+  info: FolioTipoInfo | undefined;
+  onSolicitado: () => Promise<void>;
+}) {
+  const [cantidad, setCantidad] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  async function cargar() {
-    setState((s) => ({ ...s, loading: true, error: null }));
-    try {
-      const info = await consultarFolios(tipoDte);
-      setState((s) => ({ ...s, info, loading: false }));
-    } catch (e) {
-      setState((s) => ({ ...s, loading: false, error: errMsg(e) }));
-    }
-  }
-
-  useEffect(() => {
-    cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tipoDte]);
+  const max = info?.maxRequestable ?? null;
+  const maxNoDisponible = !!info?.maxError;
 
   async function handleSolicitar() {
-    const cantidad = Number(state.cantidad);
-    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+    const n = Number(cantidad);
+    if (!Number.isInteger(n) || n <= 0) {
       toast.error("Ingresa una cantidad válida (entero mayor a 0).");
       return;
     }
-    const max = state.info?.maxRequestable ?? null;
-    if (max !== null && cantidad > max) {
+    if (!maxNoDisponible && max !== null && n > max) {
       toast.error(`La cantidad no puede superar el máximo solicitable (${max}).`);
       return;
     }
-    setState((s) => ({ ...s, busy: true }));
+    setBusy(true);
     try {
-      await solicitarFolios(tipoDte, cantidad);
+      await solicitarFolios(tipoDte, n);
       toast.success("Folios solicitados con éxito.");
-      setState((s) => ({ ...s, busy: false, cantidad: "" }));
-      await cargar();
+      setCantidad("");
+      await onSolicitado();
     } catch (e) {
       notifyError("No se pudieron solicitar los folios.", e);
-      setState((s) => ({ ...s, busy: false }));
+    } finally {
+      setBusy(false);
     }
   }
-
-  const max = state.info?.maxRequestable ?? null;
 
   return (
     <Card className="p-6">
       <div className="mb-4 text-base font-black text-[#0F2A1B]">{label}</div>
 
-      {state.loading ? (
-        <div className="py-4 text-center text-[13.5px] text-[#5E6E7E]">Cargando…</div>
-      ) : state.error ? (
-        <div className="flex flex-col gap-3">
-          <div className="text-[13px] text-[#B02A2A]">No se pudo consultar: {state.error}</div>
-          <Button variant="outline" onClick={cargar} className="w-fit">Reintentar</Button>
-        </div>
+      {info?.error ? (
+        <div className="text-[13px] text-[#B02A2A]">No se pudo consultar: {info.error}</div>
       ) : (
         <>
           <div className="mb-4 grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <span className="text-[11.5px] font-bold uppercase tracking-[.04em] text-[#5a6b7e]">Disponibles (sin usar)</span>
-              <span className="text-lg font-black text-[#0F2A1B]">{state.info?.sinUso ?? 0}</span>
+              <span className="text-lg font-black text-[#0F2A1B]">{info?.sinUso ?? 0}</span>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-[11.5px] font-bold uppercase tracking-[.04em] text-[#5a6b7e]">Máximo a solicitar</span>
-              <span className="text-lg font-black text-[#0F2A1B]">{max === null ? "Sin límite" : max}</span>
+              <span className="text-lg font-black text-[#0F2A1B]">
+                {maxNoDisponible ? "No disponible" : max === null ? "Sin límite" : max}
+              </span>
             </div>
           </div>
 
@@ -95,15 +89,15 @@ function FolioRow({ tipoDte, label }: { tipoDte: number; label: string }) {
               <Input
                 inputMode="numeric"
                 placeholder="Ej: 50"
-                value={state.cantidad}
+                value={cantidad}
                 onChange={(e) => {
                   const digits = e.target.value.replace(/[^\d]/g, "");
-                  setState((s) => ({ ...s, cantidad: digits }));
+                  setCantidad(digits);
                 }}
               />
             </label>
-            <Button onClick={handleSolicitar} disabled={state.busy}>
-              {state.busy ? "Solicitando…" : "Solicitar"}
+            <Button onClick={handleSolicitar} disabled={busy}>
+              {busy ? "Solicitando…" : "Solicitar"}
             </Button>
           </div>
         </>
@@ -112,8 +106,29 @@ function FolioRow({ tipoDte, label }: { tipoDte: number; label: string }) {
   );
 }
 
-/** Consulta y solicitud de folios (CAF) por tipo de documento: boleta, factura y nota de crédito. */
+/** Consulta y solicitud de folios (CAF) por tipo de documento: boleta, factura y nota de crédito.
+ *  Una sola invocación a la Edge Function `folios` consulta todos los tipos (reutiliza un único
+ *  token de SimpleFactura, ya que el endpoint de token es muy limitado). */
 export function FoliosPanel() {
+  const [state, setState] = useState<PanelState>(EMPTY_STATE);
+
+  async function cargar() {
+    setState((s) => ({ ...s, loading: true, error: null }));
+    try {
+      const results = await consultarFolios(TIPO_IDS);
+      const infoByTipo: Record<number, FolioTipoInfo> = {};
+      for (const r of results) infoByTipo[r.tipoDte] = r;
+      setState({ loading: false, error: null, infoByTipo });
+    } catch (e) {
+      setState({ loading: false, error: errMsg(e), infoByTipo: {} });
+    }
+  }
+
+  useEffect(() => {
+    cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="min-h-full overflow-auto px-[32px] py-[28px]">
       <div className="mb-5">
@@ -123,9 +138,27 @@ export function FoliosPanel() {
       </div>
 
       <div className="flex max-w-[640px] flex-col gap-4">
-        {TIPOS.map((t) => (
-          <FolioRow key={t.tipoDte} tipoDte={t.tipoDte} label={t.label} />
-        ))}
+        {state.loading ? (
+          <div className="py-4 text-center text-[13.5px] text-[#5E6E7E]">Cargando…</div>
+        ) : state.error ? (
+          <div className="flex flex-col gap-3">
+            <div className="text-[13px] text-[#B02A2A]">No se pudo consultar: {state.error}</div>
+            <Button variant="outline" onClick={cargar} className="w-fit">Reintentar</Button>
+          </div>
+        ) : (
+          <>
+            {TIPOS.map((t) => (
+              <FolioRow
+                key={t.tipoDte}
+                tipoDte={t.tipoDte}
+                label={t.label}
+                info={state.infoByTipo[t.tipoDte]}
+                onSolicitado={cargar}
+              />
+            ))}
+            <Button variant="outline" onClick={cargar} className="w-fit">Reintentar</Button>
+          </>
+        )}
       </div>
     </div>
   );
