@@ -346,7 +346,7 @@ export async function buscarVentaPorFolio(branchId: string, folio: number): Prom
     .from("sale")
     .select("id,folio,method,total,neto,iva,sold_at,dte_status,dte_folio,emitted_at,sale_line(product_id,name_snapshot,price_snapshot,qty,product:product_id(is_service))")
     .eq("branch_id", branchId)
-    .eq("folio", folio)
+    .eq("dte_folio", folio)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
