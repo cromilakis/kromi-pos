@@ -766,6 +766,75 @@ begin
   then
     raise exception 'arqueo: identidad expected = float + cash - nc_cash - rounding no se cumple: %', v_res;
   end if;
+
+  -- Valores concretos (no solo la identidad autoconsistente): venta en efectivo
+  -- total fiscal 16191, pagado (recv-change) 16190, sin NC en esta sesión.
+  if (v_res->>'cash')::int <> 16191 then
+    raise exception 'arqueo: cash (fiscal) esperado 16191, obtuve %', v_res->>'cash';
+  end if;
+  if (v_res->>'rounding')::int <> 1 then
+    raise exception 'arqueo: rounding esperado 1 (16191-16190), obtuve %', v_res->>'rounding';
+  end if;
+  if (v_res->>'expected_cash')::int <> 50000 + 16190 - 0 then
+    raise exception 'arqueo: expected_cash esperado 66190 (float 50000 + 16190 - 0), obtuve %', v_res->>'expected_cash';
+  end if;
+end $$;
+
+-- Ley 20.956 (Task 2): rama de nota de crédito en el redondeo de close_cash_session.
+-- credit_note en efectivo se paga redondeado a la decena
+-- (sum(((total+4)/10)*10) filter method='efectivo'); el total fiscal de la NC queda exacto.
+do $$
+declare
+  v_product   uuid := 'eeeeeeee-0000-0000-0000-000000000902';
+  v_register  uuid := 'cccccccc-0000-0000-0000-000000000902';
+  v_session   uuid := 'f0000000-0000-0000-0000-000000000902';
+  v_sale      public.sale;
+  v_nc_folio  int;
+  v_nc_total  int := 5001; -- no múltiplo de 10 -> redondea a 5000
+  v_nc_neto   int;
+  v_nc_iva    int;
+  v_res       jsonb;
+begin
+  insert into public.product (id, business_id, name, category_id, price) values
+    (v_product,'aaaaaaaa-0000-0000-0000-000000000001','Redondeo NC test','dddddddd-0000-0000-0000-000000000001',16191);
+  insert into public.inventory (product_id, branch_id, stock) values
+    (v_product,'bbbbbbbb-0000-0000-0000-000000000001',5);
+  insert into public.register (id, branch_id, name) values
+    (v_register,'bbbbbbbb-0000-0000-0000-000000000001','Caja redondeo NC');
+  insert into public.cash_session (id, business_id, branch_id, register_id, status, float_amount) values
+    (v_session,'aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000001',v_register,'open',50000);
+
+  -- venta en efectivo: misma dinámica que el caso anterior (total fiscal 16191, pagado 16190).
+  v_sale := public.charge_sale(
+    'bbbbbbbb-0000-0000-0000-000000000001', v_session,
+    ('[{"product_id":"'||v_product||'","qty":1}]')::jsonb,
+    'efectivo', 16200);
+  if v_sale.total <> 16191 then
+    raise exception 'NC/redondeo: venta efectivo total fiscal no quedo exacto: %', v_sale.total;
+  end if;
+  if v_sale.recv - v_sale.change <> 16190 then
+    raise exception 'NC/redondeo: venta efectivo recv-change no quedo redondeado: %', v_sale.recv - v_sale.change;
+  end if;
+
+  -- nota de crédito en efectivo en la MISMA cash_session, total no múltiplo de 10.
+  v_nc_neto := round(v_nc_total / 1.19);
+  v_nc_iva  := v_nc_total - v_nc_neto;
+  v_nc_folio := public.next_folio('bbbbbbbb-0000-0000-0000-000000000001','credit_note');
+  insert into public.credit_note (business_id, branch_id, cash_session_id, folio, method, total, neto, iva) values
+    ('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000001',v_session,
+     v_nc_folio,'efectivo',v_nc_total,v_nc_neto,v_nc_iva);
+
+  v_res := public.close_cash_session(v_session, 0);
+
+  if (v_res->>'nc_cash')::int <> 5001 then
+    raise exception 'NC/redondeo: nc_cash (fiscal) esperado 5001, obtuve %', v_res->>'nc_cash';
+  end if;
+  if (v_res->>'rounding')::int <> 0 then
+    raise exception 'NC/redondeo: rounding esperado 0 ((16191-16190)-(5001-5000)), obtuve %', v_res->>'rounding';
+  end if;
+  if (v_res->>'expected_cash')::int <> 50000 + 16190 - 5000 then
+    raise exception 'NC/redondeo: expected_cash esperado 61190 (float 50000 + 16190 - 5000), obtuve %', v_res->>'expected_cash';
+  end if;
 end $$;
 
 rollback;
