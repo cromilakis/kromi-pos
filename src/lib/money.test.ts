@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "./money";
+import { computeTotals, resolveDiscount, discountedPrice, fmtCLP, globalDiscount } from "./money";
 
 describe("discountedPrice", () => {
   it("aplica el % de descuento al precio unitario", () => {
@@ -51,5 +51,17 @@ describe("computeTotals con descuentos", () => {
 describe("fmtCLP", () => {
   it("formatea CLP sin decimales con separador de miles", () => {
     expect(fmtCLP(14990)).toBe("$14.990");
+  });
+});
+
+describe("globalDiscount", () => {
+  it("descuento comercial sin canje", () => {
+    expect(globalDiscount(1799, 0)).toBe(1799);
+  });
+  it("canje: el global comercial es 0 (discount_amount == points_discount)", () => {
+    expect(globalDiscount(2000, 2000)).toBe(0);
+  });
+  it("nunca negativo", () => {
+    expect(globalDiscount(0, 0)).toBe(0);
   });
 });

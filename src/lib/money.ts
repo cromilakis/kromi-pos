@@ -8,6 +8,13 @@ export function resolveDiscount(base: number, kind: "pct" | "amount" | null, val
   return Math.max(0, Math.min(base, raw));
 }
 
+/** Descuento global comercial de una venta: el total del descuento global
+ *  (`discount_amount`) menos el canje de puntos (`points_discount`), que son
+ *  mutuamente excluyentes. Nunca negativo. */
+export function globalDiscount(discountAmount: number, pointsDiscount: number): number {
+  return Math.max(0, (discountAmount ?? 0) - (pointsDiscount ?? 0));
+}
+
 /** Precio unitario con el descuento de catálogo (%) aplicado. */
 export function discountedPrice(price: number, pct: number): number {
   if (!pct || pct <= 0) return price;
