@@ -34,3 +34,10 @@ supabase/functions/.env
 
 # Preview generado por src-tauri/examples/gen_logo.rs (no es asset de la app)
 src-tauri/assets/logo_preview.png
+
+# Respaldos de BD (contienen datos REALES de prod — NUNCA commitear)
+backup_*.sql
+*.dump
+
+# Config local de Claude Code
+.claude/
