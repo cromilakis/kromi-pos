@@ -57,9 +57,9 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
   const change = recv - payTotal;
   const canConfirm = method === "tarjeta" || recv >= payTotal;
 
-  const showPayTotal = frozen?.payTotal ?? payTotal;
-  const showRecv = frozen?.recv ?? recv;
-  const showChange = frozen?.change ?? change;
+  const showPayTotal = frozen && busy ? frozen.payTotal : payTotal;
+  const showRecv = frozen && busy ? frozen.recv : recv;
+  const showChange = frozen && busy ? frozen.change : change;
 
   function pushCash(k: string) {
     setCashStr((v) => {
