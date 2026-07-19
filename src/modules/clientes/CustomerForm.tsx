@@ -35,7 +35,7 @@ interface CustomerFormProps {
   customer: CustomerRow | null;
   businessId: string;
   createdBy: string | null;
-  onSaved: () => void;
+  onSaved: (customer?: CustomerRow) => void;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -134,7 +134,7 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
     setBusy(true);
     try {
       if (!customer) {
-        await createCustomer({
+        const created = await createCustomer({
           business_id: businessId,
           name: trimmed,
           email: email.trim() || null,
@@ -143,6 +143,7 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
           ...companyFields,
         });
         toast.success("Cliente creado.");
+        onSaved(created);
       } else {
         await updateCustomer(customer.id, {
           name: trimmed,
@@ -151,8 +152,8 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
           ...companyFields,
         });
         toast.success("Cliente actualizado.");
+        onSaved();
       }
-      onSaved();
       onClose();
     } catch (e) {
       notifyError(`No se pudo guardar el cliente.`, e instanceof Error ? e.message : e);

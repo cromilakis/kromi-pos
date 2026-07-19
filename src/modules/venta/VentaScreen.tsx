@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
+import { useSaleDraft, type CartItem } from "@/session/SaleDraftContext";
 import { useOpenSession, rpcOpenCashSession } from "@/data/work";
 import { useProductsWithStock, useCategories, findByBarcode } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
@@ -14,7 +15,7 @@ import { useHeldSales, holdSale, deleteHeldSale, type HeldSaleRow } from "@/data
 import { chargeSale, cartToLines, useSalesTodayDte, markSalePrinted, type SaleDteRow } from "@/data/sales";
 import { issueReceipt, getDtePdf } from "@/data/sii";
 import { savePdfBase64 } from "@/lib/fileSave";
-import { computeTotals, resolveDiscount, discountedPrice, fmtCLP } from "@/lib/money";
+import { computeTotals, resolveDiscount, discountedPrice, fmtCLP, globalDiscount } from "@/lib/money";
 import { errMsg, notifyError } from "@/lib/errors";
 import { printReceipt } from "@/lib/print";
 import { getPrinterName } from "@/lib/printerConfig";
@@ -29,9 +30,32 @@ import { CustomerPickerDialog } from "./CustomerPickerDialog";
 import { shouldPromptCustomer } from "./customerPrompt";
 import { CierrePanel } from "@/modules/cierre/CierrePanel";
 
-interface CartItem {
-  id: string;
-  qty: number;
+/** Compara solo por día calendario local (ignora la hora). */
+function isBeforeToday(iso: string): boolean {
+  const d = new Date(iso);
+  const now = new Date();
+  return (
+    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() <
+    new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  );
+}
+
+/** Bloqueo duro: la caja quedó abierta de un día anterior. Debe cerrarse antes de vender hoy. */
+function CajaDiaAnteriorGate({ openedAt, onCerrarCaja }: { openedAt: string; onCerrarCaja: () => void }) {
+  const fecha = new Date(openedAt).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return (
+    <div className="grid min-h-full place-items-center p-6">
+      <Card className="w-full max-w-md space-y-3 p-6 text-center">
+        <h2 className="text-lg font-black text-[#0F2A1B]">Caja pendiente de cierre</h2>
+        <p className="text-sm text-[#556A7C]">
+          La caja fue abierta el {fecha}. Debes realizar el cierre de caja de ese día antes de comenzar las ventas de hoy.
+        </p>
+        <Button className="w-full" style={{ background: "var(--brand)" }} onClick={onCerrarCaja}>
+          Cerrar caja
+        </Button>
+      </Card>
+    </div>
+  );
 }
 
 /** Gate local de caja: si no hay sesión abierta en esta caja, ofrece abrirla en vez de mostrar el carrito. */
@@ -88,11 +112,10 @@ export function VentaScreen() {
 
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string>("todas");
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const { cart, setCart, customerId, setCustomerId } = useSaleDraft();
   const [payOpen, setPayOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [cierreOpen, setCierreOpen] = useState(false);
-  const [customerId, setCustomerId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [askedForCustomer, setAskedForCustomer] = useState(false);
   const [heldOpen, setHeldOpen] = useState(false);
@@ -350,7 +373,9 @@ export function VentaScreen() {
       neto,
       iva: h.total - neto,
       total: h.total,
-      descuento: h.lines.reduce((s, l) => s + (l.discount_amount ?? 0), 0),
+      recv: h.recv,
+      change: h.change,
+      descuento: globalDiscount(h.discount_amount, h.points_discount),
       canje_pts: h.points_redeemed ?? 0,
       canje_monto: h.points_discount ?? 0,
       dte_folio: h.dte_folio ?? undefined,
@@ -440,7 +465,9 @@ export function VentaScreen() {
             neto: sale.neto,
             iva: sale.iva,
             total: sale.total,
-            descuento: soldLines.reduce((s, l) => s + resolveDiscount(l.qty * l.product.price, "pct", l.product.discount_pct ?? 0), 0),
+            recv: sale.recv,
+            change: sale.change,
+            descuento: globalDiscount(sale.discount_amount, sale.points_discount),
             canje_pts: sale.points_redeemed ?? 0,
             canje_monto: sale.points_discount ?? 0,
             dte_folio: dteFolio,
@@ -505,6 +532,15 @@ export function VentaScreen() {
     return (
       <>
         <AbrirCajaGate />
+        {cierreDialog}
+      </>
+    );
+  }
+
+  if (isBeforeToday(openSession.opened_at)) {
+    return (
+      <>
+        <CajaDiaAnteriorGate openedAt={openSession.opened_at} onCerrarCaja={() => setCierreOpen(true)} />
         {cierreDialog}
       </>
     );
@@ -753,6 +789,7 @@ export function VentaScreen() {
         customerPoints={selectedCustomer?.points ?? 0}
         pointsRedeemRate={business?.points_redeem_clp_per_point ?? 1}
         canFactura={canFactura}
+        onPickCustomer={() => setPickerOpen(true)}
         onClose={() => setPayOpen(false)}
         onConfirm={handleConfirmPay}
       />
@@ -760,6 +797,7 @@ export function VentaScreen() {
       <CustomerPickerDialog
         open={pickerOpen}
         businessId={businessId}
+        createdBy={profile?.id ?? null}
         onSelect={(c) => { setCustomerId(c.id); setPickerOpen(false); }}
         onContinueWithout={() => setPickerOpen(false)}
         onClose={() => setPickerOpen(false)}

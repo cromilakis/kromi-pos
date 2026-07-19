@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { buildDetalle } from "./detalle.ts";
 
 const SF_URL = Deno.env.get("SIMPLEFACTURA_URL") ?? "https://api.simplefactura.cl";
 const SF_EMAIL = Deno.env.get("SIMPLEFACTURA_EMAIL")!;
@@ -106,47 +107,7 @@ Deno.serve(async (req) => {
     // Boleta: precio con IVA incluido (line.discount_amount ya viene con IVA incluido).
     // Factura: detalle en NETO (price_snapshot y descuentos vienen con IVA incluido desde
     // la venta; se llevan a neto dividiendo por 1.19 y redondeando, ver skill §0.5/§3).
-    const detalle = lines.map((l, i) => {
-      const desc = l.discount_amount ?? 0;
-      const prc = esFactura ? Math.round(l.price_snapshot / 1.19) : l.price_snapshot;
-      const descNeto = esFactura ? Math.round(desc / 1.19) : desc;
-      // Identidad exigida por el SII: QtyItem*PrcItem - DescuentoMonto = MontoItem.
-      // MontoItem se DERIVA de PrcItem (no se recalcula por separado) para que cuadre
-      // siempre exacto, incluso cuando price_snapshot/1.19 no es entero.
-      const montoBruto = esFactura ? prc * l.qty : l.price_snapshot * l.qty;
-      const monto = montoBruto - descNeto;
-      const d: Record<string, string | number> = {
-        NroLinDet: String(i + 1),
-        NmbItem: l.name_snapshot,
-        QtyItem: String(l.qty),
-        UnmdItem: "un",
-        PrcItem: String(prc),
-        MontoItem: String(monto),
-      };
-      // Declarar el descuento por línea: sin esto el DTE queda inconsistente
-      // (QtyItem×PrcItem ≠ MontoItem) y la boleta muestra DESCUENTO -0. Con DescuentoMonto,
-      // SimpleFactura/SII cuadran QtyItem×PrcItem − DescuentoMonto = MontoItem y lo reflejan.
-      if (descNeto > 0) d.DescuentoMonto = descNeto;
-      return d;
-    });
-    // Descuento global (comercial o canje de puntos): se declara aparte del descuento por
-    // línea vía DscRcgGlobal. TpoMov:1 = Descuento (genera "D"; el enum es 1-based, TpoMov:0
-    // pasa el preview pero rompe en emisión real con <TpoMov></TpoMov> vacío) y
-    // TpoValor:2 = Monto (genera "$"). Si no hay descuento global, la clave no se incluye
-    // (undefined, no array vacío).
-    const descuentoGlobalBruto = sale.discount_amount ?? 0;
-    const descuentoGlobal = esFactura ? Math.round(descuentoGlobalBruto / 1.19) : descuentoGlobalBruto;
-    const dscRcgGlobal = descuentoGlobal > 0
-      ? [{
-          NroLinDR: 1,
-          TpoMov: 1,
-          TpoValor: 2,
-          ValorDR: String(descuentoGlobal),
-          GlosaDR: (sale.points_redeemed ?? 0) > 0
-            ? `Canje de puntos (${sale.points_redeemed} pts)`
-            : "Descuento",
-        }]
-      : undefined;
+    const detalle = buildDetalle(lines, sale.discount_amount ?? 0, esFactura);
 
     // Totales: boleta usa los ya persistidos (neto/iva/total, con IVA incluido, ya
     // descuentan el global); factura se recalcula en neto desde el detalle (los montos
@@ -156,7 +117,7 @@ Deno.serve(async (req) => {
     let receptor: Record<string, unknown>;
     let totales: Record<string, string>;
     if (esFactura) {
-      const mntNeto = detalle.reduce((acc, d) => acc + Number(d.MontoItem), 0) - descuentoGlobal;
+      const mntNeto = detalle.reduce((acc, d) => acc + Number(d.MontoItem), 0);
       const ivaFactura = Math.round(mntNeto * 0.19);
       idDoc = { TipoDTE: 33, FchEmis: isoDate(new Date()), FchVenc: isoDate(new Date()), FmaPago: 1 };
       emisor = EMISOR_FACTURA;
@@ -187,7 +148,6 @@ Deno.serve(async (req) => {
           Totales: totales,
         },
         Detalle: detalle,
-        ...(dscRcgGlobal ? { DscRcgGlobal: dscRcgGlobal } : {}),
       },
     };
 

@@ -8,6 +8,19 @@ export function resolveDiscount(base: number, kind: "pct" | "amount" | null, val
   return Math.max(0, Math.min(base, raw));
 }
 
+/** Redondeo legal de efectivo (Ley 20.956): al múltiplo de $10, 1–5 hacia abajo
+ *  y 6–9 hacia arriba (el 5 baja). Solo aplica a pagos en efectivo. */
+export function roundCashCLP(n: number): number {
+  return Math.floor((n + 4) / 10) * 10;
+}
+
+/** Descuento global comercial de una venta: el total del descuento global
+ *  (`discount_amount`) menos el canje de puntos (`points_discount`), que son
+ *  mutuamente excluyentes. Nunca negativo. */
+export function globalDiscount(discountAmount: number, pointsDiscount: number): number {
+  return Math.max(0, (discountAmount ?? 0) - (pointsDiscount ?? 0));
+}
+
 /** Precio unitario con el descuento de catálogo (%) aplicado. */
 export function discountedPrice(price: number, pct: number): number {
   if (!pct || pct <= 0) return price;

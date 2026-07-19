@@ -6,6 +6,7 @@ export interface SalesHistoryFilters {
   to?: string;
   customerId?: string | null;
   folio?: number | null;
+  method?: "efectivo" | "tarjeta" | null;
   page?: number;
 }
 
@@ -27,6 +28,7 @@ export interface SaleHistoryRow {
   points_discount: number;
   doc_type: string;
   printed_at: string | null;
+  recv: number; change: number;
   lines: { name_snapshot: string; price_snapshot: number; qty: number; discount_amount: number }[];
 }
 
@@ -61,7 +63,7 @@ export function useSalesHistory(branchId: string | undefined, filters: SalesHist
       let query = supabase
         .from("sale")
         .select(
-          "id,folio,total,neto,iva,discount_amount,method,sold_at,customer_id,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,doc_type,printed_at," +
+          "id,folio,total,neto,iva,discount_amount,method,sold_at,customer_id,dte_status,dte_folio,dte_timbre,points_redeemed,points_discount,doc_type,printed_at,recv,change," +
             "customer:customer_id(name),sale_line(name_snapshot,price_snapshot,qty,discount_amount)",
         )
         .eq("branch_id", branchId!);
@@ -76,6 +78,8 @@ export function useSalesHistory(branchId: string | undefined, filters: SalesHist
         query = query.gte("sold_at", start).lt("sold_at", end);
         if (filters.customerId) query = query.eq("customer_id", filters.customerId);
       }
+
+      if (filters.method) query = query.eq("method", filters.method);
 
       const { data, error } = await query
         .order("sold_at", { ascending: false })
@@ -100,6 +104,7 @@ export function useSalesHistory(branchId: string | undefined, filters: SalesHist
         points_discount: s.points_discount ?? 0,
         doc_type: s.doc_type ?? "boleta",
         printed_at: s.printed_at ?? null,
+        recv: s.recv ?? 0, change: s.change ?? 0,
         lines: s.sale_line ?? [],
       }));
     },

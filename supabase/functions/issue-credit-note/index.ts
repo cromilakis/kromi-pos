@@ -58,22 +58,43 @@ Deno.serve(async (req) => {
     }
     if (!nc.sale_id) return json({ status: "error", message: "la NC no referencia una boleta" }, 400);
 
-    // Boleta referenciada: necesita el folio SII y su fecha de emisión.
+    // Documento referenciado: necesita el folio SII y su fecha de emisión.
     const { data: sale, error: e2 } = await admin
-      .from("sale").select("dte_folio,emitted_at").eq("id", nc.sale_id).single();
-    if (e2 || !sale) return json({ status: "error", message: "boleta no encontrada" }, 404);
-    if (!sale.dte_folio) return json({ status: "error", message: "la boleta no está emitida en el SII" }, 409);
+      .from("sale").select("doc_type,dte_folio,emitted_at,customer_id").eq("id", nc.sale_id).single();
+    if (e2 || !sale) return json({ status: "error", message: "documento no encontrado" }, 404);
+    if (!sale.dte_folio) return json({ status: "error", message: "el documento no está emitido en el SII" }, 409);
+
+    const esFactura = sale.doc_type === "factura";
+    let receptor: Record<string, unknown> = {
+      RUTRecep: "66666666-6", RznSocRecep: "Cliente sin especificar",
+      DirRecep: "Ciudad", CmnaRecep: "Santiago", CiudadRecep: "Santiago",
+    };
+    if (esFactura) {
+      if (!sale.customer_id) return json({ status: "error", message: "la factura no tiene cliente para la NC" }, 400);
+      const { data: cust, error: e3 } = await admin
+        .from("customer").select("rut,razon_social,giro,direccion,comuna").eq("id", sale.customer_id).single();
+      if (e3 || !cust || !cust.rut || !cust.razon_social || !cust.giro || !cust.direccion || !cust.comuna) {
+        return json({ status: "error", message: "el cliente de la factura no tiene datos tributarios completos para la NC" }, 400);
+      }
+      const rutDashed = (() => { const l = cust.rut.replace(/[.\-]/g, ""); return `${l.slice(0, -1)}-${l.slice(-1).toUpperCase()}`; })();
+      receptor = {
+        RUTRecep: rutDashed, RznSocRecep: cust.razon_social, GiroRecep: cust.giro,
+        DirRecep: cust.direccion, CmnaRecep: cust.comuna, CiudadRecep: cust.comuna,
+      };
+    }
+    const tpoDocRef = esFactura ? "33" : "39";
 
     const codRef = nc.cod_ref ?? 1;
     const fchRef = sale.emitted_at ? isoDate(new Date(sale.emitted_at)) : isoDate(new Date());
-    const razon = codRef === 1 ? "ANULA BOLETA ELECTRONICA" : "DEVOLUCION MERCADERIA";
+    const docLabel = esFactura ? "FACTURA ELECTRONICA" : "BOLETA ELECTRONICA";
+    const razon = codRef === 1 ? `ANULA ${docLabel}` : "DEVOLUCION MERCADERIA";
 
     const body = {
       Documento: {
         Encabezado: {
           IdDoc: { TipoDTE: 61, FchEmis: isoDate(new Date()), FchVenc: isoDate(new Date()), FmaPago: 1 },
           Emisor: EMISOR,
-          Receptor: { RUTRecep: "66666666-6", RznSocRecep: "Cliente sin especificar", DirRecep: "Ciudad", CmnaRecep: "Santiago", CiudadRecep: "Santiago" },
+          Receptor: receptor,
           Totales: { MntNeto: String(nc.neto), TasaIVA: "19", IVA: String(nc.iva), MntTotal: String(nc.total) },
         },
         Detalle: [{
@@ -82,7 +103,7 @@ Deno.serve(async (req) => {
           QtyItem: "1", PrcItem: String(nc.neto), MontoItem: String(nc.neto),
         }],
         Referencia: [{
-          NroLinRef: 1, TpoDocRef: "39", FolioRef: String(sale.dte_folio),
+          NroLinRef: 1, TpoDocRef: tpoDocRef, FolioRef: String(sale.dte_folio),
           FchRef: fchRef, CodRef: codRef, RazonRef: nc.reason ?? razon,
         }],
       },

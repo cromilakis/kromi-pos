@@ -6,7 +6,7 @@ import { useWork } from "@/session/WorkContext";
 import { useSalesHistory, HISTORY_PAGE, type SaleHistoryRow } from "@/data/salesHistory";
 import { markSalePrinted } from "@/data/sales";
 import { CustomerPickerDialog } from "@/modules/venta/CustomerPickerDialog";
-import { fmtCLP } from "@/lib/money";
+import { fmtCLP, globalDiscount } from "@/lib/money";
 import { useBusiness, businessToNegocio } from "@/data/business";
 import { getPrinterName } from "@/lib/printerConfig";
 import { printReceipt } from "@/lib/print";
@@ -72,6 +72,7 @@ export function HistorialScreen() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState<string | null>(null);
   const [folioStr, setFolioStr] = useState("");
+  const [method, setMethod] = useState<"efectivo" | "tarjeta" | null>(null);
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState<SaleHistoryRow[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -80,12 +81,14 @@ export function HistorialScreen() {
   const [appliedTo, setAppliedTo] = useState(today);
   const [appliedCustomerId, setAppliedCustomerId] = useState<string | null>(null);
   const [appliedFolio, setAppliedFolio] = useState<number | null>(null);
+  const [appliedMethod, setAppliedMethod] = useState<"efectivo" | "tarjeta" | null>(null);
 
   const { data, isFetching } = useSalesHistory(branchId, {
     from: appliedFrom,
     to: appliedTo,
     customerId: appliedCustomerId,
     folio: appliedFolio,
+    method: appliedMethod,
     page,
   });
 
@@ -131,6 +134,7 @@ export function HistorialScreen() {
     setAppliedTo(to);
     setAppliedCustomerId(customerId);
     setAppliedFolio(folioStr.trim() ? Number(folioStr.trim()) : null);
+    setAppliedMethod(method);
   }
 
   function handleCargarMas() {
@@ -150,7 +154,9 @@ export function HistorialScreen() {
       neto: row.neto,
       iva: row.iva,
       total: row.total,
-      descuento: row.lines.reduce((s, l) => s + (l.discount_amount ?? 0), 0),
+      recv: row.recv,
+      change: row.change,
+      descuento: globalDiscount(row.discount_amount, row.points_discount),
       canje_pts: row.points_redeemed ?? 0,
       canje_monto: row.points_discount ?? 0,
       dte_folio: row.dte_folio ?? undefined,
@@ -255,6 +261,16 @@ export function HistorialScreen() {
           className="w-28 rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[13px] font-bold text-[#0F2A1B] outline-none focus:border-[var(--brand)]"
         />
 
+        <select
+          value={method ?? ""}
+          onChange={(e) => setMethod(e.target.value ? (e.target.value as "efectivo" | "tarjeta") : null)}
+          className="rounded-lg border border-[#E1E5EE] bg-white px-2.5 py-1.5 text-[13px] font-bold text-[#0F2A1B] outline-none focus:border-[var(--brand)]"
+        >
+          <option value="">Medio de pago: Todos</option>
+          <option value="efectivo">Efectivo</option>
+          <option value="tarjeta">Tarjeta</option>
+        </select>
+
         <button
           onClick={handleBuscar}
           className="ml-auto rounded-lg px-4 py-1.5 text-[13px] font-bold text-white"
@@ -346,6 +362,7 @@ export function HistorialScreen() {
       <CustomerPickerDialog
         open={pickerOpen}
         businessId={businessId}
+        createdBy={profile?.id ?? null}
         onSelect={(c) => { setCustomerId(c.id); setCustomerName(c.name); setPickerOpen(false); }}
         onContinueWithout={() => { setCustomerId(null); setCustomerName(null); setPickerOpen(false); }}
         onClose={() => setPickerOpen(false)}

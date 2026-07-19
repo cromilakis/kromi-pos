@@ -5,6 +5,7 @@ import { useAuth } from "@/auth/AuthProvider";
 import type { Role } from "@/auth/session";
 import { navForRole, type NavItem } from "@/session/nav";
 import { BranchGate } from "@/session/BranchGate";
+import { SaleDraftProvider } from "@/session/SaleDraftContext";
 import { Button } from "@/components/ui/button";
 import { useBusiness } from "@/data/business";
 import { useIdleLock } from "@/session/useIdleLock";
@@ -170,9 +171,11 @@ export function AppLayout() {
       </aside>
       <div className="flex-1 flex flex-col overflow-hidden bg-[#F7F8FA]">
         <main className="flex-1 overflow-auto">
-          <BranchGate businessId={profile.business_id}>
-            <Outlet />
-          </BranchGate>
+          <SaleDraftProvider>
+            <BranchGate businessId={profile.business_id}>
+              <Outlet />
+            </BranchGate>
+          </SaleDraftProvider>
         </main>
       </div>
     </div>

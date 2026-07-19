@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fmtCLP, resolveDiscount } from "@/lib/money";
+import { fmtCLP, resolveDiscount, roundCashCLP } from "@/lib/money";
 import type { DiscountRow } from "@/data/discounts";
 
 export type PayMethod = "efectivo" | "tarjeta";
@@ -14,17 +14,19 @@ interface PayDialogProps {
   customerPoints?: number;
   pointsRedeemRate?: number;
   canFactura?: boolean;
+  onPickCustomer?: () => void;
   onClose: () => void;
   onConfirm: (method: PayMethod, recv: number, discountId: string | null, pointsRedeem: number, docType: DocType) => void;
 }
 
 /** Diálogo de cobro: método, descuento predefinido, canje de puntos, efectivo recibido y vuelto. Clona el popup de cobro del prototipo. */
-export function PayDialog({ open, total, busy, discounts, customerPoints = 0, pointsRedeemRate = 1, canFactura = false, onClose, onConfirm }: PayDialogProps) {
+export function PayDialog({ open, total, busy, discounts, customerPoints = 0, pointsRedeemRate = 1, canFactura = false, onPickCustomer, onClose, onConfirm }: PayDialogProps) {
   const [method, setMethod] = useState<PayMethod>("tarjeta");
   const [cashStr, setCashStr] = useState("");
   const [discountId, setDiscountId] = useState<string | null>(null);
   const [pointsRedeem, setPointsRedeem] = useState(0);
   const [docType, setDocType] = useState<DocType>("boleta");
+  const [frozen, setFrozen] = useState<{ payTotal: number; recv: number; change: number } | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -33,6 +35,7 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
       setDiscountId(null);
       setPointsRedeem(0);
       setDocType("boleta");
+      setFrozen(null);
     }
   }, [open]);
 
@@ -50,9 +53,14 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
   const effectiveTotal = total - discAmount - pointsDiscount;
   const maxPointsRedeem = Math.max(0, Math.min(customerPoints, Math.ceil(total / pointsRedeemRate)));
 
+  const payTotal = method === "efectivo" ? roundCashCLP(effectiveTotal) : effectiveTotal;
   const recv = method === "efectivo" ? Number(cashStr) || 0 : effectiveTotal;
-  const change = recv - effectiveTotal;
-  const canConfirm = method === "tarjeta" || recv >= effectiveTotal;
+  const change = recv - payTotal;
+  const canConfirm = method === "tarjeta" || recv >= payTotal;
+
+  const showPayTotal = frozen && busy ? frozen.payTotal : payTotal;
+  const showRecv = frozen && busy ? frozen.recv : recv;
+  const showChange = frozen && busy ? frozen.change : change;
 
   function pushCash(k: string) {
     setCashStr((v) => {
@@ -90,6 +98,12 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
             <span className="text-sm font-semibold text-[#556A7C]">Total a cobrar</span>
             <span className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(effectiveTotal)}</span>
           </div>
+          {method === "efectivo" && showPayTotal !== effectiveTotal && (
+            <div className="mt-2 flex items-baseline justify-between px-1 text-[13px] font-bold text-[#556A7C]">
+              <span>Redondeo (efectivo) · Total a pagar</span>
+              <span>{fmtCLP(showPayTotal)}</span>
+            </div>
+          )}
         </div>
 
         <div className="p-[22px_24px]">
@@ -171,8 +185,18 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
               </button>
             </div>
             {!canFactura && (
-              <div className="mt-1.5 text-[12px] font-medium text-[#556A7C]">
+              <div className="mt-1.5 flex items-center gap-1.5 text-[12px] font-medium text-[#556A7C]">
                 Elige un cliente empresa para facturar
+                {onPickCustomer && (
+                  <button
+                    type="button"
+                    onClick={onPickCustomer}
+                    className="font-bold underline"
+                    style={{ color: "var(--brand)" }}
+                  >
+                    Elegir/crear cliente
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -207,14 +231,14 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
               <div className="mb-3.5 flex gap-2.5">
                 <div className="flex-1 rounded-2xl border border-[#E1E5EE] bg-[#F6F7FB] px-3.5 py-2.5">
                   <div className="mb-0.5 text-[11px] font-semibold text-[#556A7C]">Recibido</div>
-                  <div className="text-[22px] font-black text-[#0F2A1B]">{fmtCLP(recv)}</div>
+                  <div className="text-[22px] font-black text-[#0F2A1B]">{fmtCLP(showRecv)}</div>
                 </div>
                 <div
                   className="flex-1 rounded-2xl px-3.5 py-2.5"
-                  style={{ background: change < 0 ? "#FDECEC" : "var(--brand)", color: change < 0 ? "#9a2533" : "#fff" }}
+                  style={{ background: showChange < 0 ? "#FDECEC" : "var(--brand)", color: showChange < 0 ? "#9a2533" : "#fff" }}
                 >
                   <div className="mb-0.5 text-[11px] font-semibold opacity-80">Vuelto</div>
-                  <div className="text-[22px] font-black">{fmtCLP(Math.max(0, change))}</div>
+                  <div className="text-[22px] font-black">{fmtCLP(Math.max(0, showChange))}</div>
                 </div>
               </div>
               <div className="mb-[18px] grid grid-cols-3 gap-2">
@@ -247,7 +271,10 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
               Cancelar
             </button>
             <button
-              onClick={() => onConfirm(method, recv, discountId, pointsRedeem, docType)}
+              onClick={() => {
+                setFrozen({ payTotal, recv, change });
+                onConfirm(method, recv, discountId, pointsRedeem, docType);
+              }}
               disabled={busy || !canConfirm}
               className="flex-1 rounded-2xl py-3.5 text-[15px] font-bold text-white disabled:opacity-50"
               style={{ background: "var(--brand)" }}

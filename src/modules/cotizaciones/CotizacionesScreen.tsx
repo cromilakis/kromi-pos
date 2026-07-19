@@ -150,8 +150,8 @@ export function CotizacionesScreen() {
             neto: quote.neto,
             iva: quote.iva,
             total: quote.total,
-            // Total de descuentos = descuentos por línea + descuento global (como en la boleta de venta).
-            descuento: itemsSnap.reduce((s, i) => s + (i.descuento ?? 0), 0) + globalSnap,
+            // Descuento global (descuentos por línea se muestran en los ítems).
+            descuento: globalSnap,
           });
         } catch (e) {
           notifyError(`La cotización se generó, pero no se pudo imprimir.`, errMsg(e));
@@ -176,8 +176,8 @@ export function CotizacionesScreen() {
         neto: q.neto,
         iva: q.iva,
         total: q.total,
-        // Total de descuentos = descuentos por línea + descuento global (como en la boleta de venta).
-        descuento: q.lines.reduce((s, l) => s + (l.discount_amount ?? 0), 0) + q.discount_amount,
+        // Descuento global (descuentos por línea se muestran en los ítems).
+        descuento: q.discount_amount,
       });
     } catch (e) {
       notifyError(`No se pudo imprimir la cotización.`, errMsg(e));
