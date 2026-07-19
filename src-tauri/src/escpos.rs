@@ -237,6 +237,33 @@ fn set_bit(bits: &mut [u8], bpr: usize, x: usize, y0: usize, row_h: usize, width
     }
 }
 
+/// Bloque de totales del ticket: Subtotal (Σ precio*qty − dcto de línea) y las
+/// líneas de descuento GLOBAL/canje se muestran solo si hay algún descuento;
+/// luego siempre Neto, IVA y TOTAL (doble tamaño). Cuadra:
+/// Subtotal − descuento − canje = total = neto + iva.
+fn totales_block(b: &mut Vec<u8>, items: &[Item], descuento: i64, canje_pts: i64, canje_monto: i64, neto: i64, iva: i64, total: i64) {
+    let subtotal: i64 = items.iter().map(|it| it.precio * it.qty as i64 - it.descuento).sum();
+    let hay_desc = items.iter().any(|it| it.descuento > 0) || descuento > 0 || canje_monto > 0;
+    if hay_desc {
+        line_lr(b, "Subtotal", &money(subtotal), COL);
+        if descuento > 0 {
+            let pct = if subtotal > 0 { ((descuento as f64 * 100.0) / subtotal as f64).round() as i64 } else { 0 };
+            line_lr(b, &format!("Descuento global {}%", pct), &format!("-{}", money(descuento)), COL);
+        }
+        if canje_monto > 0 {
+            line_lr(b, &format!("Canje de puntos ({} pts)", canje_pts), &format!("-{}", money(canje_monto)), COL);
+        }
+        rule(b, b'-');
+    }
+    line_lr(b, "Neto", &money(neto), COL);
+    line_lr(b, "IVA 19%", &money(iva), COL);
+    nl(b);
+    b.extend_from_slice(&[0x1D, 0x21, 0x11]); // doble tamano
+    line_lr(b, "TOTAL", &money(total), 24);
+    b.extend_from_slice(&[0x1D, 0x21, 0x00]);
+    nl(b);
+}
+
 pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     let mut b: Vec<u8> = Vec::new();
     b.extend_from_slice(&[0x1B, 0x40]); // init
@@ -289,7 +316,7 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
 
     // encabezado de columnas (negrita)
     b.extend_from_slice(&[0x1B, 0x45, 0x01]);
-    line_lr(&mut b, "Item", "Subtotal", COL);
+    line_lr(&mut b, "Item", "Importe", COL);
     b.extend_from_slice(&[0x1B, 0x45, 0x00]);
     rule(&mut b, b'=');
 
@@ -305,20 +332,8 @@ pub fn build(p: &ReceiptPayload) -> Vec<u8> {
     }
     rule(&mut b, b'=');
 
-    // totales — orden: Neto, Descuento (si aplica) y luego IVA, para que se lea Total → Descuento → IVA.
-    line_lr(&mut b, "Neto", &money(p.neto), COL);
-    if p.descuento > 0 {
-        line_lr(&mut b, "Total descuentos", &format!("-{}", money(p.descuento)), COL);
-    }
-    if p.canje_monto > 0 {
-        line_lr(&mut b, &format!("Canje de puntos ({} pts)", p.canje_pts), &format!("-{}", money(p.canje_monto)), COL);
-    }
-    line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
-    nl(&mut b);
-    b.extend_from_slice(&[0x1D, 0x21, 0x11]); // doble tamano
-    line_lr(&mut b, "TOTAL", &money(p.total), 24);
-    b.extend_from_slice(&[0x1D, 0x21, 0x00]);
-    nl(&mut b);
+    totales_block(&mut b, &p.items, p.descuento, p.canje_pts, p.canje_monto, p.neto, p.iva, p.total);
+
     line_lr(&mut b, "Forma de pago", &metodo_label(&p.metodo), COL);
     rule(&mut b, b'-');
 
@@ -495,7 +510,7 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
     rule(&mut b, b'-');
 
     b.extend_from_slice(&[0x1B, 0x45, 0x01]);
-    line_lr(&mut b, "Item", "Subtotal", COL);
+    line_lr(&mut b, "Item", "Importe", COL);
     b.extend_from_slice(&[0x1B, 0x45, 0x00]);
     rule(&mut b, b'=');
     for it in &p.items {
@@ -509,16 +524,7 @@ pub fn build_quote(p: &QuotePayload) -> Vec<u8> {
     }
     rule(&mut b, b'=');
 
-    line_lr(&mut b, "Neto", &money(p.neto), COL);
-    if p.descuento > 0 {
-        line_lr(&mut b, "Total descuentos", &format!("-{}", money(p.descuento)), COL);
-    }
-    line_lr(&mut b, "IVA 19%", &money(p.iva), COL);
-    nl(&mut b);
-    b.extend_from_slice(&[0x1D, 0x21, 0x11]);
-    line_lr(&mut b, "TOTAL", &money(p.total), 24);
-    b.extend_from_slice(&[0x1D, 0x21, 0x00]);
-    nl(&mut b);
+    totales_block(&mut b, &p.items, p.descuento, 0, 0, p.neto, p.iva, p.total);
     rule(&mut b, b'-');
 
     // red social (QR) — solo si esta configurada
@@ -638,6 +644,34 @@ mod tests {
 
     fn contains(haystack: &[u8], needle: &[u8]) -> bool {
         haystack.windows(needle.len()).any(|w| w == needle)
+    }
+
+    #[test]
+    fn boleta_descuento_global_muestra_subtotal_y_descuento() {
+        let mut p = sample("efectivo", true);
+        p.items = vec![Item { nombre: "Marantha".into(), qty: 1, precio: 17990, descuento: 0 }];
+        p.descuento = 1799;
+        p.neto = 13606; p.iva = 2585; p.total = 16191;
+        let b = build(&p);
+        assert!(contains(&b, b"Subtotal"));
+        assert!(contains(&b, b"Descuento global"));
+    }
+
+    #[test]
+    fn boleta_canje_muestra_linea() {
+        let mut p = sample("efectivo", true);
+        p.items = vec![Item { nombre: "Marantha".into(), qty: 1, precio: 10000, descuento: 0 }];
+        p.canje_pts = 5; p.canje_monto = 1000;
+        p.neto = 7563; p.iva = 1437; p.total = 9000;
+        let b = build(&p);
+        assert!(contains(&b, b"Canje de puntos (5 pts)"));
+        assert!(contains(&b, b"Subtotal"));
+    }
+
+    #[test]
+    fn boleta_sin_descuento_no_muestra_subtotal() {
+        let b = build(&sample("efectivo", true)); // descuento 0, canje 0
+        assert!(!contains(&b, b"Subtotal"));
     }
 
     #[test]
