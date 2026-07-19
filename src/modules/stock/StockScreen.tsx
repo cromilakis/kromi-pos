@@ -473,6 +473,7 @@ export function StockScreen() {
                     key={p.id}
                     onClick={canManage ? (e) => handleRowClick(e, p, index) : undefined}
                     onContextMenu={canManage ? (e) => handleRowContextMenu(e, p) : undefined}
+                    onDoubleClick={canManage ? () => { setEditing(p); setFormOpen(true); } : undefined}
                     className="border-t border-[#EEF1F6]"
                     style={{
                       cursor: canManage ? "pointer" : undefined,
