@@ -30,6 +30,34 @@ import { CustomerPickerDialog } from "./CustomerPickerDialog";
 import { shouldPromptCustomer } from "./customerPrompt";
 import { CierrePanel } from "@/modules/cierre/CierrePanel";
 
+/** Compara solo por día calendario local (ignora la hora). */
+function isBeforeToday(iso: string): boolean {
+  const d = new Date(iso);
+  const now = new Date();
+  return (
+    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() <
+    new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+  );
+}
+
+/** Bloqueo duro: la caja quedó abierta de un día anterior. Debe cerrarse antes de vender hoy. */
+function CajaDiaAnteriorGate({ openedAt, onCerrarCaja }: { openedAt: string; onCerrarCaja: () => void }) {
+  const fecha = new Date(openedAt).toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return (
+    <div className="grid min-h-full place-items-center p-6">
+      <Card className="w-full max-w-md space-y-3 p-6 text-center">
+        <h2 className="text-lg font-black text-[#0F2A1B]">Caja pendiente de cierre</h2>
+        <p className="text-sm text-[#556A7C]">
+          La caja fue abierta el {fecha}. Debes realizar el cierre de caja de ese día antes de comenzar las ventas de hoy.
+        </p>
+        <Button className="w-full" style={{ background: "var(--brand)" }} onClick={onCerrarCaja}>
+          Cerrar caja
+        </Button>
+      </Card>
+    </div>
+  );
+}
+
 /** Gate local de caja: si no hay sesión abierta en esta caja, ofrece abrirla en vez de mostrar el carrito. */
 function AbrirCajaGate() {
   const { register } = useWork();
@@ -504,6 +532,15 @@ export function VentaScreen() {
     return (
       <>
         <AbrirCajaGate />
+        {cierreDialog}
+      </>
+    );
+  }
+
+  if (isBeforeToday(openSession.opened_at)) {
+    return (
+      <>
+        <CajaDiaAnteriorGate openedAt={openSession.opened_at} onCerrarCaja={() => setCierreOpen(true)} />
         {cierreDialog}
       </>
     );

@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 
 export interface Branch { id: string; name: string; }
 export interface Register { id: string; name: string; branch_id: string; }
-export interface CashSession { id: string; register_id: string; status: string; }
+export interface CashSession { id: string; register_id: string; status: string; opened_at: string; }
 
 export function useBranches(businessId: string | undefined) {
   return useQuery({
@@ -29,7 +29,7 @@ export function useOpenSession(registerId: string | undefined) {
   return useQuery({
     queryKey: ["open-session", registerId], enabled: !!registerId,
     queryFn: async (): Promise<CashSession | null> => {
-      const { data, error } = await supabase.from("cash_session").select("id,register_id,status").eq("register_id", registerId!).eq("status", "open").maybeSingle();
+      const { data, error } = await supabase.from("cash_session").select("id,register_id,status,opened_at").eq("register_id", registerId!).eq("status", "open").maybeSingle();
       if (error) throw error; return data ?? null;
     },
   });
