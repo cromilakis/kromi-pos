@@ -12,15 +12,15 @@ describe("summarizeSales", () => {
   it("suma total, promedio y desglosa por método", () => {
     const rows = [
       { total: 1000, method: "efectivo" },
-      { total: 3000, method: "tarjeta" },
+      { total: 4000, method: "tarjeta" },
       { total: 2000, method: "efectivo" },
     ];
     const s = summarizeSales(rows);
-    expect(s.total).toBe(6000);
+    expect(s.total).toBe(7000);
     expect(s.count).toBe(3);
-    expect(s.avg).toBe(2000);
+    expect(s.avg).toBe(2333);
     expect(s.cash).toBe(3000);
-    expect(s.card).toBe(3000);
+    expect(s.card).toBe(4000);
   });
 });
 
