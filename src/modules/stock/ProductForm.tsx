@@ -5,6 +5,7 @@ import type { CategoryRow, ProductRow } from "@/data/stock";
 import { createProduct, updateProduct, upsertInventory } from "@/data/stock";
 import { ImageUploader } from "@/components/ImageUploader";
 import { uploadProductImage } from "@/lib/image";
+import { PriceHistory } from "./PriceHistory";
 
 interface ProductFormProps {
   open: boolean;
@@ -264,6 +265,10 @@ export function ProductForm({ open, onClose, product, categories, businessId, br
                 maxSize={200}
                 label="producto"
               />
+            </div>
+            <div>
+              <label style={labelStyle}>Histórico de precios</label>
+              <PriceHistory productId={product?.id ?? null} />
             </div>
           </div>
         </div>
