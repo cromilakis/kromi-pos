@@ -50,3 +50,16 @@ export async function savePdfBase64(base64: string, suggestedName: string): Prom
     URL.revokeObjectURL(url);
   }
 }
+
+/** Guarda texto (p.ej. CSV) reusando el flujo de `saveUrlAs`: diálogo nativo "Guardar como"
+ *  en Tauri, descarga por <a> en el navegador. No muestra mensajes: el guardado se confirma
+ *  con el propio diálogo. */
+export async function saveTextAs(text: string, suggestedName: string, mimeType = "text/csv;charset=utf-8;"): Promise<boolean> {
+  const blob = new Blob([text], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  try {
+    return await saveUrlAs(url, suggestedName);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}

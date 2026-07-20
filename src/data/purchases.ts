@@ -56,6 +56,38 @@ export function usePurchaseInvoices(businessId: string | undefined) {
   });
 }
 
+export interface PricePoint {
+  issued_at: string;
+  unit_cost: number;
+  supplier_id: string;
+  supplier_name: string;
+}
+
+/** Serie de precios de compra (unit_cost) de un producto a lo largo del tiempo, con su
+ *  proveedor. Une purchase_invoice_line con su factura (fecha + proveedor). Ordenada por fecha. */
+export function usePriceHistory(productId: string | undefined) {
+  return useQuery({
+    queryKey: ["price-history", productId],
+    enabled: !!productId,
+    queryFn: async (): Promise<PricePoint[]> => {
+      const { data, error } = await supabase
+        .from("purchase_invoice_line")
+        .select("unit_cost, invoice:invoice_id(issued_at, supplier_id, supplier:supplier_id(razon_social))")
+        .eq("product_id", productId!);
+      if (error) throw error;
+      return (data ?? [])
+        .map((r: any) => ({
+          issued_at: r.invoice?.issued_at,
+          unit_cost: r.unit_cost,
+          supplier_id: r.invoice?.supplier_id ?? "",
+          supplier_name: r.invoice?.supplier?.razon_social ?? "—",
+        }))
+        .filter((p: PricePoint) => !!p.issued_at)
+        .sort((a: PricePoint, b: PricePoint) => a.issued_at.localeCompare(b.issued_at));
+    },
+  });
+}
+
 export async function invoiceDownloadUrl(pdfPath: string): Promise<string> {
   // download: true agrega Content-Disposition: attachment a la URL firmada, forzando
   // la descarga en lugar de abrir el PDF (funciona aun siendo cross-origin).

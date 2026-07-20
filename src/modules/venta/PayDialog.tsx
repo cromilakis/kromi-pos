@@ -200,7 +200,7 @@ export function PayDialog({ open, total, busy, discounts, customerPoints = 0, po
                   value={discountId ?? ""}
                   onChange={(e) => setDiscountId(e.target.value || null)}
                   disabled={pointsRedeem > 0}
-                  className="w-full rounded-xl border border-[#E1E5EE] bg-white px-3 py-2.5 text-[13px] font-bold text-[#2A3A2E] outline-none disabled:opacity-50"
+                  className="h-[42px] w-full appearance-none rounded-xl border border-[#E1E5EE] bg-white px-3 text-[13px] font-bold text-[#2A3A2E] outline-none disabled:opacity-50"
                 >
                   <option value="">Sin descuento</option>
                   {discounts.map((d) => (

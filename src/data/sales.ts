@@ -3,10 +3,12 @@ import { supabase } from "@/lib/supabase";
 
 export interface SaleRow { id?: string; folio?: number; total: number; method?: string; sold_at?: string; dte_folio?: number | null; }
 
-export function summarizeSales(rows: { total: number }[]): { total: number; count: number; avg: number } {
+export function summarizeSales(rows: { total: number; method?: string }[]): { total: number; count: number; avg: number; card: number; cash: number } {
   const total = rows.reduce((s, r) => s + r.total, 0);
   const count = rows.length;
-  return { total, count, avg: count ? Math.round(total / count) : 0 };
+  const card = rows.filter((r) => r.method === "tarjeta").reduce((s, r) => s + r.total, 0);
+  const cash = rows.filter((r) => r.method === "efectivo").reduce((s, r) => s + r.total, 0);
+  return { total, count, avg: count ? Math.round(total / count) : 0, card, cash };
 }
 
 /** Ventas de HOY de la sucursal (rango del día local). */
@@ -17,7 +19,7 @@ export function useSalesToday(branchId: string | undefined) {
     queryFn: async () => {
       const start = new Date(); start.setHours(0, 0, 0, 0);
       const { data, error } = await supabase
-        .from("sale").select("total").eq("branch_id", branchId!).gte("sold_at", start.toISOString());
+        .from("sale").select("total,method").eq("branch_id", branchId!).gte("sold_at", start.toISOString());
       if (error) throw error;
       return summarizeSales(data ?? []);
     },
@@ -372,7 +374,7 @@ export async function buscarVentaPorFolio(branchId: string, folio: number): Prom
   };
 }
 
-export interface CriticalStockRow { name: string; stock: number; min_stock: number; }
+export interface CriticalStockRow { name: string; stock: number; min_stock: number; critical: boolean; }
 
 export function useCriticalStock(branchId: string | undefined) {
   return useQuery({
@@ -381,10 +383,10 @@ export function useCriticalStock(branchId: string | undefined) {
     queryFn: async (): Promise<CriticalStockRow[]> => {
       // inventory de la sucursal con stock <= min_stock del producto
       const { data, error } = await supabase
-        .from("inventory").select("stock, product:product_id(name,min_stock)").eq("branch_id", branchId!);
+        .from("inventory").select("stock, product:product_id(name,min_stock,critical)").eq("branch_id", branchId!);
       if (error) throw error;
       return (data ?? [])
-        .map((r: any) => ({ name: r.product?.name, stock: r.stock, min_stock: r.product?.min_stock ?? 0 }))
+        .map((r: any) => ({ name: r.product?.name, stock: r.stock, min_stock: r.product?.min_stock ?? 0, critical: !!r.product?.critical }))
         .filter((r: any) => r.min_stock > 0 && r.stock <= r.min_stock);
     },
   });

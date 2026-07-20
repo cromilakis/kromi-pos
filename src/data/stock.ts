@@ -9,7 +9,6 @@ export interface ProductRow {
   min_stock: number;
   critical: boolean;
   img_url: string | null;
-  supplier_id: string | null;
   internal_code: string | null;
   barcode: string | null;
   discount_pct: number;
@@ -50,7 +49,7 @@ export function useProductsWithStock(businessId?: string, branchId?: string) {
       const [{ data: products, error: e1 }, { data: inv, error: e2 }] = await Promise.all([
         supabase
           .from("product")
-          .select("id,name,category_id,price,min_stock,critical,img_url,supplier_id,internal_code,barcode,discount_pct,is_service")
+          .select("id,name,category_id,price,min_stock,critical,img_url,internal_code,barcode,discount_pct,is_service")
           .eq("business_id", businessId!)
           .is("deleted_at", null)
           .order("name"),
@@ -112,7 +111,6 @@ export async function createProduct(input: {
   min_stock: number;
   critical: boolean;
   img_url: string | null;
-  supplier_id: string | null;
   barcode: string | null;
   discount_pct: number;
   is_service: boolean;
@@ -131,7 +129,6 @@ export async function updateProduct(
     min_stock: number;
     critical: boolean;
     img_url: string | null;
-    supplier_id: string | null;
     barcode: string | null;
     discount_pct: number;
     is_service: boolean;

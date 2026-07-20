@@ -16,12 +16,18 @@ interface CartProps {
   onClear: () => void;
   onHold: () => void;
   onPay: () => void;
+  customerName: string | null;
+  heldCount: number;
+  onOpenHeld: () => void;
+  onPickCustomer: () => void;
+  onRemoveCustomer: () => void;
 }
 
 /** Panel del carrito de la venta actual: líneas, totales (neto/IVA) y acciones.
- *  En el encabezado: escoba (vaciar, con confirmación) y diskette (guardar/retener).
+ *  En el encabezado: escoba (vaciar, con confirmación), guardar (retener) y abrir guardadas.
+ *  Bajo el encabezado se muestra el cliente asignado a la venta actual (o el atajo para elegirlo).
  *  El descuento se configura a nivel de producto (Stock) y se muestra por línea. */
-export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay }: CartProps) {
+export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, customerName, heldCount, onOpenHeld, onPickCustomer, onRemoveCustomer }: CartProps) {
   const hasCart = lines.length > 0;
   const [confirmClear, setConfirmClear] = useState(false);
 
@@ -47,6 +53,16 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay }: Ca
               💾
             </button>
             <button
+              onClick={onOpenHeld}
+              title="Abrir ventas guardadas"
+              className="relative flex size-[32px] items-center justify-center rounded-[10px] border border-[#E1E5EE] bg-white text-[15px] text-[#5a6b7e]"
+            >
+              📂
+              {heldCount > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 flex min-w-[16px] items-center justify-center rounded-full bg-[var(--brand)] px-1 text-[10px] font-black text-white">{heldCount}</span>
+              )}
+            </button>
+            <button
               onClick={() => setConfirmClear(true)}
               disabled={!hasCart}
               title="Vaciar carrito"
@@ -56,6 +72,19 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay }: Ca
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 border-b border-[#E1E5EE] px-5 py-2.5">
+        {customerName ? (
+          <>
+            <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#0F2A1B]">{customerName}</span>
+            <button onClick={onRemoveCustomer} title="Quitar cliente" className="shrink-0 text-[#556A7C]">×</button>
+          </>
+        ) : (
+          <button onClick={onPickCustomer} className="text-[13px] font-bold" style={{ color: "var(--brand)" }}>
+            Cliente no registrado
+          </button>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto px-5 py-1.5">

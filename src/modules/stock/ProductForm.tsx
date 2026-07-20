@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
-import type { CategoryRow, ProductRow, SupplierRow } from "@/data/stock";
+import type { CategoryRow, ProductRow } from "@/data/stock";
 import { createProduct, updateProduct, upsertInventory } from "@/data/stock";
 import { ImageUploader } from "@/components/ImageUploader";
 import { uploadProductImage } from "@/lib/image";
+import { PriceHistory } from "./PriceHistory";
 
 interface ProductFormProps {
   open: boolean;
   onClose: () => void;
   product: ProductRow | null;
   categories: CategoryRow[];
-  suppliers: SupplierRow[];
   businessId: string;
   branchId: string;
   onSaved: () => void;
@@ -28,16 +28,29 @@ const inputStyle: React.CSSProperties = {
   outline: "none",
   boxSizing: "border-box",
 };
+// Select normalizado para igualar el alto/relleno de inputStyle: sin apariencia nativa,
+// alto explícito y flecha custom (SVG data-URI) alineada a la derecha.
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+  height: 44,
+  paddingRight: 38,
+  backgroundImage:
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23556A7C' stroke-width='1.6' stroke-linecap='round'/></svg>\")",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 14px center",
+};
 const labelStyle: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 700, color: "#556A7C", marginBottom: 6 };
 
-export function ProductForm({ open, onClose, product, categories, suppliers, businessId, branchId, onSaved }: ProductFormProps) {
+export function ProductForm({ open, onClose, product, categories, businessId, branchId, onSaved }: ProductFormProps) {
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
   const [minStock, setMinStock] = useState("");
   const [critical, setCritical] = useState(false);
-  const [supplierId, setSupplierId] = useState<string>("");
   const [imgUrl, setImgUrl] = useState("");
   const [barcode, setBarcode] = useState("");
   const [discountPct, setDiscountPct] = useState("");
@@ -53,7 +66,6 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
       setStock(String(product.stock));
       setMinStock(product.min_stock ? String(product.min_stock) : "");
       setCritical(product.critical);
-      setSupplierId(product.supplier_id ?? "");
       setImgUrl(product.img_url ?? "");
       setBarcode(product.barcode ?? "");
       setDiscountPct(product.discount_pct ? String(product.discount_pct) : "");
@@ -65,7 +77,6 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
       setStock("");
       setMinStock("");
       setCritical(false);
-      setSupplierId("");
       setImgUrl("");
       setBarcode("");
       setDiscountPct("");
@@ -102,7 +113,6 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           min_stock: minStockToSave,
           critical: criticalToSave,
           img_url: imgUrl.trim() || null,
-          supplier_id: supplierId || null,
           barcode: barcode.trim() || null,
           discount_pct: discountNum,
           is_service: isService,
@@ -117,7 +127,6 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
           min_stock: minStockToSave,
           critical: criticalToSave,
           img_url: imgUrl.trim() || null,
-          supplier_id: supplierId || null,
           barcode: barcode.trim() || null,
           discount_pct: discountNum,
           is_service: isService,
@@ -160,22 +169,11 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
             </div>
             <div>
               <label style={labelStyle}>Categoría</label>
-              <select style={inputStyle} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+              <select style={selectStyle} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
                 <option value="">Sin categoría</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label style={labelStyle}>Proveedor (opcional)</label>
-              <select style={inputStyle} value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-                <option value="">Sin proveedor</option>
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.razon_social}
                   </option>
                 ))}
               </select>
@@ -267,6 +265,10 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
                 maxSize={200}
                 label="producto"
               />
+            </div>
+            <div>
+              <label style={labelStyle}>Histórico de precios</label>
+              <PriceHistory productId={product?.id ?? null} />
             </div>
           </div>
         </div>

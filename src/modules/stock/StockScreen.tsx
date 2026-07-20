@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { notifyError } from "@/lib/errors";
+import { saveTextAs } from "@/lib/fileSave";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
-import { useCategories, useProductsWithStock, useSuppliers, softDeleteProduct, upsertInventory, updateProductsCategory } from "@/data/stock";
+import { useCategories, useProductsWithStock, softDeleteProduct, upsertInventory, updateProductsCategory } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
 import { fmtCLP } from "@/lib/money";
 import { ProductForm } from "./ProductForm";
@@ -25,15 +26,8 @@ function csvCell(v: string | number): string {
 
 function downloadCsv(filename: string, header: string[], rows: (string | number)[][]) {
   const body = rows.map((r) => r.map(csvCell).join(","));
-  const blob = new Blob(["﻿" + [header.join(",")].concat(body).join("\r\n")], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const text = "﻿" + [header.join(",")].concat(body).join("\r\n");
+  void saveTextAs(text, filename);
 }
 
 export function StockScreen() {
@@ -46,7 +40,6 @@ export function StockScreen() {
   const qc = useQueryClient();
   const { data: products, isLoading: loadingProducts } = useProductsWithStock(businessId, branchId);
   const { data: categories } = useCategories(businessId);
-  const { data: suppliers } = useSuppliers(businessId);
 
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string>("todas");
@@ -227,6 +220,16 @@ export function StockScreen() {
     downloadCsv(`stock-critico-${stamp}.csv`, header, rows);
   }
 
+  function exportStockCsv() {
+    const list = products ?? [];
+    if (!list.length) return;
+    const header = ["nombre", "cantidad", "precio"];
+    const rows = list.map((p) => [p.name, p.stock, p.price]);
+    const now = new Date();
+    const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    downloadCsv(`stock-${stamp}.csv`, header, rows);
+  }
+
   const showCriticalBanner = canManage && lowStockList.length > 0;
 
   if (view === "cargar") {
@@ -290,6 +293,13 @@ export function StockScreen() {
         </div>
         {canManage ? (
           <div className="flex gap-2.5">
+            <button
+              onClick={exportStockCsv}
+              title="Exportar todo el inventario a CSV (nombre, cantidad, precio)"
+              className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
+            >
+              Exportar stock (CSV)
+            </button>
             <button
               onClick={() => setView("categorias")}
               className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
@@ -357,7 +367,10 @@ export function StockScreen() {
                 <div key={p.id} className="flex items-center gap-[13px] border-b border-[#F0F2F7] py-[10px] last:border-0">
                   <span className="size-2.5 shrink-0 rounded-full" style={{ background: p.category_id ? catById.get(p.category_id)?.dot ?? "#556A7C" : "#5E6E7E" }} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[14px] font-bold text-[#0F2A1B]">{p.name}</div>
+                    <div className="flex items-center">
+                      <span className="truncate text-[14px] font-bold text-[#0F2A1B]">{p.name}</span>
+                      {p.critical && <span className="ml-1.5 rounded-full bg-[#FBF1E0] px-1.5 py-0.5 text-[10px] font-black text-[#9A6F12]">★ Crítico</span>}
+                    </div>
                     <div className="text-xs text-[#5E6E7E]">{p.category_id ? catById.get(p.category_id)?.label : "Sin categoría"}</div>
                   </div>
                   <span className="whitespace-nowrap text-[12.5px] font-bold text-[#9a2533]">Faltan {Math.max(0, p.min_stock - p.stock)}</span>
@@ -633,7 +646,6 @@ export function StockScreen() {
           onClose={() => setFormOpen(false)}
           product={editing}
           categories={allCategories}
-          suppliers={suppliers ?? []}
           businessId={businessId ?? ""}
           branchId={branchId ?? ""}
           onSaved={refetchAll}
