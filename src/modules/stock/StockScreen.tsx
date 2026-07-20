@@ -40,7 +40,8 @@ export function StockScreen() {
   const qc = useQueryClient();
   const { data: products, isLoading: loadingProducts } = useProductsWithStock(businessId, branchId);
   const { data: categories } = useCategories(businessId);
-  const { data: suppliers } = useSuppliers(businessId);
+  // Se mantiene para la Task 7 (histórico de precios por proveedor); ya no lo usa ProductForm.
+  useSuppliers(businessId);
 
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string>("todas");
@@ -647,7 +648,6 @@ export function StockScreen() {
           onClose={() => setFormOpen(false)}
           product={editing}
           categories={allCategories}
-          suppliers={suppliers ?? []}
           businessId={businessId ?? ""}
           branchId={branchId ?? ""}
           onSaved={refetchAll}
