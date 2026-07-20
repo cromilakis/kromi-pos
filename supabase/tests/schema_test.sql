@@ -138,5 +138,15 @@ do $$ begin
   end;
 end $$;
 
+-- customer: columnas opcionales de empresa (lote registro-empresa)
+do $$
+begin
+  if (select count(*) from information_schema.columns
+        where table_name = 'customer'
+          and column_name in ('ciudad','direccion_despacho','comuna_despacho','contacto','observaciones')) <> 5 then
+    raise exception 'faltan columnas opcionales de empresa en customer';
+  end if;
+end $$;
+
 rollback;
 \echo 'schema_test OK'
