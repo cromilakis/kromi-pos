@@ -585,9 +585,12 @@ git commit -m "feat(venta): permitir crear empresa desde el selector de cliente 
 **Interfaces:**
 - Consumes: columnas de Task 1 en `customer`.
 
-- [ ] **Step 1: Verificar los nombres de campos opcionales contra el Postman de SimpleFactura**
+- [ ] **Step 1: Nombres de campos confirmados (gap cerrado)**
 
-Abrir el Postman/documentación de SimpleFactura (factura afecta, DTE 33) y confirmar, dentro de `Documento.Encabezado.Receptor`, los nombres exactos: `CiudadRecep` (confirmado, estándar SII), `Contacto`, `CorreoRecep`; y para despacho el bloque `Transporte` (`DirDest`/`CmnaDest`/`CiudadDest`, más `IndTraslado` si la API lo exige). Anotar cualquier diferencia respecto a los nombres usados abajo y ajustar el código del Step 3 en consecuencia. Si algún opcional no se puede confirmar, dejarlo fuera (no enviar el campo) y anotarlo en el commit.
+Verificado contra el SDK oficial de SimpleFactura (`SDKSimpleFacturaPHP`, `src/Models/Facturacion/`). Nombres exactos a usar:
+- `Receptor`: `CiudadRecep` (ciudad), `Contacto` (teléfono/email del contacto), `CorreoRecep` (correo). Todos opcionales.
+- `Transporte`: `DirDest`, `CmnaDest`, `CiudadDest`. **Va dentro de `Encabezado`** (junto a IdDoc/Emisor/Receptor/Totales), NO bajo `Documento`.
+- `IdDoc.FmaPago` ya existe (se mantiene en 1).
 
 - [ ] **Step 2: Ampliar el `select` del customer y su tipo**
 
@@ -622,19 +625,19 @@ Reemplazar el objeto `receptor` de la rama factura por:
       };
 ```
 
-Si hay dirección de despacho, agregar el bloque `Transporte` al `Documento` (fuera del `Encabezado`), después de confirmar su forma en el Step 1:
+Para la dirección de despacho, agregar el bloque `Transporte` **dentro del `Encabezado`** del `body` (junto a IdDoc/Emisor/Receptor/Totales), solo cuando haya dirección de despacho. En el objeto literal `body.Documento.Encabezado`, agregar como última clave:
 
 ```ts
-      if (customer!.direccion_despacho) {
-        (body.Documento as Record<string, unknown>).Transporte = {
-          DirDest: customer!.direccion_despacho,
-          ...(customer!.comuna_despacho ? { CmnaDest: customer!.comuna_despacho } : {}),
-          ...(customer!.ciudad ? { CiudadDest: customer!.ciudad } : {}),
-        };
-      }
+          ...(esFactura && customer!.direccion_despacho
+            ? {
+                Transporte: {
+                  DirDest: customer!.direccion_despacho,
+                  ...(customer!.comuna_despacho ? { CmnaDest: customer!.comuna_despacho } : {}),
+                  ...(customer!.ciudad ? { CiudadDest: customer!.ciudad } : {}),
+                },
+              }
+            : {}),
 ```
-
-(Colocar este bloque después de construir `body`, antes del `fetch` de emisión.)
 
 - [ ] **Step 4: Verificar que la función parsea sin error de sintaxis**
 
