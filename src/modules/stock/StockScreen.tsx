@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { notifyError } from "@/lib/errors";
+import { saveTextAs } from "@/lib/fileSave";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -25,15 +26,8 @@ function csvCell(v: string | number): string {
 
 function downloadCsv(filename: string, header: string[], rows: (string | number)[][]) {
   const body = rows.map((r) => r.map(csvCell).join(","));
-  const blob = new Blob(["﻿" + [header.join(",")].concat(body).join("\r\n")], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const text = "﻿" + [header.join(",")].concat(body).join("\r\n");
+  void saveTextAs(text, filename);
 }
 
 export function StockScreen() {
@@ -227,6 +221,16 @@ export function StockScreen() {
     downloadCsv(`stock-critico-${stamp}.csv`, header, rows);
   }
 
+  function exportStockCsv() {
+    const list = products ?? [];
+    if (!list.length) return;
+    const header = ["nombre", "cantidad", "precio"];
+    const rows = list.map((p) => [p.name, p.stock, p.price]);
+    const now = new Date();
+    const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    downloadCsv(`stock-${stamp}.csv`, header, rows);
+  }
+
   const showCriticalBanner = canManage && lowStockList.length > 0;
 
   if (view === "cargar") {
@@ -290,6 +294,13 @@ export function StockScreen() {
         </div>
         {canManage ? (
           <div className="flex gap-2.5">
+            <button
+              onClick={exportStockCsv}
+              title="Exportar todo el inventario a CSV (nombre, cantidad, precio)"
+              className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
+            >
+              Exportar stock (CSV)
+            </button>
             <button
               onClick={() => setView("categorias")}
               className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
