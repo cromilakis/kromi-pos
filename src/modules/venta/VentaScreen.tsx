@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Bookmark, Lock, Grid3x3, ScanLine, Trash2, FileText } from "lucide-react";
+import { Lock, Grid3x3, ScanLine, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
@@ -572,24 +572,6 @@ export function VentaScreen() {
               <ScanLine className="size-4" strokeWidth={1.9} /> Lectura
             </button>
           </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setPickerOpen(true)}
-              title="Cliente de la venta"
-              className="rounded-xl border border-[#E1E5EE] bg-white px-3.5 py-2.5 text-[13px] font-bold text-[#2A3A2E]"
-            >
-              {selectedCustomer ? selectedCustomer.name : "Sin cliente"}
-            </button>
-            {selectedCustomer && (
-              <button onClick={() => setCustomerId(null)} title="Quitar cliente" className="flex size-[34px] items-center justify-center rounded-xl border border-[#E1E5EE] bg-white text-[#556A7C]">×</button>
-            )}
-          </div>
-          <button
-            onClick={() => setHeldOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
-          >
-            <Bookmark className="size-4" strokeWidth={1.9} /> Guardadas{heldSales && heldSales.length > 0 ? ` (${heldSales.length})` : ""}
-          </button>
           <button
             onClick={() => setBoletasOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-xl border border-[#E1E5EE] bg-white px-4 py-2.5 text-[13px] font-bold text-[#5a6b7e]"
@@ -778,7 +760,20 @@ export function VentaScreen() {
       </div>
 
       {mode === "catalogo" && (
-        <Cart lines={cartLines} totals={totals} onInc={incCart} onDec={decCart} onClear={clearCart} onHold={handleHold} onPay={() => setPayOpen(true)} />
+        <Cart
+          lines={cartLines}
+          totals={totals}
+          onInc={incCart}
+          onDec={decCart}
+          onClear={clearCart}
+          onHold={handleHold}
+          onPay={() => setPayOpen(true)}
+          customerName={selectedCustomer?.name ?? null}
+          heldCount={heldSales?.length ?? 0}
+          onOpenHeld={() => setHeldOpen(true)}
+          onPickCustomer={() => setPickerOpen(true)}
+          onRemoveCustomer={() => setCustomerId(null)}
+        />
       )}
 
       <PayDialog
