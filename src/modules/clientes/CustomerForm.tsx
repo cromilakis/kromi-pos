@@ -3,31 +3,6 @@ import { notifyError } from "@/lib/errors";
 import { toast } from "sonner";
 import type { CustomerRow } from "@/data/customers";
 import { createCustomer, updateCustomer } from "@/data/customers";
-import { normRut } from "@/lib/rut";
-
-/** Calcula el dígito verificador (0-9 o 'k') para el cuerpo numérico de un RUT. */
-function computeRutDv(body: string): string {
-  let sum = 0;
-  let mul = 2;
-  for (let i = body.length - 1; i >= 0; i--) {
-    sum += parseInt(body[i], 10) * mul;
-    mul = mul === 7 ? 2 : mul + 1;
-  }
-  const res = 11 - (sum % 11);
-  if (res === 11) return "0";
-  if (res === 10) return "k";
-  return String(res);
-}
-
-/** Valida un RUT chileno usando la normalización de rut.ts + dígito verificador. */
-function isValidRut(rut: string): boolean {
-  const normalized = normRut(rut);
-  if (normalized.length < 2) return false;
-  const body = normalized.slice(0, -1);
-  const dv = normalized.slice(-1);
-  if (!/^\d+$/.test(body)) return false;
-  return computeRutDv(body) === dv;
-}
 
 interface CustomerFormProps {
   open: boolean;
@@ -59,12 +34,6 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [isCompany, setIsCompany] = useState(false);
-  const [rut, setRut] = useState("");
-  const [razonSocial, setRazonSocial] = useState("");
-  const [giro, setGiro] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [comuna, setComuna] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -73,22 +42,10 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
       setName(customer.name);
       setEmail(customer.email ?? "");
       setPhone(phoneLocal8(customer.phone));
-      setIsCompany(customer.is_company);
-      setRut(customer.rut ?? "");
-      setRazonSocial(customer.razon_social ?? "");
-      setGiro(customer.giro ?? "");
-      setDireccion(customer.direccion ?? "");
-      setComuna(customer.comuna ?? "");
     } else {
       setName("");
       setEmail("");
       setPhone("");
-      setIsCompany(false);
-      setRut("");
-      setRazonSocial("");
-      setGiro("");
-      setDireccion("");
-      setComuna("");
     }
   }, [open, customer]);
 
@@ -100,47 +57,11 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
       toast.error("El nombre del cliente es obligatorio.");
       return;
     }
-
-    // Teléfono opcional; si se ingresa debe tener los 8 dígitos que van después de +56 9.
     if (phone && phone.length !== 8) {
       toast.error("El teléfono debe tener 8 dígitos (después de +56 9).");
       return;
     }
     const phoneToSave = phone ? `+569${phone}` : null;
-
-    const trimmedRazonSocial = razonSocial.trim();
-    const trimmedGiro = giro.trim();
-    const trimmedDireccion = direccion.trim();
-    const trimmedComuna = comuna.trim();
-
-    if (isCompany) {
-      if (!isValidRut(rut)) {
-        toast.error("El RUT de la empresa no es válido.");
-        return;
-      }
-      if (!trimmedRazonSocial || !trimmedGiro || !trimmedDireccion || !trimmedComuna) {
-        toast.error("Razón social, giro, dirección y comuna son obligatorios para facturar a empresa.");
-        return;
-      }
-    }
-
-    const companyFields = isCompany
-      ? {
-          is_company: true,
-          rut: normRut(rut),
-          razon_social: trimmedRazonSocial,
-          giro: trimmedGiro,
-          direccion: trimmedDireccion,
-          comuna: trimmedComuna,
-        }
-      : {
-          is_company: false,
-          rut: null,
-          razon_social: null,
-          giro: null,
-          direccion: null,
-          comuna: null,
-        };
 
     setBusy(true);
     try {
@@ -151,7 +72,7 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
           email: email.trim() || null,
           phone: phoneToSave,
           created_by: createdBy,
-          ...companyFields,
+          is_company: false,
         });
         toast.success("Cliente creado.");
         onSaved(created);
@@ -160,7 +81,7 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
           name: trimmed,
           email: email.trim() || null,
           phone: phoneToSave,
-          ...companyFields,
+          is_company: false,
         });
         toast.success("Cliente actualizado.");
         onSaved();
@@ -220,63 +141,6 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
               />
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, paddingTop: 4 }}>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: "#2A3A2E" }}>Empresa (factura)</div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isCompany}
-              onClick={() => setIsCompany((v) => !v)}
-              style={{
-                position: "relative",
-                height: 26,
-                width: 46,
-                flex: "none",
-                border: 0,
-                borderRadius: 999,
-                cursor: "pointer",
-                background: isCompany ? "var(--brand)" : "#CBD5E1",
-                transition: "background-color .15s",
-              }}
-            >
-              <span
-                style={{
-                  position: "absolute",
-                  top: 3,
-                  left: isCompany ? 23 : 3,
-                  width: 20,
-                  height: 20,
-                  borderRadius: "50%",
-                  background: "#fff",
-                  transition: "left .15s",
-                }}
-              />
-            </button>
-          </div>
-          {isCompany && (
-            <>
-              <div>
-                <label style={labelStyle}>RUT</label>
-                <input style={inputStyle} value={rut} onChange={(e) => setRut(e.target.value)} placeholder="Ej. 76.123.456-7" />
-              </div>
-              <div>
-                <label style={labelStyle}>Razón social</label>
-                <input style={inputStyle} value={razonSocial} onChange={(e) => setRazonSocial(e.target.value)} placeholder="Razón social de la empresa" />
-              </div>
-              <div>
-                <label style={labelStyle}>Giro</label>
-                <input style={inputStyle} value={giro} onChange={(e) => setGiro(e.target.value)} placeholder="Giro comercial" />
-              </div>
-              <div>
-                <label style={labelStyle}>Dirección</label>
-                <input style={inputStyle} value={direccion} onChange={(e) => setDireccion(e.target.value)} placeholder="Dirección" />
-              </div>
-              <div>
-                <label style={labelStyle}>Comuna</label>
-                <input style={inputStyle} value={comuna} onChange={(e) => setComuna(e.target.value)} placeholder="Comuna" />
-              </div>
-            </>
-          )}
         </div>
         <div style={{ padding: "16px 24px", borderTop: "1px solid #E1E5EE", background: "#FAFBFD", display: "flex", justifyContent: "flex-end", gap: 10 }}>
           <button
