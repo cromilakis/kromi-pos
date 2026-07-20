@@ -1,4 +1,93 @@
 -- El proveedor deja de ser un atributo del producto: pasa a ser solo un filtro del
--- histórico de precios (que se deriva de las facturas de compra). La columna estaba
--- muerta (solo la usaba el formulario), así que se elimina.
+-- histórico de precios (que se deriva de las facturas de compra). Se elimina la columna
+-- product.supplier_id y se actualiza receive_invoice para no referenciarla:
+--   * el producto nuevo ya no guarda supplier_id (el vínculo proveedor-producto vive en
+--     supplier_product);
+--   * el código interno de respaldo se numera por negocio en vez de por proveedor.
+
+create or replace function public.receive_invoice(
+  p_branch uuid, p_supplier jsonb, p_doc jsonb, p_lines jsonb, p_pdf_path text
+)
+returns public.purchase_invoice
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  v_business uuid;
+  v_supplier uuid;
+  v_seq      int;
+  v_inv      public.purchase_invoice;
+  v_pid      uuid;
+  v_code     text;
+  v_scode    text;
+  ln         jsonb;
+begin
+  select business_id into v_business from public.branch where id = p_branch;
+  if v_business is null then raise exception 'la sucursal no existe'; end if;
+  if auth.uid() is not null and v_business is distinct from public.current_business_id() and not public.is_kromi() then
+    raise exception 'no autorizado para operar en este negocio';
+  end if;
+
+  perform pg_advisory_xact_lock(hashtext('supplier_seq:' || v_business::text));
+
+  v_supplier := nullif(p_supplier->>'id','')::uuid;
+  if v_supplier is null then
+    select coalesce(max(seq), 0) + 1 into v_seq from public.supplier where business_id = v_business;
+    insert into public.supplier (business_id, seq, razon_social, rut, giro, email, phone, address)
+    values (v_business, v_seq, p_supplier->>'razon_social', p_supplier->>'rut',
+            p_supplier->>'giro', p_supplier->>'email', p_supplier->>'phone', p_supplier->>'address')
+    returning id into v_supplier;
+  else
+    select seq into v_seq from public.supplier where id = v_supplier;
+    if v_seq is null then
+      select coalesce(max(seq), 0) + 1 into v_seq from public.supplier where business_id = v_business;
+      update public.supplier set seq = v_seq where id = v_supplier;
+    end if;
+  end if;
+
+  insert into public.purchase_invoice (business_id, supplier_id, branch_id, doc_type, folio, issued_at, neto, iva, total, pdf_path, created_by)
+  values (v_business, v_supplier, p_branch, p_doc->>'doc_type', p_doc->>'folio',
+          nullif(p_doc->>'issued_at','')::date, coalesce((p_doc->>'neto')::int,0),
+          coalesce((p_doc->>'iva')::int,0), coalesce((p_doc->>'total')::int,0), p_pdf_path, auth.uid())
+  returning * into v_inv;
+
+  for ln in select * from jsonb_array_elements(p_lines) loop
+    v_scode := nullif(ln->>'supplier_code','');
+    v_pid := nullif(ln->>'product_id','')::uuid;
+
+    if v_pid is null and v_scode is not null then
+      select product_id into v_pid from public.supplier_product
+        where supplier_id = v_supplier and supplier_code = v_scode;
+    end if;
+
+    if v_pid is null and (ln->'new_product') is not null then
+      v_code := lpad(v_seq::text, 3, '0') || '-' ||
+                coalesce(v_scode,
+                         'S' || (select count(*) + 1 from public.product where business_id = v_business)::text);
+      insert into public.product (business_id, name, category_id, price, internal_code)
+      values (v_business, ln->'new_product'->>'name',
+              nullif(ln->'new_product'->>'category_id','')::uuid, 0, v_code)
+      returning id into v_pid;
+    end if;
+    if v_pid is null then raise exception 'línea sin producto (product_id o new_product requerido)'; end if;
+
+    if v_scode is not null then
+      insert into public.supplier_product (business_id, supplier_id, supplier_code, product_id, last_cost)
+      values (v_business, v_supplier, v_scode, v_pid, (ln->>'unit_cost')::int)
+      on conflict (supplier_id, supplier_code)
+        do update set product_id = excluded.product_id, last_cost = excluded.last_cost, updated_at = now();
+    end if;
+
+    insert into public.purchase_invoice_line (invoice_id, product_id, supplier_code, description, qty, unit_cost, line_total)
+    values (v_inv.id, v_pid, ln->>'supplier_code', ln->>'description',
+            (ln->>'qty')::int, (ln->>'unit_cost')::int, coalesce((ln->>'line_total')::int, 0));
+
+    insert into public.inventory (product_id, branch_id, stock)
+    values (v_pid, p_branch, (ln->>'qty')::int)
+    on conflict (product_id, branch_id) do update set stock = public.inventory.stock + (ln->>'qty')::int;
+  end loop;
+
+  return v_inv;
+end;
+$$;
+
 alter table public.product drop column if exists supplier_id;

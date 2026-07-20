@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/auth/AuthProvider";
 import { useWork } from "@/session/WorkContext";
-import { useCategories, useProductsWithStock, useSuppliers, softDeleteProduct, upsertInventory, updateProductsCategory } from "@/data/stock";
+import { useCategories, useProductsWithStock, softDeleteProduct, upsertInventory, updateProductsCategory } from "@/data/stock";
 import type { ProductRow } from "@/data/stock";
 import { fmtCLP } from "@/lib/money";
 import { ProductForm } from "./ProductForm";
@@ -40,8 +40,6 @@ export function StockScreen() {
   const qc = useQueryClient();
   const { data: products, isLoading: loadingProducts } = useProductsWithStock(businessId, branchId);
   const { data: categories } = useCategories(businessId);
-  // Se mantiene para la Task 7 (histórico de precios por proveedor); ya no lo usa ProductForm.
-  useSuppliers(businessId);
 
   const [query, setQuery] = useState("");
   const [catFilter, setCatFilter] = useState<string>("todas");

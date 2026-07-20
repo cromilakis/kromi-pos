@@ -124,7 +124,7 @@ begin
     'bb000000-0000-0000-0000-000000000001/dup.pdf');
 
   -- Un solo producto creado para ese proveedor (no dos con el mismo internal_code)
-  select count(*) into v_n from public.product p join public.supplier s on s.id=p.supplier_id where s.rut='76.555.444-2';
+  select count(distinct sp.product_id) into v_n from public.supplier_product sp join public.supplier s on s.id=sp.supplier_id where s.rut='76.555.444-2';
   if v_n <> 1 then raise exception 'esperaba 1 producto creado para código repetido, got %', v_n; end if;
   -- Stock sumado: 2 + 4 = 6
   select product_id into v_pid from public.supplier_product where supplier_code='DUP1';
