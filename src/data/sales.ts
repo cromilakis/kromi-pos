@@ -374,7 +374,7 @@ export async function buscarVentaPorFolio(branchId: string, folio: number): Prom
   };
 }
 
-export interface CriticalStockRow { name: string; stock: number; min_stock: number; }
+export interface CriticalStockRow { name: string; stock: number; min_stock: number; critical: boolean; }
 
 export function useCriticalStock(branchId: string | undefined) {
   return useQuery({
@@ -383,10 +383,10 @@ export function useCriticalStock(branchId: string | undefined) {
     queryFn: async (): Promise<CriticalStockRow[]> => {
       // inventory de la sucursal con stock <= min_stock del producto
       const { data, error } = await supabase
-        .from("inventory").select("stock, product:product_id(name,min_stock)").eq("branch_id", branchId!);
+        .from("inventory").select("stock, product:product_id(name,min_stock,critical)").eq("branch_id", branchId!);
       if (error) throw error;
       return (data ?? [])
-        .map((r: any) => ({ name: r.product?.name, stock: r.stock, min_stock: r.product?.min_stock ?? 0 }))
+        .map((r: any) => ({ name: r.product?.name, stock: r.stock, min_stock: r.product?.min_stock ?? 0, critical: !!r.product?.critical }))
         .filter((r: any) => r.min_stock > 0 && r.stock <= r.min_stock);
     },
   });

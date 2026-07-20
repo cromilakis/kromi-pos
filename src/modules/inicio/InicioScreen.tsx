@@ -134,7 +134,12 @@ export function InicioScreen() {
                         <PackageSearch className="size-[18px]" strokeWidth={1.8} />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="truncate text-[14px] font-bold text-[#0F2A1B]">{r.name}</div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-[14px] font-bold text-[#0F2A1B]">{r.name}</span>
+                          {r.critical && (
+                            <span className="shrink-0 rounded-full bg-[#FBF1E0] px-1.5 py-0.5 text-[10px] font-black text-[#9A6F12]">★ Crítico</span>
+                          )}
+                        </div>
                       </div>
                       <span className="min-w-[74px] whitespace-nowrap text-right text-[14px] font-black text-[#0F2A1B]">
                         {r.stock} / {r.min_stock}

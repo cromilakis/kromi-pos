@@ -357,7 +357,10 @@ export function StockScreen() {
                 <div key={p.id} className="flex items-center gap-[13px] border-b border-[#F0F2F7] py-[10px] last:border-0">
                   <span className="size-2.5 shrink-0 rounded-full" style={{ background: p.category_id ? catById.get(p.category_id)?.dot ?? "#556A7C" : "#5E6E7E" }} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[14px] font-bold text-[#0F2A1B]">{p.name}</div>
+                    <div className="flex items-center">
+                      <span className="truncate text-[14px] font-bold text-[#0F2A1B]">{p.name}</span>
+                      {p.critical && <span className="ml-1.5 rounded-full bg-[#FBF1E0] px-1.5 py-0.5 text-[10px] font-black text-[#9A6F12]">★ Crítico</span>}
+                    </div>
                     <div className="text-xs text-[#5E6E7E]">{p.category_id ? catById.get(p.category_id)?.label : "Sin categoría"}</div>
                   </div>
                   <span className="whitespace-nowrap text-[12.5px] font-bold text-[#9a2533]">Faltan {Math.max(0, p.min_stock - p.stock)}</span>
