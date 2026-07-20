@@ -28,6 +28,20 @@ const inputStyle: React.CSSProperties = {
   outline: "none",
   boxSizing: "border-box",
 };
+// Select normalizado para igualar el alto/relleno de inputStyle: sin apariencia nativa,
+// alto explícito y flecha custom (SVG data-URI) alineada a la derecha.
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+  height: 44,
+  paddingRight: 38,
+  backgroundImage:
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%23556A7C' stroke-width='1.6' stroke-linecap='round'/></svg>\")",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 14px center",
+};
 const labelStyle: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 700, color: "#556A7C", marginBottom: 6 };
 
 export function ProductForm({ open, onClose, product, categories, suppliers, businessId, branchId, onSaved }: ProductFormProps) {
@@ -160,7 +174,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
             </div>
             <div>
               <label style={labelStyle}>Categoría</label>
-              <select style={inputStyle} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+              <select style={selectStyle} value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
                 <option value="">Sin categoría</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -171,7 +185,7 @@ export function ProductForm({ open, onClose, product, categories, suppliers, bus
             </div>
             <div>
               <label style={labelStyle}>Proveedor (opcional)</label>
-              <select style={inputStyle} value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+              <select style={selectStyle} value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
                 <option value="">Sin proveedor</option>
                 {suppliers.map((s) => (
                   <option key={s.id} value={s.id}>
