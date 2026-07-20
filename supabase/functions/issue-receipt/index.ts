@@ -88,12 +88,23 @@ Deno.serve(async (req) => {
     const tipoDte = esFactura ? 33 : 39;
 
     // Factura: requiere el cliente (empresa) para el Receptor real.
-    let customer: { rut: string | null; razon_social: string | null; giro: string | null; direccion: string | null; comuna: string | null } | null = null;
+    let customer: {
+      rut: string | null;
+      razon_social: string | null;
+      giro: string | null;
+      direccion: string | null;
+      comuna: string | null;
+      ciudad: string | null;
+      direccion_despacho: string | null;
+      comuna_despacho: string | null;
+      contacto: string | null;
+      email: string | null;
+    } | null = null;
     if (esFactura) {
       if (!sale.customer_id) return json({ status: "error", message: "la factura requiere un cliente" }, 400);
       const { data: cust, error: e2 } = await admin
         .from("customer")
-        .select("rut,razon_social,giro,direccion,comuna")
+        .select("rut,razon_social,giro,direccion,comuna,ciudad,direccion_despacho,comuna_despacho,contacto,email")
         .eq("id", sale.customer_id).single();
       if (e2 || !cust) return json({ status: "error", message: "cliente no encontrado" }, 404);
       if (!cust.razon_social || !cust.giro || !cust.direccion || !cust.comuna) {
@@ -127,6 +138,9 @@ Deno.serve(async (req) => {
         GiroRecep: customer!.giro,
         DirRecep: customer!.direccion,
         CmnaRecep: customer!.comuna,
+        ...(customer!.ciudad ? { CiudadRecep: customer!.ciudad } : {}),
+        ...(customer!.contacto ? { Contacto: customer!.contacto } : {}),
+        ...(customer!.email ? { CorreoRecep: customer!.email } : {}),
       };
       totales = { MntNeto: String(mntNeto), IVA: String(ivaFactura), MntTotal: String(mntNeto + ivaFactura) };
     } else {
@@ -146,6 +160,15 @@ Deno.serve(async (req) => {
           Emisor: emisor,
           Receptor: receptor,
           Totales: totales,
+          ...(esFactura && customer!.direccion_despacho
+            ? {
+                Transporte: {
+                  DirDest: customer!.direccion_despacho,
+                  ...(customer!.comuna_despacho ? { CmnaDest: customer!.comuna_despacho } : {}),
+                  ...(customer!.ciudad ? { CiudadDest: customer!.ciudad } : {}),
+                },
+              }
+            : {}),
         },
         Detalle: detalle,
       },
