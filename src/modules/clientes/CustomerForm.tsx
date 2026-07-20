@@ -51,6 +51,10 @@ const inputStyle: React.CSSProperties = {
 };
 const labelStyle: React.CSSProperties = { display: "block", fontSize: 12, fontWeight: 700, color: "#556A7C", marginBottom: 6 };
 
+const onlyDigits = (v: string) => v.replace(/\D/g, "");
+/** Extrae los últimos 8 dígitos de un teléfono guardado (ej. "+56912345678" → "12345678"). */
+const phoneLocal8 = (v: string | null | undefined) => onlyDigits(v ?? "").slice(-8);
+
 export function CustomerForm({ open, onClose, customer, businessId, createdBy, onSaved }: CustomerFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -68,7 +72,7 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
     if (customer) {
       setName(customer.name);
       setEmail(customer.email ?? "");
-      setPhone(customer.phone ?? "");
+      setPhone(phoneLocal8(customer.phone));
       setIsCompany(customer.is_company);
       setRut(customer.rut ?? "");
       setRazonSocial(customer.razon_social ?? "");
@@ -96,6 +100,13 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
       toast.error("El nombre del cliente es obligatorio.");
       return;
     }
+
+    // Teléfono opcional; si se ingresa debe tener los 8 dígitos que van después de +56 9.
+    if (phone && phone.length !== 8) {
+      toast.error("El teléfono debe tener 8 dígitos (después de +56 9).");
+      return;
+    }
+    const phoneToSave = phone ? `+569${phone}` : null;
 
     const trimmedRazonSocial = razonSocial.trim();
     const trimmedGiro = giro.trim();
@@ -138,7 +149,7 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
           business_id: businessId,
           name: trimmed,
           email: email.trim() || null,
-          phone: phone.trim() || null,
+          phone: phoneToSave,
           created_by: createdBy,
           ...companyFields,
         });
@@ -148,7 +159,7 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
         await updateCustomer(customer.id, {
           name: trimmed,
           email: email.trim() || null,
-          phone: phone.trim() || null,
+          phone: phoneToSave,
           ...companyFields,
         });
         toast.success("Cliente actualizado.");
@@ -198,7 +209,16 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
           </div>
           <div>
             <label style={labelStyle}>Teléfono</label>
-            <input style={inputStyle} value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" placeholder="+56 9 1234 5678" />
+            <div style={{ display: "flex", alignItems: "stretch", border: "1px solid #E1E5EE", borderRadius: 11, overflow: "hidden", background: "#fff" }}>
+              <span style={{ display: "flex", alignItems: "center", padding: "0 12px", fontSize: 14, fontWeight: 700, color: "#556A7C", background: "#F6F7FB", borderRight: "1px solid #E1E5EE", whiteSpace: "nowrap" }}>+56 9</span>
+              <input
+                style={{ ...inputStyle, border: 0, borderRadius: 0 }}
+                value={phone}
+                onChange={(e) => setPhone(onlyDigits(e.target.value).slice(0, 8))}
+                inputMode="numeric"
+                placeholder="1234 5678"
+              />
+            </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, paddingTop: 4 }}>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: "#2A3A2E" }}>Empresa (factura)</div>
