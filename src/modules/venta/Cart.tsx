@@ -81,8 +81,14 @@ export function Cart({ lines, totals, onInc, onDec, onClear, onHold, onPay, cust
             <button onClick={onRemoveCustomer} title="Quitar cliente" className="shrink-0 text-[#556A7C]">×</button>
           </>
         ) : (
-          <button onClick={onPickCustomer} className="text-[13px] font-bold" style={{ color: "var(--brand)" }}>
-            Cliente no registrado
+          <button
+            onClick={onPickCustomer}
+            title="Registrar o elegir cliente"
+            className="flex w-full cursor-pointer items-center justify-between gap-2 text-[13px] font-bold"
+            style={{ color: "var(--brand)" }}
+          >
+            <span>Cliente no registrado</span>
+            <span className="flex size-[22px] shrink-0 items-center justify-center rounded-lg bg-[#E6F7EE] text-[16px] leading-none">+</span>
           </button>
         )}
       </div>
