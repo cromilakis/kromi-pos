@@ -7,6 +7,7 @@ import { useCustomers, filterCustomers, softDeleteCustomer } from "@/data/custom
 import type { CustomerRow } from "@/data/customers";
 import { fmtCLP } from "@/lib/money";
 import { CustomerForm } from "./CustomerForm";
+import { EmpresaForm } from "./EmpresaForm";
 
 function initials(name: string): string {
   return name
@@ -27,6 +28,7 @@ export function ClientesScreen() {
 
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
+  const [empresaOpen, setEmpresaOpen] = useState(false);
   const [editing, setEditing] = useState<CustomerRow | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -59,15 +61,20 @@ export function ClientesScreen() {
           </div>
           <h2 className="m-0 text-[26px] font-black tracking-[-.01em] text-[#0F2A1B]">Clientes</h2>
         </div>
-        <button
-          onClick={() => {
-            setEditing(null);
-            setFormOpen(true);
-          }}
-          className="flex items-center gap-2 rounded-xl border border-[#A7E3C0] bg-[#E6F7EE] px-[18px] py-3 text-sm font-bold text-[#0a6e36]"
-        >
-          + Nuevo cliente
-        </button>
+        <div className="flex gap-2.5">
+          <button
+            onClick={() => { setEditing(null); setEmpresaOpen(true); }}
+            className="flex items-center gap-2 rounded-xl border border-[#E1E5EE] bg-white px-[18px] py-3 text-sm font-bold text-[#2A3A2E]"
+          >
+            + Nueva empresa
+          </button>
+          <button
+            onClick={() => { setEditing(null); setFormOpen(true); }}
+            className="flex items-center gap-2 rounded-xl border border-[#A7E3C0] bg-[#E6F7EE] px-[18px] py-3 text-sm font-bold text-[#0a6e36]"
+          >
+            + Nuevo cliente
+          </button>
+        </div>
       </div>
 
       <div className="mb-3.5 flex items-center gap-3">
@@ -127,7 +134,8 @@ export function ClientesScreen() {
                 <button
                   onClick={() => {
                     setEditing(c);
-                    setFormOpen(true);
+                    if (c.is_company) setEmpresaOpen(true);
+                    else setFormOpen(true);
                   }}
                   title="Editar cliente"
                   className="flex size-[30px] items-center justify-center rounded-[9px] border border-[#E1E5EE] bg-white text-[#556A7C]"
@@ -151,6 +159,17 @@ export function ClientesScreen() {
         <CustomerForm
           open={formOpen}
           onClose={() => setFormOpen(false)}
+          customer={editing}
+          businessId={businessId ?? ""}
+          createdBy={profile?.id ?? null}
+          onSaved={refetchAll}
+        />
+      )}
+
+      {empresaOpen && (
+        <EmpresaForm
+          open={empresaOpen}
+          onClose={() => setEmpresaOpen(false)}
           customer={editing}
           businessId={businessId ?? ""}
           createdBy={profile?.id ?? null}

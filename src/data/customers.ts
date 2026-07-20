@@ -15,6 +15,11 @@ export interface CustomerRow {
   giro: string | null;
   direccion: string | null;
   comuna: string | null;
+  ciudad: string | null;
+  direccion_despacho: string | null;
+  comuna_despacho: string | null;
+  contacto: string | null;
+  observaciones: string | null;
 }
 
 /** Filtro de búsqueda por nombre, teléfono o correo (case-insensitive). */
@@ -31,7 +36,7 @@ export function useCustomers(businessId?: string) {
     queryFn: async (): Promise<CustomerRow[]> => {
       const { data, error } = await supabase
         .from("customer")
-        .select("id,name,email,phone,points,spent,visits,is_company,rut,razon_social,giro,direccion,comuna")
+        .select("id,name,email,phone,points,spent,visits,is_company,rut,razon_social,giro,direccion,comuna,ciudad,direccion_despacho,comuna_despacho,contacto,observaciones")
         .eq("business_id", businessId!)
         .is("deleted_at", null)
         .order("name");
@@ -53,11 +58,16 @@ export async function createCustomer(input: {
   giro?: string | null;
   direccion?: string | null;
   comuna?: string | null;
+  ciudad?: string | null;
+  direccion_despacho?: string | null;
+  comuna_despacho?: string | null;
+  contacto?: string | null;
+  observaciones?: string | null;
 }): Promise<CustomerRow> {
   const { data, error } = await supabase
     .from("customer")
     .insert(input)
-    .select("id,name,email,phone,points,spent,visits,is_company,rut,razon_social,giro,direccion,comuna")
+    .select("id,name,email,phone,points,spent,visits,is_company,rut,razon_social,giro,direccion,comuna,ciudad,direccion_despacho,comuna_despacho,contacto,observaciones")
     .single();
   if (error) throw error;
   return data;
@@ -75,6 +85,11 @@ export async function updateCustomer(
     giro: string | null;
     direccion: string | null;
     comuna: string | null;
+    ciudad: string | null;
+    direccion_despacho: string | null;
+    comuna_despacho: string | null;
+    contacto: string | null;
+    observaciones: string | null;
   }>,
 ) {
   const { error } = await supabase.from("customer").update(input).eq("id", id);
