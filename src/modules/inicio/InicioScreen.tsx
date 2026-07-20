@@ -70,9 +70,10 @@ export function InicioScreen() {
   const showCritical = profile?.role === "admin" || profile?.role === "kromi";
   const { data: critical } = useCriticalStock(showCritical ? branch?.id : undefined);
 
-  const count = stats?.count ?? 0;
   const total = stats?.total ?? 0;
   const avg = stats?.avg ?? 0;
+  const card = stats?.card ?? 0;
+  const cash = stats?.cash ?? 0;
 
   return (
     <div className="relative min-h-full overflow-auto px-[34px] py-[30px]">
@@ -88,15 +89,6 @@ export function InicioScreen() {
 
         {/* tarjetas de stats */}
         <div className="mb-[18px] grid grid-cols-4 gap-4">
-          <div className="relative overflow-hidden rounded-[18px] bg-[#0F2A1B] p-5 text-white">
-            <div
-              className="pointer-events-none absolute -right-[30px] -top-[30px] size-[120px] rounded-full"
-              style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--brand) 45%, transparent), transparent 70%)" }}
-            />
-            <div className="relative mb-2 text-[12.5px] font-bold text-[#97F2CC]">Ventas de hoy</div>
-            <div className="relative text-[32px] font-black tracking-[-.02em]">{count}</div>
-            <div className="relative mt-[3px] text-xs text-white/70">operaciones cobradas</div>
-          </div>
           <div className="rounded-[18px] border border-[#E1E5EE] bg-white p-5">
             <div className="mb-2 text-[12.5px] font-bold text-[#556A7C]">Total vendido</div>
             <div className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(total)}</div>
@@ -108,9 +100,14 @@ export function InicioScreen() {
             <div className="mt-[3px] text-xs text-[#5E6E7E]">por venta</div>
           </div>
           <div className="rounded-[18px] border border-[#E1E5EE] bg-white p-5">
-            <div className="mb-2 text-[12.5px] font-bold text-[#556A7C]">Nuevos clientes</div>
-            <div className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">0</div>
-            <div className="mt-[3px] text-xs text-[#5E6E7E]">registrados hoy</div>
+            <div className="mb-2 text-[12.5px] font-bold text-[#556A7C]">Total tarjeta</div>
+            <div className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(card)}</div>
+            <div className="mt-[3px] text-xs text-[#5E6E7E]">pagos con tarjeta</div>
+          </div>
+          <div className="rounded-[18px] border border-[#E1E5EE] bg-white p-5">
+            <div className="mb-2 text-[12.5px] font-bold text-[#556A7C]">Total efectivo</div>
+            <div className="text-[30px] font-black tracking-[-.02em] text-[#0F2A1B]">{fmtCLP(cash)}</div>
+            <div className="mt-[3px] text-xs text-[#5E6E7E]">pagos en efectivo</div>
           </div>
         </div>
 
