@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCustomers, filterCustomers, type CustomerRow } from "@/data/customers";
 import { CustomerForm } from "@/modules/clientes/CustomerForm";
+import { EmpresaForm } from "@/modules/clientes/EmpresaForm";
 
 interface CustomerPickerDialogProps {
   open: boolean;
@@ -32,15 +33,22 @@ export function CustomerPickerDialog({ open, businessId, createdBy, onSelect, on
 
   const [mode, setMode] = useState<Mode>("search");
   const [query, setQuery] = useState("");
+  const [empresaOpen, setEmpresaOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
       setMode("search");
       setQuery("");
+      setEmpresaOpen(false);
     }
   }, [open]);
 
   if (!open) return null;
+
+  const handleSaved = async (created?: CustomerRow) => {
+    await qc.invalidateQueries({ queryKey: ["customers", businessId] });
+    if (created) onSelect(created);
+  };
 
   if (mode === "new") {
     return (
@@ -50,10 +58,20 @@ export function CustomerPickerDialog({ open, businessId, createdBy, onSelect, on
         customer={null}
         businessId={businessId ?? ""}
         createdBy={createdBy}
-        onSaved={async (created) => {
-          await qc.invalidateQueries({ queryKey: ["customers", businessId] });
-          if (created) onSelect(created);
-        }}
+        onSaved={handleSaved}
+      />
+    );
+  }
+
+  if (empresaOpen) {
+    return (
+      <EmpresaForm
+        open
+        onClose={() => setEmpresaOpen(false)}
+        customer={null}
+        businessId={businessId ?? ""}
+        createdBy={createdBy}
+        onSaved={handleSaved}
       />
     );
   }
@@ -124,6 +142,13 @@ export function CustomerPickerDialog({ open, businessId, createdBy, onSelect, on
               style={{ background: "var(--brand)" }}
             >
               Nuevo cliente
+            </button>
+            <button
+              onClick={() => setEmpresaOpen(true)}
+              className="flex-1 rounded-2xl py-3 text-[14px] font-bold text-white"
+              style={{ background: "var(--brand)" }}
+            >
+              Nueva empresa
             </button>
           </div>
         </div>
