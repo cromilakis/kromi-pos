@@ -57,11 +57,15 @@ export function CustomerForm({ open, onClose, customer, businessId, createdBy, o
       toast.error("El nombre del cliente es obligatorio.");
       return;
     }
-    if (phone && phone.length !== 8) {
+    // Change-aware: solo validar/reformatear si el teléfono cambió respecto al cargado.
+    // Preserva teléfonos legados (no conformes a la máscara) al editar otros campos.
+    const initialPhone = phoneLocal8(customer?.phone);
+    const phoneChanged = phone !== initialPhone;
+    if (phoneChanged && phone && phone.length !== 8) {
       toast.error("El teléfono debe tener 8 dígitos (después de +56 9).");
       return;
     }
-    const phoneToSave = phone ? `+569${phone}` : null;
+    const phoneToSave = phoneChanged ? (phone ? `+569${phone}` : null) : (customer?.phone ?? null);
 
     setBusy(true);
     try {

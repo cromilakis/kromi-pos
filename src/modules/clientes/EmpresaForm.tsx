@@ -92,14 +92,19 @@ export function EmpresaForm({ open, onClose, customer, businessId, createdBy, on
       toast.error("Razón social, giro, dirección y comuna son obligatorios para facturar.");
       return;
     }
-    if (phone && phone.length !== 8) {
+    // Change-aware: solo validar/reformatear si el teléfono cambió respecto al cargado.
+    // Preserva teléfonos legados (no conformes a la máscara) al editar otros campos.
+    const initialPhone = phoneLocal8(customer?.phone);
+    const phoneChanged = phone !== initialPhone;
+    if (phoneChanged && phone && phone.length !== 8) {
       toast.error("El teléfono debe tener 8 dígitos (después de +56 9).");
       return;
     }
+    const phoneToSave = phoneChanged ? (phone ? `+569${phone}` : null) : (customer?.phone ?? null);
     const fields = {
       name: rs, // el display de la lista es la razón social
       email: email.trim() || null,
-      phone: phone ? `+569${phone}` : null,
+      phone: phoneToSave,
       is_company: true,
       rut: normRut(rut),
       razon_social: rs,
